@@ -4,9 +4,9 @@ import { Certificate02Icon, ArrowRight02Icon } from "@hugeicons/core-free-icons"
 
 export function CTASection() {
   return (
-    <section className="bg-gradient-to-b from-bright-sky/5 via-white to-white px-4 py-20 md:py-28">
+    <section className="bg-gradient-to-b from-bright-sky/5 via-white to-white px-4 py-20 md:py-28 dark:from-graphite/90 dark:via-graphite dark:to-graphite">
       <div className="mx-auto max-w-6xl">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-graphite to-graphite/90 px-6 py-16 text-center shadow-2xl shadow-graphite/20 md:px-16 md:py-20">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-graphite to-graphite/90 px-6 py-16 text-center shadow-2xl shadow-graphite/20 md:px-16 md:py-20 dark:from-black dark:to-graphite/80 dark:shadow-black/30">
           <div className="absolute -top-20 -right-20 size-64 rounded-full bg-bright-sky/15 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 size-64 rounded-full bg-bright-sky/10 blur-3xl" />
           <div className="absolute top-1/3 right-1/4 size-48 rounded-full bg-banana-cream/10 blur-3xl" />
@@ -25,11 +25,11 @@ export function CTASection() {
             </p>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90">
+              <Button className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20">
                 Claim Your Free Certificate
                 <HugeiconsIcon icon={ArrowRight02Icon} className="ml-1.5 size-4" />
               </Button>
-              <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90">
+              <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
                 Browse Examples
               </Button>
             </div>

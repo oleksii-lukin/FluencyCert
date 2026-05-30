@@ -21,7 +21,7 @@ function FooterLinks({ items }: { items: { label: string; href: string }[] }) {
     <>
       {items.map((item) => (
         <li key={item.label}>
-          <Link href={item.href} className="text-sm text-graphite/50 transition-colors hover:text-bright-sky">{item.label}</Link>
+          <Link href={item.href} className="text-sm text-graphite/50 transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">{item.label}</Link>
         </li>
       ))}
     </>
@@ -32,7 +32,7 @@ export function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-bright-sky/10 bg-gradient-to-b from-white to-bright-sky/[0.03] px-4 py-12 md:py-16" suppressHydrationWarning>
+    <footer className="border-t border-bright-sky/10 bg-gradient-to-b from-white to-bright-sky/[0.03] px-4 py-12 md:py-16 dark:border-snow/5 dark:from-graphite dark:to-graphite/95" suppressHydrationWarning>
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
@@ -40,35 +40,35 @@ export function Footer() {
               <div className="flex size-8 items-center justify-center rounded-lg bg-bright-sky">
                 <HugeiconsIcon icon={Certificate02Icon} className="size-4 text-white" />
               </div>
-              <span className="text-base font-bold tracking-tight text-graphite">
+              <span className="text-base font-bold tracking-tight text-graphite dark:text-snow">
                 Fluency<span className="text-bright-sky">Cert</span>
               </span>
             </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-graphite/50">
+            <p className="max-w-xs text-sm leading-relaxed text-graphite/50 dark:text-snow/40">
               The platform for speaking club members to showcase their English proficiency certificates and connect with the community.
             </p>
           </div>
 
           <div>
-            <h4 className="mb-4 text-sm font-semibold text-graphite">Platform</h4>
+            <h4 className="mb-4 text-sm font-semibold text-graphite dark:text-snow">Platform</h4>
             <ul className="space-y-2.5">
               <FooterLinks items={links} />
             </ul>
           </div>
 
           <div>
-            <h4 className="mb-4 text-sm font-semibold text-graphite">Community</h4>
+            <h4 className="mb-4 text-sm font-semibold text-graphite dark:text-snow">Community</h4>
             <ul className="space-y-2.5">
               <FooterLinks items={communityLinks} />
             </ul>
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-8 text-xs text-graphite/40 md:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-8 text-xs text-graphite/40 md:flex-row dark:border-snow/10 dark:text-snow/40">
           <p>&copy; {year} FluencyCert. All rights reserved.</p>
           <div className="flex gap-6">
-            <Link href="/privacy" className="transition-colors hover:text-bright-sky">Privacy Policy</Link>
-            <Link href="/terms" className="transition-colors hover:text-bright-sky">Terms of Service</Link>
+            <Link href="/privacy" className="transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">Privacy Policy</Link>
+            <Link href="/terms" className="transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">Terms of Service</Link>
           </div>
         </div>
       </div>

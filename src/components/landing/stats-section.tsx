@@ -1,8 +1,8 @@
 import { HugeiconsIcon } from "@hugeicons/react"
-import { GlobeIcon, Award01Icon, MessageMultiple01Icon, StarIcon } from "@hugeicons/core-free-icons"
+import { Globe02Icon, Award01Icon, MessageMultiple01Icon, StarIcon } from "@hugeicons/core-free-icons"
 
 const stats = [
-  { value: "50+", label: "Speaking Clubs", icon: GlobeIcon },
+  { value: "50+", label: "Speaking Clubs", icon: Globe02Icon },
   { value: "12.4K", label: "Certificates Issued", icon: Award01Icon },
   { value: "56K+", label: "Reactions Sent", icon: MessageMultiple01Icon },
   { value: "4.8", label: "Average Rating", icon: StarIcon },
@@ -10,8 +10,8 @@ const stats = [
 
 export function StatsSection() {
   return (
-    <section className="relative overflow-hidden bg-graphite px-4 py-16 md:py-20">
-      <div className="absolute inset-0 bg-gradient-to-r from-graphite via-graphite to-graphite/95" />
+    <section className="relative overflow-hidden bg-gradient-to-r from-graphite to-graphite/95 px-4 py-16 md:py-20 dark:from-black dark:to-graphite/80">
+      <div className="absolute inset-0" />
       <div className="absolute -top-20 -right-20 size-96 rounded-full bg-bright-sky/10 blur-3xl" />
       <div className="absolute -bottom-20 -left-20 size-96 rounded-full bg-bright-sky/8 blur-3xl" />
       <div className="absolute top-1/2 left-1/2 size-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-bright-sky/5 blur-3xl" />
