@@ -1,3 +1,9 @@
+pnpm:
+  minimumReleaseAge: 3 days
+
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+onlyBuiltDependencies:
+  - msgpackr-extract
