@@ -7,4 +7,4 @@ onlyBuiltDependencies:
   - msgpackr-extract
 
 pnpm:
-  minimumReleaseAge: 3 days
+  minimumReleaseAge: 10080

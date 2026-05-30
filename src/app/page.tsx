@@ -1,6 +1,11 @@
+import type { Metadata } from 'next'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Navbar } from "@/components/landing/navbar"
+
+export const metadata: Metadata = {
+  title: "FluencyCert - Prove Your English Fluency with a Verified Speaking Certificate",
+}
 import { HeroSection } from "@/components/landing/hero-section"
 import { HowItWorks } from "@/components/landing/how-it-works"
 import { ShowcaseSection } from "@/components/landing/showcase-section"
