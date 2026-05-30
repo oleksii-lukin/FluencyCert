@@ -5,6 +5,8 @@ import Image from "next/image"
 import { SignUpButton, UserButton, Show } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Certificate02Icon } from "@hugeicons/core-free-icons"
 
 export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   return (
@@ -39,7 +41,15 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                 <Button variant="outline" size="sm">Admin</Button>
               </Link>
             )}
-            <UserButton />
+            <UserButton>
+              <UserButton.MenuItems>
+                <UserButton.Link
+                  label="My Certificate"
+                  href="/my-certificate"
+                  labelIcon={<HugeiconsIcon icon={Certificate02Icon} className="size-4" />}
+                />
+              </UserButton.MenuItems>
+            </UserButton>
           </Show>
         </div>
       </nav>

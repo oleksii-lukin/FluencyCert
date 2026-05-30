@@ -1,7 +1,8 @@
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { SparklesIcon, Award01Icon, UserGroupIcon, MedalFirstPlaceIcon } from "@hugeicons/core-free-icons"
+import { SparklesIcon, UserGroupIcon, MedalFirstPlaceIcon } from "@hugeicons/core-free-icons"
+import { ClaimCertificateButton } from "@/components/landing/claim-certificate-button"
 
 export function HeroSection() {
   return (
@@ -33,10 +34,10 @@ export function HeroSection() {
             </p>
 
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row">
-              <Button className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20">
-                Claim Your Certificate
-                <HugeiconsIcon icon={Award01Icon} className="ml-1.5 size-4" />
-              </Button>
+              <ClaimCertificateButton
+                label="Claim Your Certificate"
+                className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20"
+              />
               <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
                 Explore Gallery
               </Button>

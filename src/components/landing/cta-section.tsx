@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Certificate02Icon, ArrowRight02Icon } from "@hugeicons/core-free-icons"
+import { Certificate02Icon } from "@hugeicons/core-free-icons"
+import { ClaimCertificateButton } from "@/components/landing/claim-certificate-button"
 
 export function CTASection() {
   return (
@@ -25,10 +26,10 @@ export function CTASection() {
             </p>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20">
-                Claim Your Free Certificate
-                <HugeiconsIcon icon={ArrowRight02Icon} className="ml-1.5 size-4" />
-              </Button>
+              <ClaimCertificateButton
+                label="Claim Your Free Certificate"
+                className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20"
+              />
               <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
                 Browse Examples
               </Button>
