@@ -6,7 +6,7 @@ import { SignUpButton, UserButton, Show } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 
-export function Navbar() {
+export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   return (
     <header className="fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-6xl -translate-x-1/2">
       <nav className="flex items-center justify-between rounded-2xl border border-banana-cream/20 bg-gradient-to-r from-banana-cream/20 via-banana-cream/60 to-banana-cream/10 px-6 py-3 shadow-lg shadow-banana-cream/15 backdrop-blur-xl dark:border-snow/10 dark:from-graphite dark:via-graphite/95 dark:to-graphite/90 dark:shadow-black/20">
@@ -34,6 +34,11 @@ export function Navbar() {
             </SignUpButton>
           </Show>
           <Show when="signed-in">
+            {isAdmin && (
+              <Link href="/admin">
+                <Button variant="outline" size="sm">Admin</Button>
+              </Link>
+            )}
             <UserButton />
           </Show>
         </div>

@@ -40,6 +40,9 @@ __pycache__/
 # vercel
 .vercel
 
+# editor
+.vscode/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

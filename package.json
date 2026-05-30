@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "doctor": "npx react-doctor@latest",
-    "gen:types": "dotenv -e .env.local -- sh -c 'npx supabase gen types typescript --project-id \"$PROJECT_REF\" --schema public' > database.types.ts"
+    "gen:types": "dotenv -e .env.local -- sh -c 'npx supabase gen types typescript --project-id \"$PROJECT_REF\" --schema public' > database.types.ts",
+    "supabase:db:push": "supabase db push",
+    "supabase:functions:deploy": "supabase functions deploy"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.2",
