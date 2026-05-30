@@ -13,10 +13,10 @@
     "supabase:functions:deploy": "supabase functions deploy"
   },
   "dependencies": {
+    "@arcjet/next": "^1.4.0",
     "@clerk/nextjs": "^7.4.2",
     "@hugeicons/core-free-icons": "^4.2.0",
     "@hugeicons/react": "^1.1.6",
-
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
     "class-variance-authority": "^0.7.1",
@@ -38,7 +38,6 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
-
     "tailwindcss": "^4",
     "typescript": "^5"
   }
