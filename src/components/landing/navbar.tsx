@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
+import { SignUpButton, UserButton, Show } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -23,10 +26,16 @@ export function Navbar() {
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" className="hidden text-sm text-graphite/70 md:inline-flex hover:text-graphite hover:bg-graphite/5 dark:text-snow/60 dark:hover:text-snow dark:hover:bg-snow/5">Sign In</Button>
-          <Button size="sm" className="bg-bright-sky text-white shadow-sm shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20">
-            Get Started
-          </Button>
+          <Show when="signed-out">
+            <SignUpButton mode="modal">
+              <Button size="sm" className="bg-bright-sky text-white shadow-sm shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20">
+                Get Started
+              </Button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
         </div>
       </nav>
     </header>

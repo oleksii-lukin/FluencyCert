@@ -1,9 +1,10 @@
-pnpm:
-  minimumReleaseAge: 3 days
-
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
 
 onlyBuiltDependencies:
+  - '@clerk/shared'
   - msgpackr-extract
+
+pnpm:
+  minimumReleaseAge: 3 days
