@@ -1,0 +1,77 @@
+.modern-glass-bg {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(61, 183, 230, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(202, 138, 4, 0.08) 0%, transparent 50%),
+    linear-gradient(135deg, #F8FAFC 0%, #F0F9FF 100%);
+}
+
+.dark .modern-glass-bg {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(61, 183, 230, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(202, 138, 4, 0.06) 0%, transparent 50%),
+    linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+}
+
+.modern-glass-panel {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+.dark .modern-glass-panel {
+  background: rgba(55, 54, 55, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.modern-glass-panel-strong {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .modern-glass-panel-strong {
+  background: rgba(55, 54, 55, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modern-glass-gold-bar {
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #CA8A04 20%, #EAB308 50%, #CA8A04 80%, transparent 100%);
+  border-radius: 2px;
+}
+
+.modern-glass-gold-pill {
+  background: linear-gradient(135deg, rgba(202, 138, 4, 0.12), rgba(234, 179, 8, 0.08));
+  border: 1px solid rgba(202, 138, 4, 0.3);
+  box-shadow: 0 0 20px rgba(202, 138, 4, 0.1);
+}
+
+.modern-glass-gold-text {
+  background: linear-gradient(135deg, #CA8A04, #EAB308);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modern-glass-seal {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(202, 138, 4, 0.15), rgba(234, 179, 8, 0.08));
+  border: 2px solid rgba(202, 138, 4, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 24px rgba(202, 138, 4, 0.08);
+}
+
+.dark .modern-glass-seal {
+  background: linear-gradient(135deg, rgba(202, 138, 4, 0.2), rgba(234, 179, 8, 0.1));
+  border-color: rgba(202, 138, 4, 0.4);
+  box-shadow: 0 0 24px rgba(202, 138, 4, 0.15);
+}

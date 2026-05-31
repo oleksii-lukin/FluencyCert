@@ -1,10 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { GuillocheSecurityTemplate } from "./templates/guilloche-security"
+import { getTemplate } from "./template-registry"
+import type { CertificateTemplate } from "./template"
 import { UpvoteRosette } from "./upvote-rosette"
 import { TestimonialsMarquee } from "./testimonials-marquee"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons"
 import "./guilloche-pattern.css"
+import "./templates/modern-glass.css"
+import "./templates/neubrutal.css"
+import "./templates/memphis-retro.css"
+import "./templates/cyber-neon.css"
+import "./templates/natural-green.css"
 
 type Profile = {
   id: string
@@ -92,6 +99,7 @@ interface CertificatePageLayoutProps {
   hasUpvoted: boolean
   canUpvote: boolean
   testimonialCount: number
+  templateId?: string
 }
 
 function CertificatePageLayout({
@@ -106,8 +114,10 @@ function CertificatePageLayout({
   hasUpvoted,
   canUpvote,
   testimonialCount,
+  templateId,
 }: CertificatePageLayoutProps) {
-  const Component = GuillocheSecurityTemplate.component
+  const template: CertificateTemplate | undefined = templateId ? getTemplate(templateId) : undefined
+  const Component = template ? template.component : GuillocheSecurityTemplate.component
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
@@ -173,6 +183,10 @@ const meta: Meta<typeof CertificatePageLayout> = {
     hasUpvoted: { control: "boolean" },
     canUpvote: { control: "boolean" },
     adminFeedback: { control: "text" },
+    templateId: {
+      control: "select",
+      options: ["guilloche-security", "modern-glass", "neubrutal", "memphis-retro", "cyber-neon", "natural-green"],
+    },
   },
 }
 
@@ -319,5 +333,232 @@ export const AuthenticatedUser: Story = {
     hasUpvoted: true,
     canUpvote: false,
     testimonialCount: 12,
+  },
+}
+
+export const ModernGlassDefault: Story = {
+  args: {
+    ...Default.args,
+    templateId: "modern-glass",
+  },
+}
+
+export const ModernGlassNoHours: Story = {
+  args: {
+    ...Default.args,
+    templateId: "modern-glass",
+    hoursParticipated: null,
+  },
+}
+
+export const ModernGlassNoFeedback: Story = {
+  args: {
+    ...Default.args,
+    templateId: "modern-glass",
+    adminFeedback: null,
+    testimonialCount: 5,
+  },
+}
+
+export const ModernGlassMinimal: Story = {
+  args: {
+    ...Default.args,
+    templateId: "modern-glass",
+    englishLevel: "A2",
+    speakingClubsCount: 3,
+    hoursParticipated: null,
+    adminFeedback: null,
+    upvoteCount: 0,
+    testimonialCount: 1,
+  },
+}
+
+export const ModernGlassPremium: Story = {
+  args: {
+    ...Default.args,
+    templateId: "modern-glass",
+    fullName: "Alex Johnson",
+    englishLevel: "C2 (Proficient)",
+    speakingClubsCount: 96,
+    hoursParticipated: 240,
+    adminFeedback: "Exceptional fluency. Alex demonstrates native-level proficiency across all CEFR criteria — outstanding vocabulary, precise grammar, and effortless pronunciation.",
+    upvoteCount: 256,
+    testimonialCount: 30,
+  },
+}
+
+export const NeubrutalDefault: Story = {
+  args: {
+    ...Default.args,
+    templateId: "neubrutal",
+  },
+}
+
+export const NeubrutalNoHours: Story = {
+  args: {
+    ...Default.args,
+    templateId: "neubrutal",
+    hoursParticipated: null,
+  },
+}
+
+export const NeubrutalNoFeedback: Story = {
+  args: {
+    ...Default.args,
+    templateId: "neubrutal",
+    adminFeedback: null,
+    testimonialCount: 3,
+  },
+}
+
+export const NeubrutalMinimal: Story = {
+  args: {
+    ...Default.args,
+    templateId: "neubrutal",
+    englishLevel: "A2",
+    speakingClubsCount: 3,
+    hoursParticipated: null,
+    adminFeedback: null,
+    upvoteCount: 0,
+    testimonialCount: 0,
+  },
+}
+
+export const MemphisRetroDefault: Story = {
+  args: {
+    ...Default.args,
+    templateId: "memphis-retro",
+  },
+}
+
+export const MemphisRetroNoHours: Story = {
+  args: {
+    ...Default.args,
+    templateId: "memphis-retro",
+    hoursParticipated: null,
+  },
+}
+
+export const MemphisRetroNoFeedback: Story = {
+  args: {
+    ...Default.args,
+    templateId: "memphis-retro",
+    adminFeedback: null,
+    testimonialCount: 5,
+  },
+}
+
+export const MemphisRetroMinimal: Story = {
+  args: {
+    ...Default.args,
+    templateId: "memphis-retro",
+    englishLevel: "A1",
+    speakingClubsCount: 2,
+    hoursParticipated: null,
+    adminFeedback: null,
+    upvoteCount: 1,
+    testimonialCount: 0,
+  },
+}
+
+export const MemphisRetroPremium: Story = {
+  args: {
+    ...Default.args,
+    templateId: "memphis-retro",
+    fullName: "Elena Vasquez",
+    englishLevel: "C2 (Proficient)",
+    speakingClubsCount: 84,
+    hoursParticipated: 200,
+    adminFeedback: "Elena is a phenomenal speaker with near-native fluency. Her vocabulary range and pronunciation are exceptional.",
+    upvoteCount: 189,
+    testimonialCount: 25,
+  },
+}
+
+export const CyberNeonDefault: Story = {
+  args: {
+    ...Default.args,
+    templateId: "cyber-neon",
+  },
+}
+
+export const CyberNeonNoHours: Story = {
+  args: {
+    ...Default.args,
+    templateId: "cyber-neon",
+    hoursParticipated: null,
+  },
+}
+
+export const CyberNeonNoFeedback: Story = {
+  args: {
+    ...Default.args,
+    templateId: "cyber-neon",
+    adminFeedback: null,
+    testimonialCount: 3,
+  },
+}
+
+export const CyberNeonMinimal: Story = {
+  args: {
+    ...Default.args,
+    templateId: "cyber-neon",
+    englishLevel: "B1",
+    speakingClubsCount: 6,
+    hoursParticipated: null,
+    adminFeedback: null,
+    upvoteCount: 0,
+    testimonialCount: 0,
+  },
+}
+
+export const NaturalGreenDefault: Story = {
+  args: {
+    ...Default.args,
+    templateId: "natural-green",
+  },
+}
+
+export const NaturalGreenNoHours: Story = {
+  args: {
+    ...Default.args,
+    templateId: "natural-green",
+    hoursParticipated: null,
+  },
+}
+
+export const NaturalGreenNoFeedback: Story = {
+  args: {
+    ...Default.args,
+    templateId: "natural-green",
+    adminFeedback: null,
+    testimonialCount: 4,
+  },
+}
+
+export const NaturalGreenMinimal: Story = {
+  args: {
+    ...Default.args,
+    templateId: "natural-green",
+    englishLevel: "A1",
+    speakingClubsCount: 1,
+    hoursParticipated: null,
+    adminFeedback: null,
+    upvoteCount: 0,
+    testimonialCount: 0,
+  },
+}
+
+export const NaturalGreenPremium: Story = {
+  args: {
+    ...Default.args,
+    templateId: "natural-green",
+    fullName: "Olivia Hart",
+    englishLevel: "C2 (Proficient)",
+    speakingClubsCount: 72,
+    hoursParticipated: 180,
+    adminFeedback: "Olivia's command of English is extraordinary — articulate, nuanced, and naturally fluent in every context.",
+    upvoteCount: 145,
+    testimonialCount: 20,
   },
 }

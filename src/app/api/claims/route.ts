@@ -12,6 +12,10 @@ const postAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 5, characteristics: ["userId"] }),
 )
 
+const patchAj = aj.withRule(
+  slidingWindow({ mode: "LIVE", interval: 60, max: 10, characteristics: ["userId"] }),
+)
+
 export async function GET(request: Request) {
   const { userId } = await auth()
   if (!userId) {
@@ -77,4 +81,66 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ claim }, { status: 201 })
+}
+
+export async function PATCH(request: Request) {
+  const { userId } = await auth()
+  if (!userId) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  const decision = await patchAj.protect(request, { userId })
+  if (decision.isDenied()) {
+    if (decision.reason.isRateLimit()) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const body = await request.json()
+  const { background_template } = body
+
+  if (!background_template || typeof background_template !== 'string') {
+    return NextResponse.json({ error: 'background_template is required' }, { status: 400 })
+  }
+
+  const { listTemplates } = await import('@/components/certificate/template-registry')
+  const templates = listTemplates()
+  const templateExists = templates.some((t) => t.id === background_template)
+  if (!templateExists) {
+    return NextResponse.json({ error: 'Invalid template' }, { status: 400 })
+  }
+
+  const supabase = createAdminClient()
+
+  const { data: claim } = await supabase
+    .from('certificate_claims')
+    .select('id, user_id, status')
+    .eq('id', body.claimId)
+    .single()
+
+  if (!claim) {
+    return NextResponse.json({ error: 'Claim not found' }, { status: 404 })
+  }
+
+  if (claim.user_id !== userId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  if (claim.status !== 'approved') {
+    return NextResponse.json({ error: 'Claim is not approved' }, { status: 400 })
+  }
+
+  const { data: updated, error } = await supabase
+    .from('certificate_claims')
+    .update({ background_template })
+    .eq('id', claim.id)
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ claim: updated })
 }

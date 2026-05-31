@@ -11,6 +11,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
   const [englishLevel, setEnglishLevel] = useState("")
   const [speakingClubsCount, setSpeakingClubsCount] = useState("")
   const [hoursParticipated, setHoursParticipated] = useState("")
+  const [backgroundTemplate, setBackgroundTemplate] = useState("modern-glass")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -23,6 +24,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
     if (status === 'approved') {
       body.english_level = englishLevel.trim()
       body.speaking_clubs_count = parseInt(speakingClubsCount, 10)
+      body.background_template = backgroundTemplate
       if (hoursParticipated) {
         body.hours_participated = parseInt(hoursParticipated, 10)
       }
@@ -123,6 +125,21 @@ export function ClaimActions({ claimId }: { claimId: string }) {
                       value={hoursParticipated}
                       onChange={(e) => setHoursParticipated(e.target.value)}
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Background Template</label>
+                    <select
+                      className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                      value={backgroundTemplate}
+                      onChange={(e) => setBackgroundTemplate(e.target.value)}
+                    >
+                      <option value="modern-glass">Modern Glass</option>
+                      <option value="guilloche-security">Security Pattern</option>
+                      <option value="neubrutal">Neubrutal</option>
+                      <option value="memphis-retro">Memphis Retro</option>
+                      <option value="cyber-neon">Cyber Neon</option>
+                      <option value="natural-green">Natural Green</option>
+                    </select>
                   </div>
                 </>
               )}

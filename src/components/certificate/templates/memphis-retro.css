@@ -1,0 +1,137 @@
+.memphis-bg {
+  background-color: #FFF5F9;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 24px,
+      rgba(255, 113, 206, 0.06) 24px,
+      rgba(255, 113, 206, 0.06) 25px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 24px,
+      rgba(134, 204, 202, 0.04) 24px,
+      rgba(134, 204, 202, 0.04) 25px
+    );
+  border: 2px solid #FF71CE;
+  border-radius: 0;
+}
+
+.dark .memphis-bg {
+  background-color: #2A1522;
+  border-color: #E055A0;
+}
+
+.memphis-panel-pink {
+  background: rgba(255, 113, 206, 0.08);
+  border: 2px solid #FF71CE;
+  border-radius: 16px 4px 16px 4px;
+}
+
+.dark .memphis-panel-pink {
+  background: rgba(224, 85, 160, 0.12);
+  border-color: #E055A0;
+}
+
+.memphis-panel-yellow {
+  background: rgba(255, 206, 92, 0.08);
+  border: 2px solid #FFCE5C;
+  border-radius: 4px 16px 4px 16px;
+}
+
+.dark .memphis-panel-yellow {
+  background: rgba(224, 168, 64, 0.12);
+  border-color: #E0A840;
+}
+
+.memphis-panel-teal {
+  background: rgba(134, 204, 202, 0.1);
+  border: 2px solid #86CCCA;
+  border-radius: 0;
+}
+
+.dark .memphis-panel-teal {
+  background: rgba(93, 168, 166, 0.15);
+  border-color: #5DA8A6;
+}
+
+.memphis-pill {
+  background: #86CCCA;
+  color: #FFF;
+  border: 2px solid #000;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+.dark .memphis-pill {
+  background: #5DA8A6;
+  border-color: #E055A0;
+}
+
+.memphis-zigzag {
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    #FF71CE 0px, #FF71CE 8px,
+    transparent 8px, transparent 16px,
+    #FFCE5C 16px, #FFCE5C 24px,
+    transparent 24px, transparent 32px,
+    #86CCCA 32px, #86CCCA 40px,
+    transparent 40px, transparent 48px,
+    #6A7BB4 48px, #6A7BB4 56px,
+    transparent 56px, transparent 64px
+  );
+}
+
+.dark .memphis-zigzag {
+  background: repeating-linear-gradient(
+    90deg,
+    #E055A0 0px, #E055A0 8px,
+    transparent 8px, transparent 16px,
+    #E0A840 16px, #E0A840 24px,
+    transparent 24px, transparent 32px,
+    #5DA8A6 32px, #5DA8A6 40px,
+    transparent 40px, transparent 48px,
+    #4E5A8C 48px, #4E5A8C 56px,
+    transparent 56px, transparent 64px
+  );
+}
+
+.memphis-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #FF71CE;
+  border: 2px solid #000;
+}
+
+.dark .memphis-circle {
+  background: #E055A0;
+}
+
+.memphis-triangle {
+  width: 0;
+  height: 0;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-bottom: 28px solid #86CCCA;
+  filter: drop-shadow(2px 2px 0px #000);
+}
+
+.dark .memphis-triangle {
+  border-bottom-color: #5DA8A6;
+}
+
+.memphis-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFCE5C;
+  border: 1.5px solid #000;
+}
+
+.dark .memphis-dot {
+  background: #E0A840;
+}

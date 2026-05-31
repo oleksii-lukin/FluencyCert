@@ -1,0 +1,67 @@
+.natural-bg {
+  background: #ECFDF5;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+  border-radius: 20px;
+}
+
+.dark .natural-bg {
+  background: #052E16;
+  border-color: rgba(5, 150, 105, 0.15);
+}
+
+.natural-panel {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(5, 150, 105, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(5, 150, 105, 0.04);
+}
+
+.dark .natural-panel {
+  background: rgba(5, 150, 105, 0.06);
+  border-color: rgba(5, 150, 105, 0.15);
+}
+
+.natural-panel-strong {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(5, 150, 105, 0.12);
+  border-radius: 14px;
+}
+
+.dark .natural-panel-strong {
+  background: rgba(5, 150, 105, 0.08);
+  border-color: rgba(5, 150, 105, 0.12);
+}
+
+.natural-badge {
+  background: linear-gradient(135deg, #059669, #10B981);
+  color: #FFF;
+  border-radius: 999px;
+  box-shadow: 0 2px 12px rgba(5, 150, 105, 0.2);
+}
+
+.natural-gold-text {
+  color: #D97706;
+}
+
+.natural-accent-line {
+  height: 3px;
+  background: linear-gradient(90deg, #059669 0%, #10B981 40%, #FBBF24 70%, transparent 100%);
+  border-radius: 2px;
+}
+
+.natural-leaf {
+  width: 28px;
+  height: 28px;
+  border-radius: 2px 14px 2px 14px;
+  background: linear-gradient(135deg, #059669, #10B981);
+  opacity: 0.6;
+  transform: rotate(15deg);
+}
+
+.natural-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FBBF24;
+  opacity: 0.4;
+}

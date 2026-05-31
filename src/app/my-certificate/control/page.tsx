@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { FeedbackManager } from '@/components/certificate/feedback-manager'
 import { CopyShareLink } from '@/components/certificate/copy-share-link'
+import { TemplateSelector } from '@/components/certificate/template-selector'
 import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowLeft02Icon, Share01Icon, Certificate02Icon } from '@hugeicons/core-free-icons'
+import { ArrowLeft02Icon, Share01Icon, Certificate02Icon, LayoutGridIcon } from '@hugeicons/core-free-icons'
 
 export default async function CertificateControlPage() {
   const { userId } = await auth()
@@ -70,6 +71,20 @@ export default async function CertificateControlPage() {
             </Link>
             <CopyShareLink certificateId={claim.id} />
           </div>
+        </div>
+
+        <div className="mb-8 rounded-xl border bg-white p-6 dark:bg-gray-800">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-graphite dark:text-snow mb-2">
+            <HugeiconsIcon icon={LayoutGridIcon} className="size-5 text-bright-sky" />
+            Certificate Template
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Choose how your certificate looks. Changes are instantly reflected on your public page.
+          </p>
+          <TemplateSelector
+            currentTemplateId={claim.background_template || 'guilloche-security'}
+            claimId={claim.id}
+          />
         </div>
 
         <div className="rounded-xl border bg-white p-6 dark:bg-gray-800">

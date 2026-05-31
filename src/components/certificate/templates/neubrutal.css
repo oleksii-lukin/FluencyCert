@@ -1,0 +1,66 @@
+.neubrutal-card {
+  background: #FAFAFA;
+  border: 3px solid #000;
+  box-shadow: 6px 6px 0px #000;
+  border-radius: 0;
+}
+
+.dark .neubrutal-card {
+  background: #1A1A1A;
+  border-color: #FFF;
+  box-shadow: 6px 6px 0px #FFF;
+}
+
+.neubrutal-badge {
+  background: #2196F3;
+  color: #FFF;
+  border: 2px solid #000;
+  border-radius: 0;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.neubrutal-panel {
+  background: #FFF;
+  border: 3px solid #000;
+  border-radius: 0;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.dark .neubrutal-panel {
+  background: #222;
+  border-color: #FFF;
+  box-shadow: 4px 4px 0px #FFF;
+}
+
+.neubrutal-stat {
+  background: #FFF;
+  border: 2px solid #000;
+  border-radius: 0;
+}
+
+.dark .neubrutal-stat {
+  background: #222;
+  border-color: #FFF;
+}
+
+.neubrutal-accent-bar {
+  height: 4px;
+  background: #FF5252;
+  border: none;
+  border-radius: 0;
+}
+
+.dark .neubrutal-accent-bar {
+  background: #FF5252;
+}
+
+.neubrutal-bottom-bar {
+  height: 4px;
+  background: #000;
+  border: none;
+  border-radius: 0;
+}
+
+.dark .neubrutal-bottom-bar {
+  background: #FFF;
+}
