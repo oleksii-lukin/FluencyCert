@@ -129,14 +129,26 @@ export function TestimonialsMarquee({ feedbacks }: TestimonialsMarqueeProps) {
 
   if (visible.length === 0) return null
 
-  const maxRows = 3
-  const rowCount = Math.min(maxRows, visible.length)
-  const rows: FeedbackWithReviewer[][] = Array.from({ length: rowCount }, () => [])
-  for (let i = 0; i < visible.length; i++) {
-    rows[i % rowCount].push(visible[i])
+  let rowCount: number
+  if (visible.length <= 10) {
+    rowCount = 1
+  } else if (visible.length <= 20) {
+    rowCount = 2
+  } else {
+    rowCount = 3
   }
 
-  const speeds = [30, 45, 60]
+  const rows: FeedbackWithReviewer[][] = []
+  const chunkSize = Math.ceil(visible.length / rowCount)
+  for (let r = 0; r < rowCount; r++) {
+    const start = r * chunkSize
+    const end = Math.min(start + chunkSize, visible.length)
+    if (start < visible.length) {
+      rows.push(visible.slice(start, end))
+    }
+  }
+
+  const speeds = [30, 15, 20]
 
   return (
     <div className="w-full overflow-hidden py-4">
