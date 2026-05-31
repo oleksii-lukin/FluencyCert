@@ -110,7 +110,7 @@ export function TemplateSelector({ currentTemplateId, claimId }: TemplateSelecto
       </div>
 
       {saving && (
-        <p className="text-sm text-muted-foreground animate-pulse">Saving template...</p>
+        <p className="text-sm text-muted-foreground animate-pulse">Saving template&hellip;</p>
       )}
       {saved && (
         <p className="text-sm text-green-600 dark:text-green-400">Template saved!</p>
