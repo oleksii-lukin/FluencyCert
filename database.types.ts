@@ -7,13 +7,176 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      certificate_claims: {
+        Row: {
+          admin_feedback: string | null
+          background_template: string | null
+          created_at: string
+          english_level: string | null
+          hours_participated: number | null
+          id: string
+          speaking_clubs_count: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_feedback?: string | null
+          background_template?: string | null
+          created_at?: string
+          english_level?: string | null
+          hours_participated?: number | null
+          id?: string
+          speaking_clubs_count?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_feedback?: string | null
+          background_template?: string | null
+          created_at?: string
+          english_level?: string | null
+          hours_participated?: number | null
+          id?: string
+          speaking_clubs_count?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificate_feedback: {
+        Row: {
+          certificate_id: string
+          created_at: string
+          display_name_preference: string
+          feedback_text: string
+          id: string
+          is_visible: boolean
+          linkedin_url: string | null
+          reviewer_id: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          certificate_id: string
+          created_at?: string
+          display_name_preference?: string
+          feedback_text: string
+          id?: string
+          is_visible?: boolean
+          linkedin_url?: string | null
+          reviewer_id: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          certificate_id?: string
+          created_at?: string
+          display_name_preference?: string
+          feedback_text?: string
+          id?: string
+          is_visible?: boolean
+          linkedin_url?: string | null
+          reviewer_id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_feedback_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_feedback_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificate_upvotes: {
+        Row: {
+          certificate_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          certificate_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          certificate_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_upvotes_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -55,41 +218,6 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
-      }
-      certificate_claims: {
-        Row: {
-          id: string
-          user_id: string
-          status: string
-          admin_feedback: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          status?: string
-          admin_feedback?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          status?: string
-          admin_feedback?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "certificate_claims_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
@@ -225,6 +353,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
