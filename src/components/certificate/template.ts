@@ -1,5 +1,3 @@
-import type { ReactNode } from "react"
-
 export interface CertificateTemplateProps {
   fullName: string
   englishLevel: string
@@ -13,5 +11,4 @@ export interface CertificateTemplateProps {
 export interface CertificateTemplate {
   id: string
   name: string
-  component: (props: CertificateTemplateProps) => ReactNode
 }

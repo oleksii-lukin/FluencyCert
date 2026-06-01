@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from 'next-intl'
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
@@ -10,6 +11,7 @@ interface FeedbackFormProps {
 }
 
 export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
+  const t = useTranslations('feedback')
   const router = useRouter()
   const [feedbackText, setFeedbackText] = useState("")
   const [namePref, setNamePref] = useState<"nickname" | "full_name">("nickname")
@@ -35,7 +37,7 @@ export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
 
     if (!res.ok) {
       const data = await res.json()
-      setError(data.error || "Something went wrong")
+      setError(data.error || t('somethingWentWrong'))
       setSubmitting(false)
       return
     }
@@ -49,7 +51,7 @@ export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
   if (submitted) {
     return (
       <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-center text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
-        Your feedback has been submitted and is pending review by the certificate owner.
+        {t('submittedSuccess')}
       </div>
     )
   }
@@ -57,12 +59,12 @@ export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
   return (
     <form onSubmit={handleSubmit} className="rounded-xl border bg-white p-6 dark:bg-gray-800">
       <h3 className="text-sm font-semibold text-graphite dark:text-snow mb-3">
-        Leave Your Feedback
+        {t('leaveFeedback')}
       </h3>
 
       <textarea
         className="w-full rounded-lg border bg-background p-3 text-sm min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-bright-sky"
-        placeholder="Share your thoughts about this certificate..."
+        placeholder={t('placeholder')}
         value={feedbackText}
         onChange={(e) => setFeedbackText(e.target.value)}
         maxLength={500}
@@ -74,7 +76,7 @@ export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
       <div className="mt-3 space-y-3">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-2">
-            How would you like your name to appear?
+            {t('nameAppearance')}
           </p>
           <div className="flex gap-4">
             <label className="flex items-center gap-2 text-xs cursor-pointer">
@@ -86,7 +88,7 @@ export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
                 onChange={() => setNamePref("nickname")}
                 className="accent-bright-sky"
               />
-              Username
+              {t('username')}
             </label>
             <label className="flex items-center gap-2 text-xs cursor-pointer">
               <input
@@ -97,19 +99,19 @@ export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
                 onChange={() => setNamePref("full_name")}
                 className="accent-bright-sky"
               />
-              Full Name
+              {t('fullName')}
             </label>
           </div>
         </div>
 
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1">
-            LinkedIn URL (optional)
+            {t('linkedinUrl')}
           </label>
           <input
             type="url"
             className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-            placeholder="https://linkedin.com/in/..."
+            placeholder={t('linkedinPlaceholder')}
             value={linkedinUrl}
             onChange={(e) => setLinkedinUrl(e.target.value)}
           />
@@ -126,7 +128,7 @@ export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
           size="sm"
           disabled={!feedbackText.trim() || submitting}
         >
-          {submitting ? "Submitting..." : "Submit Feedback"}
+          {submitting ? t('submitting') : t('submitFeedback')}
         </Button>
       </div>
     </form>

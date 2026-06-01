@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import Link from "next/link"
+import { useTranslations } from 'next-intl'
+import { Link } from "@/i18n/routing"
 import { useUser } from "@clerk/nextjs"
 import { SignInButton } from "@clerk/nextjs"
 import type { CertificateClaim } from "@/types/certificate-claim"
@@ -16,6 +17,7 @@ type ClaimButtonProps = {
 }
 
 export function ClaimCertificateButton({ label, icon, className }: ClaimButtonProps) {
+  const t = useTranslations('claimButton')
   const { isSignedIn, isLoaded } = useUser()
   const [claim, setClaim] = useState<CertificateClaim | null | undefined>(undefined)
   const [loading, setLoading] = useState(false)
@@ -68,7 +70,7 @@ export function ClaimCertificateButton({ label, icon, className }: ClaimButtonPr
       <Link href="/my-certificate">
         <Button className={className}>
           <HugeiconsIcon icon={Clock01Icon} className="mr-1.5 size-4" />
-          Review Claim Status
+          {t('reviewStatus')}
         </Button>
       </Link>
     )

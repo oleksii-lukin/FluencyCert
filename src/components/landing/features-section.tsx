@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Certificate02Icon,
@@ -8,55 +9,57 @@ import {
   IdVerifiedIcon,
 } from "@hugeicons/core-free-icons"
 
-const features = [
-  {
-    icon: Certificate02Icon,
-    title: "Certificate Display",
-    description: "Your personalized certificate showcases your English level, club participation, and achievements in an elegant design.",
-    bg: "bg-bright-sky/15 dark:bg-bright-sky/20",
-  },
-  {
-    icon: LayoutGridIcon,
-    title: "Certificate Templates",
-    description: "Choose from multiple beautifully designed templates to personalize the look and feel of your certificate.",
-    bg: "bg-bright-sky/20 dark:bg-bright-sky/25",
-  },
-  {
-    icon: HeartIcon,
-    title: "Upvote Rosette",
-    description: "Get recognition from the community. Other members can upvote your certificate to celebrate your achievement.",
-    bg: "bg-bright-sky/12 dark:bg-bright-sky/15",
-  },
-  {
-    icon: Message01Icon,
-    title: "Moderated Feedback",
-    description: "Receive feedback from other approved members. You control which testimonials appear on your public page.",
-    bg: "bg-harvest-orange/12 dark:bg-harvest-orange/15",
-  },
-  {
-    icon: Share01Icon,
-    title: "Share Anywhere",
-    description: "Share your unique certificate page on social media, CV, or LinkedIn with a single link.",
-    bg: "bg-banana-cream/15 dark:bg-banana-cream/10",
-  },
-  {
-    icon: IdVerifiedIcon,
-    title: "Admin Verification",
-    description: "Each certificate is reviewed and verified by our admin team, ensuring authenticity and credibility.",
-    bg: "bg-harvest-orange/10 dark:bg-harvest-orange/15",
-  },
-]
+export async function FeaturesSection() {
+  const t = await getTranslations('features')
 
-export function FeaturesSection() {
+  const features = [
+    {
+      icon: Certificate02Icon,
+      title: t('certificateDisplay'),
+      description: t('certificateDisplayDesc'),
+      bg: "bg-bright-sky/15 dark:bg-bright-sky/20",
+    },
+    {
+      icon: LayoutGridIcon,
+      title: t('certificateTemplates'),
+      description: t('certificateTemplatesDesc'),
+      bg: "bg-bright-sky/20 dark:bg-bright-sky/25",
+    },
+    {
+      icon: HeartIcon,
+      title: t('upvoteRosette'),
+      description: t('upvoteRosetteDesc'),
+      bg: "bg-bright-sky/12 dark:bg-bright-sky/15",
+    },
+    {
+      icon: Message01Icon,
+      title: t('moderatedFeedback'),
+      description: t('moderatedFeedbackDesc'),
+      bg: "bg-harvest-orange/12 dark:bg-harvest-orange/15",
+    },
+    {
+      icon: Share01Icon,
+      title: t('shareAnywhere'),
+      description: t('shareAnywhereDesc'),
+      bg: "bg-banana-cream/15 dark:bg-banana-cream/10",
+    },
+    {
+      icon: IdVerifiedIcon,
+      title: t('adminVerification'),
+      description: t('adminVerificationDesc'),
+      bg: "bg-harvest-orange/10 dark:bg-harvest-orange/15",
+    },
+  ]
+
   return (
     <section id="features" className="bg-gradient-to-b from-bright-sky/5 via-white to-bright-sky/5 px-4 py-20 md:py-28 dark:from-graphite/90 dark:via-graphite dark:to-graphite/90">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-graphite dark:text-snow md:text-4xl">
-            Everything You Need
+            {t('title')}
           </h2>
           <p className="mt-4 text-lg text-graphite/60 dark:text-snow/60">
-            Built for speaking club members who want to showcase their English proficiency.
+            {t('subtitle')}
           </p>
         </div>
 

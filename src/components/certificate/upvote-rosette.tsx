@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ThumbsUpIcon } from "@hugeicons/core-free-icons"
 
@@ -17,6 +18,7 @@ export function UpvoteRosette({
   initialHasUpvoted,
   canUpvote,
 }: UpvoteRosetteProps) {
+  const t = useTranslations('upvote')
   const [hasUpvoted, setHasUpvoted] = useState(initialHasUpvoted)
   const [count, setCount] = useState(initialCount)
   const [animating, setAnimating] = useState(false)
@@ -105,9 +107,9 @@ export function UpvoteRosette({
       <p className="text-xs text-muted-foreground text-center max-w-24 leading-tight">
         {canUpvote
           ? hasUpvoted
-            ? "You upvoted this"
-            : "Show your support"
-          : "Upvotes from the community"}
+            ? t('youUpvoted')
+            : t('showSupport')
+          : t('communityUpvotes')}
       </p>
     </div>
   )

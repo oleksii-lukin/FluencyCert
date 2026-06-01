@@ -1,14 +1,17 @@
+import { getTranslations } from 'next-intl/server'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Globe02Icon, Award01Icon, MessageMultiple01Icon, StarIcon } from "@hugeicons/core-free-icons"
 
-const stats = [
-  { value: "50+", label: "Speaking Clubs", icon: Globe02Icon },
-  { value: "12.4K", label: "Certificates Issued", icon: Award01Icon },
-  { value: "56K+", label: "Reactions Sent", icon: MessageMultiple01Icon },
-  { value: "4.8", label: "Average Rating", icon: StarIcon },
-]
+export async function StatsSection() {
+  const t = await getTranslations('stats')
 
-export function StatsSection() {
+  const stats = [
+    { value: "50+", label: t('speakingClubs'), icon: Globe02Icon },
+    { value: "12.4K", label: t('certificatesIssued'), icon: Award01Icon },
+    { value: "56K+", label: t('reactionsSent'), icon: MessageMultiple01Icon },
+    { value: "4.8", label: t('averageRating'), icon: StarIcon },
+  ]
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-r from-graphite to-graphite/95 px-4 py-16 md:py-20 dark:from-black dark:to-graphite/80">
       <div className="absolute inset-0" />

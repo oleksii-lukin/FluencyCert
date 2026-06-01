@@ -1,37 +1,40 @@
+import { getTranslations } from 'next-intl/server'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Upload01Icon, Certificate02Icon, MessageFavourite01Icon } from "@hugeicons/core-free-icons"
 
-const steps = [
-  {
-    icon: Upload01Icon,
-    title: "Submit Your Claim",
-    description: "Tell us about your speaking club journey — your English level, clubs you've attended, and hours of practice. Our team reviews and verifies your information.",
-    color: "bg-bright-sky/15 text-bright-sky dark:bg-bright-sky/20",
-  },
-  {
-    icon: Certificate02Icon,
-    title: "Get Your Certificate",
-    description: "Once approved, your personalized certificate is generated with your achievements. Choose from multiple templates to make it your own.",
-    color: "bg-bright-sky/20 text-bright-sky dark:bg-bright-sky/25",
-  },
-  {
-    icon: MessageFavourite01Icon,
-    title: "Share & Connect",
-    description: "Share your certificate page with the community. Other members can upvote and leave feedback — and you decide which feedback to feature on your page.",
-    color: "bg-bright-sky/15 text-bright-sky dark:bg-bright-sky/20",
-  },
-]
+export async function HowItWorks() {
+  const t = await getTranslations('howItWorks')
 
-export function HowItWorks() {
+  const steps = [
+    {
+      icon: Upload01Icon,
+      title: t('step1Title'),
+      description: t('step1Description'),
+      color: "bg-bright-sky/15 text-bright-sky dark:bg-bright-sky/20",
+    },
+    {
+      icon: Certificate02Icon,
+      title: t('step2Title'),
+      description: t('step2Description'),
+      color: "bg-bright-sky/20 text-bright-sky dark:bg-bright-sky/25",
+    },
+    {
+      icon: MessageFavourite01Icon,
+      title: t('step3Title'),
+      description: t('step3Description'),
+      color: "bg-bright-sky/15 text-bright-sky dark:bg-bright-sky/20",
+    },
+  ]
+
   return (
     <section id="how-it-works" className="relative bg-gradient-to-b from-white via-bright-sky/[0.02] to-white px-4 py-20 md:py-28 dark:from-graphite dark:via-graphite/95 dark:to-graphite">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-graphite dark:text-snow md:text-4xl">
-            How It Works
+            {t('title')}
           </h2>
           <p className="mt-4 text-lg text-graphite/60 dark:text-snow/60">
-            Three simple steps to get your verified speaking certificate.
+            {t('subtitle')}
           </p>
         </div>
 

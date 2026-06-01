@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from 'next-intl'
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -28,14 +29,16 @@ interface FeedbackManagerProps {
   initialFeedbacks: FeedbackItem[]
 }
 
-function getDisplayName(profile: FeedbackItem["profiles"], preference: string): string {
+function getDisplayName(profile: FeedbackItem["profiles"], preference: string, anonymousLabel: string): string {
   if (preference === "full_name") {
-    return [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Anonymous"
+    return [profile.first_name, profile.last_name].filter(Boolean).join(" ") || anonymousLabel
   }
-  return profile.username || profile.first_name || "Anonymous"
+  return profile.username || profile.first_name || anonymousLabel
 }
 
 export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackManagerProps) {
+  const t = useTranslations('feedback')
+  const anonymousLabel = t('anonymous')
   const router = useRouter()
   const [feedbacks, setFeedbacks] = useState(initialFeedbacks)
   const [loading, setLoading] = useState<string | null>(null)
@@ -92,7 +95,7 @@ export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackMan
     <div>
       {feedbacks.length === 0 ? (
         <p className="text-sm text-muted-foreground py-8 text-center">
-          No feedback received yet.
+          {t('noFeedback')}
         </p>
       ) : (
         <div className="space-y-3">
@@ -129,21 +132,21 @@ export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackMan
                 />
               ) : (
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-bright-sky/15 text-xs font-bold text-bright-sky">
-                  {getDisplayName(feedback.profiles, feedback.display_name_preference)[0].toUpperCase()}
+                  {getDisplayName(feedback.profiles, feedback.display_name_preference, anonymousLabel)[0].toUpperCase()}
                 </div>
               )}
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-graphite dark:text-snow">
-                    {getDisplayName(feedback.profiles, feedback.display_name_preference)}
+                    {getDisplayName(feedback.profiles, feedback.display_name_preference, anonymousLabel)}
                   </span>
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColors[feedback.status] || ""}`}>
-                    {feedback.status}
+                    {t(feedback.status)}
                   </span>
                   {feedback.is_visible && (
                     <span className="inline-flex items-center rounded-full bg-bright-sky/10 px-2 py-0.5 text-[10px] font-semibold text-bright-sky">
-                      visible
+                      {t('visible')}
                     </span>
                   )}
                 </div>
@@ -152,7 +155,7 @@ export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackMan
                 </p>
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   {new Date(feedback.created_at).toLocaleDateString()}
-                  {feedback.linkedin_url && " · LinkedIn attached"}
+                  {feedback.linkedin_url && ` · ${t('linkedinAttached')}`}
                 </p>
               </div>
 
@@ -170,7 +173,7 @@ export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackMan
                       })
                     }
                   >
-                    Accept
+                    {t('accept')}
                   </Button>
                 )}
                 {feedback.status !== "rejected" && (
@@ -186,7 +189,7 @@ export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackMan
                       })
                     }
                   >
-                    Decline
+                    {t('decline')}
                   </Button>
                 )}
                 {feedback.status === "approved" && (
@@ -201,7 +204,7 @@ export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackMan
                       })
                     }
                   >
-                    {feedback.is_visible ? "Hide" : "Show"}
+                    {feedback.is_visible ? t('hide') : t('show')}
                   </Button>
                 )}
               </div>

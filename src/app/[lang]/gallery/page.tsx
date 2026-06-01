@@ -1,4 +1,5 @@
-import Link from "next/link"
+import { getTranslations } from 'next-intl/server'
+import { Link } from '@/i18n/routing'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons"
 import { listTemplates } from "@/components/certificate/template-registry"
@@ -69,7 +70,10 @@ const fakeUsers: Record<string, {
   },
 }
 
-export default function GalleryPage() {
+export default async function GalleryPage({ params }: { params: Promise<{ lang: string }> }) {
+  const t = await getTranslations('gallery')
+  const td = await getTranslations('templateDescriptions')
+  const tn = await getTranslations('templateNames')
   const templates = listTemplates()
 
   return (
@@ -80,15 +84,15 @@ export default function GalleryPage() {
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
-          Back to FluencyCert
+          {t('backToHome')}
         </Link>
 
         <div className="mb-12">
           <h1 className="text-3xl font-bold tracking-tight text-graphite dark:text-snow md:text-4xl">
-            Certificate Templates
+            {t('title')}
           </h1>
           <p className="mt-3 text-base text-muted-foreground max-w-2xl">
-            Browse all available certificate templates. Each certificate is personalized with the member&apos;s English level, club participation, and admin verification note. Choose the style that best represents your achievement.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -100,15 +104,15 @@ export default function GalleryPage() {
               <section key={template.id}>
                 <div className="mb-4 border-b border-gray-200 pb-3 dark:border-gray-700">
                   <h2 className="text-xl font-semibold text-graphite dark:text-snow">
-                    {template.name}
+                    {tn(template.name)}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    {template.id === "guilloche-security" && "Classic security pattern with intricate background design"}
-                    {template.id === "modern-glass" && "Modern frosted glass design with elegant gold accents"}
-                    {template.id === "neubrutal" && "Bold minimalist design with thick borders and high contrast"}
-                    {template.id === "memphis-retro" && "Playful retro-inspired design with vibrant geometric patterns"}
-                    {template.id === "cyber-neon" && "Dark futuristic design with neon accents and grid overlay"}
-                    {template.id === "natural-green" && "Warm organic design with emerald tones and natural shapes"}
+                    {template.id === "guilloche-security" && td('guillocheSecurity')}
+                    {template.id === "modern-glass" && td('modernGlass')}
+                    {template.id === "neubrutal" && td('neubrutal')}
+                    {template.id === "memphis-retro" && td('memphisRetro')}
+                    {template.id === "cyber-neon" && td('cyberNeon')}
+                    {template.id === "natural-green" && td('naturalGreen')}
                   </p>
                 </div>
                 <CertificateRenderer

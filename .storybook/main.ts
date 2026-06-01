@@ -10,7 +10,7 @@ const { NormalModuleReplacementPlugin } = require("webpack");
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(ts|tsx)"],
   staticDirs: ["../public"],
-  addons: [],
+  addons: ['storybook-next-intl'],
   framework: {
     name: "@storybook/nextjs",
     options: {},

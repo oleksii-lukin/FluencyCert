@@ -1,8 +1,9 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
+import { useTranslations } from 'next-intl'
+import { Link } from "@/i18n/routing"
 import Image from "next/image"
-import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Linkedin01Icon } from "@hugeicons/core-free-icons"
 
@@ -33,14 +34,16 @@ interface TestimonialsMarqueeProps {
 function getDisplayName(
   profile: FeedbackWithReviewer["profiles"],
   preference: string,
+  t: (key: string) => string,
 ): string {
+  const anonymous = t('anonymous')
   if (preference === "full_name") {
-    return [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Anonymous"
+    return [profile.first_name, profile.last_name].filter(Boolean).join(" ") || anonymous
   }
-  return profile.username || profile.first_name || "Anonymous"
+  return profile.username || profile.first_name || anonymous
 }
 
-function FeedbackCard({ feedback }: { feedback: FeedbackWithReviewer }) {
+function FeedbackCard({ feedback, t }: { feedback: FeedbackWithReviewer; t: (key: string) => string }) {
   return (
     <div className="mx-3 inline-flex shrink-0 items-start gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800" style={{ width: "280px" }}>
       <Link href={`/certificate/${feedback.reviewer_certificate_id || feedback.profiles.id}`} className="shrink-0">
@@ -54,7 +57,7 @@ function FeedbackCard({ feedback }: { feedback: FeedbackWithReviewer }) {
           />
         ) : (
           <div className="flex size-9 items-center justify-center rounded-full bg-bright-sky/15 text-xs font-bold text-bright-sky">
-            {getDisplayName(feedback.profiles, feedback.display_name_preference)[0].toUpperCase()}
+            {getDisplayName(feedback.profiles, feedback.display_name_preference, t)[0].toUpperCase()}
           </div>
         )}
       </Link>
@@ -64,7 +67,7 @@ function FeedbackCard({ feedback }: { feedback: FeedbackWithReviewer }) {
             href={`/certificate/${feedback.reviewer_certificate_id || feedback.profiles.id}`}
             className="text-sm font-semibold text-graphite hover:text-bright-sky dark:text-snow dark:hover:text-bright-sky truncate"
           >
-            {getDisplayName(feedback.profiles, feedback.display_name_preference)}
+            {getDisplayName(feedback.profiles, feedback.display_name_preference, t)}
           </Link>
           {feedback.linkedin_url && (
             <a
@@ -85,7 +88,7 @@ function FeedbackCard({ feedback }: { feedback: FeedbackWithReviewer }) {
   )
 }
 
-function MarqueeRow({ items, speed }: { items: FeedbackWithReviewer[]; speed: number }) {
+function MarqueeRow({ items, speed, t }: { items: FeedbackWithReviewer[]; speed: number; t: (key: string) => string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const [overflows, setOverflows] = useState(false)
@@ -114,10 +117,10 @@ function MarqueeRow({ items, speed }: { items: FeedbackWithReviewer[]; speed: nu
         style={{ "--marquee-speed": `${speed}s` } as React.CSSProperties}
       >
         {items.map((item) => (
-          <FeedbackCard key={item.id} feedback={item} />
+          <FeedbackCard key={item.id} feedback={item} t={t} />
         ))}
         {overflows && items.map((item) => (
-          <FeedbackCard key={`dup-${item.id}`} feedback={item} />
+          <FeedbackCard key={`dup-${item.id}`} feedback={item} t={t} />
         ))}
       </div>
     </div>
@@ -125,6 +128,7 @@ function MarqueeRow({ items, speed }: { items: FeedbackWithReviewer[]; speed: nu
 }
 
 export function TestimonialsMarquee({ feedbacks }: TestimonialsMarqueeProps) {
+  const t = useTranslations('testimonialsMarquee')
   const visible = feedbacks.filter((f) => f.is_visible && f.status === "approved")
 
   if (visible.length === 0) return null
@@ -153,11 +157,11 @@ export function TestimonialsMarquee({ feedbacks }: TestimonialsMarqueeProps) {
   return (
     <div className="w-full overflow-hidden py-4">
       <p className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        Testimonials
+        {t('heading')}
       </p>
       <div className="flex flex-col gap-3">
         {rows.map((row, i) => (
-          <MarqueeRow key={i} items={row} speed={speeds[i % speeds.length]} />
+          <MarqueeRow key={i} items={row} speed={speeds[i % speeds.length]} t={t} />
         ))}
       </div>
     </div>

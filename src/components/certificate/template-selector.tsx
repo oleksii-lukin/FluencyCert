@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from 'next-intl'
 import { listTemplates } from "./template-registry"
 import { CheckmarkCircle01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -14,21 +15,15 @@ const templateIcons: Record<string, string> = {
   "natural-green": "M12 4L4 20h16z",
 }
 
-const templateDescriptions: Record<string, string> = {
-  "guilloche-security": "Classic security pattern with intricate background design.",
-  "modern-glass": "Modern frosted glass design with elegant gold accents.",
-  "neubrutal": "Bold minimalist design with thick black borders and high contrast.",
-  "memphis-retro": "Playful 90s-inspired design with vibrant geometric patterns.",
-  "cyber-neon": "Dark futuristic design with neon green accents and grid overlay.",
-  "natural-green": "Warm organic design with emerald tones and natural shapes.",
-}
-
 interface TemplateSelectorProps {
   currentTemplateId: string
   claimId: string
 }
 
 export function TemplateSelector({ currentTemplateId, claimId }: TemplateSelectorProps) {
+  const t = useTranslations('templateDescriptions')
+  const tn = useTranslations('templateNames')
+  const ct = useTranslations('certificateControl')
   const [selected, setSelected] = useState(currentTemplateId)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -51,7 +46,7 @@ export function TemplateSelector({ currentTemplateId, claimId }: TemplateSelecto
 
     if (!res.ok) {
       const data = await res.json()
-      setError(data.error || "Failed to update template")
+      setError(data.error || ct('failedUpdateTemplate'))
       setSaving(false)
       return
     }
@@ -94,14 +89,19 @@ export function TemplateSelector({ currentTemplateId, claimId }: TemplateSelecto
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-semibold ${isActive ? "text-bright-sky" : "text-graphite dark:text-snow"}`}>
-                    {template.name}
+                    {tn(template.name)}
                   </span>
                   {isActive && (
                     <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-4 text-bright-sky shrink-0" />
                   )}
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                  {templateDescriptions[template.id] || ""}
+                  {t(template.id === "guilloche-security" ? "guillocheSecurity" :
+                    template.id === "modern-glass" ? "modernGlass" :
+                    template.id === "neubrutal" ? "neubrutal" :
+                    template.id === "memphis-retro" ? "memphisRetro" :
+                    template.id === "cyber-neon" ? "cyberNeon" :
+                    template.id === "natural-green" ? "naturalGreen" : "")}
                 </p>
               </div>
             </button>
@@ -110,10 +110,10 @@ export function TemplateSelector({ currentTemplateId, claimId }: TemplateSelecto
       </div>
 
       {saving && (
-        <p className="text-sm text-muted-foreground animate-pulse">Saving template&hellip;</p>
+        <p className="text-sm text-muted-foreground animate-pulse">{ct('savingTemplate')}</p>
       )}
       {saved && (
-        <p className="text-sm text-green-600 dark:text-green-400">Template saved!</p>
+        <p className="text-sm text-green-600 dark:text-green-400">{ct('templateSaved')}</p>
       )}
       {error && (
         <p className="text-sm text-red-500">{error}</p>

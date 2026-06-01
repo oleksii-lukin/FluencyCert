@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { CopyLinkIcon } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
 
 export function CopyShareLink({ certificateId, className }: { certificateId: string; className?: string }) {
+  const t = useTranslations('copyShareLink')
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
@@ -24,7 +26,7 @@ export function CopyShareLink({ certificateId, className }: { certificateId: str
       )}
     >
       <HugeiconsIcon icon={CopyLinkIcon} className="size-4" />
-      {copied ? "Copied!" : "Copy Share Link"}
+      {copied ? t('copied') : t('copy')}
     </button>
   )
 }

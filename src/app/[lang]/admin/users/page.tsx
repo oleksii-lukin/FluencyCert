@@ -1,7 +1,9 @@
+import { getTranslations } from 'next-intl/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Image from 'next/image'
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({ params }: { params: Promise<{ lang: string }> }) {
+  const t = await getTranslations('admin')
   const supabase = createAdminClient()
 
   const { data: profiles } = await supabase
@@ -11,18 +13,18 @@ export default async function AdminUsersPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Users</h1>
+      <h1 className="text-3xl font-bold mb-8">{t('users')}</h1>
 
       <div className="rounded-xl border overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">User</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Email</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Username</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Phone</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Role</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Joined</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('user')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('email')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('username')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('phone')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('role')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('joined')}</th>
             </tr>
           </thead>
           <tbody>
@@ -54,11 +56,11 @@ export default async function AdminUsersPage() {
                 <td className="px-4 py-3">
                   {profile.is_admin ? (
                     <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary border-primary/20">
-                      Admin
+                      {t('adminBadge')}
                     </span>
                   ) : (
                     <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                      User
+                      {t('userBadge')}
                     </span>
                   )}
                 </td>
@@ -70,7 +72,7 @@ export default async function AdminUsersPage() {
             {(!profiles || profiles.length === 0) && (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                  No users found. Users will appear here once they sign up and the Clerk webhook syncs them.
+                  {t('noUsersFound')}
                 </td>
               </tr>
             )}

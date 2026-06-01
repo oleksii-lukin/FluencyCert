@@ -1,7 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { GuillocheSecurityTemplate } from "./templates/guilloche-security"
-import { getTemplate } from "./template-registry"
-import type { CertificateTemplate } from "./template"
+import { GuillocheSecurityCertificate } from "./templates/guilloche-security"
+import { ModernGlassCertificate } from "./templates/modern-glass"
+import { NeubrutalCertificate } from "./templates/neubrutal"
+import { MemphisRetroCertificate } from "./templates/memphis-retro"
+import { CyberNeonCertificate } from "./templates/cyber-neon"
+import { NaturalGreenCertificate } from "./templates/natural-green"
+import type { CertificateTemplateProps } from "./template"
 import { UpvoteRosette } from "./upvote-rosette"
 import { TestimonialsMarquee } from "./testimonials-marquee"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -102,6 +106,15 @@ interface CertificatePageLayoutProps {
   templateId?: string
 }
 
+const templateComponents: Record<string, React.ComponentType<CertificateTemplateProps>> = {
+  "guilloche-security": GuillocheSecurityCertificate,
+  "modern-glass": ModernGlassCertificate,
+  "neubrutal": NeubrutalCertificate,
+  "memphis-retro": MemphisRetroCertificate,
+  "cyber-neon": CyberNeonCertificate,
+  "natural-green": NaturalGreenCertificate,
+}
+
 function CertificatePageLayout({
   fullName,
   englishLevel,
@@ -116,8 +129,7 @@ function CertificatePageLayout({
   testimonialCount,
   templateId,
 }: CertificatePageLayoutProps) {
-  const template: CertificateTemplate | undefined = templateId ? getTemplate(templateId) : undefined
-  const Component = template ? template.component : GuillocheSecurityTemplate.component
+  const Component = templateId ? templateComponents[templateId] : GuillocheSecurityCertificate
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">

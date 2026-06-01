@@ -1,6 +1,7 @@
 "use client"
 
-import Link from "next/link"
+import { useLocale, useTranslations } from 'next-intl'
+import { Link, usePathname, useRouter } from "@/i18n/routing"
 import Image from "next/image"
 import { SignUpButton, UserButton, Show } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
@@ -8,7 +9,46 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Certificate02Icon } from "@hugeicons/core-free-icons"
 
+function LanguageToggle() {
+  const pathname = usePathname()
+  const router = useRouter()
+  const currentLocale = useLocale()
+
+  function switchLocale(locale: string) {
+    router.replace(pathname, { locale: locale as 'en' | 'uk' })
+  }
+
+  const isEn = currentLocale === 'en'
+
+  return (
+    <div className="flex items-center rounded-lg border border-bright-sky/40 shadow-sm shadow-bright-sky/10 overflow-hidden">
+      <button
+        onClick={() => switchLocale('en')}
+        className={`px-2.5 py-1 text-xs font-semibold border-r border-bright-sky/40 transition-colors ${
+          isEn
+            ? "bg-bright-sky text-white shadow-sm"
+            : "text-muted-foreground hover:text-foreground hover:bg-bright-sky/10"
+        }`}
+      >
+        EN
+      </button>
+      <button
+        onClick={() => switchLocale('uk')}
+        className={`px-2.5 py-1 text-xs font-semibold transition-colors ${
+          !isEn
+            ? "bg-bright-sky text-white shadow-sm"
+            : "text-muted-foreground hover:text-foreground hover:bg-bright-sky/10"
+        }`}
+      >
+        UA
+      </button>
+    </div>
+  )
+}
+
 export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
+  const t = useTranslations('nav')
+
   return (
     <header className="fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-6xl -translate-x-1/2">
       <nav className="flex items-center justify-between rounded-2xl border border-banana-cream/20 bg-gradient-to-r from-banana-cream/20 via-banana-cream/60 to-banana-cream/10 px-6 py-3 shadow-lg shadow-banana-cream/15 backdrop-blur-xl dark:border-snow/10 dark:from-graphite dark:via-graphite/95 dark:to-graphite/90 dark:shadow-black/20">
@@ -20,31 +60,32 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          <a href="#how-it-works" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">How it works</a>
-          <a href="#showcase" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">Showcase</a>
-          <a href="#features" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">Features</a>
-          <a href="#testimonials" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">Testimonials</a>
+          <a href="#how-it-works" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('howItWorks')}</a>
+          <a href="#showcase" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('showcase')}</a>
+          <a href="#features" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('features')}</a>
+          <a href="#testimonials" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('testimonials')}</a>
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguageToggle />
           <ThemeToggle />
           <Show when="signed-out">
             <SignUpButton mode="modal">
               <Button size="sm" className="bg-bright-sky text-white shadow-sm shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20">
-                Get Started
+                {t('getStarted')}
               </Button>
             </SignUpButton>
           </Show>
           <Show when="signed-in">
             {isAdmin && (
               <Link href="/admin" target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm">Admin</Button>
+                <Button variant="outline" size="sm">{t('admin')}</Button>
               </Link>
             )}
             <UserButton>
               <UserButton.MenuItems>
                 <UserButton.Link
-                  label="My Certificate"
+                  label={t('myCertificate')}
                   href="/my-certificate"
                   labelIcon={<HugeiconsIcon icon={Certificate02Icon} className="size-4" />}
                 />

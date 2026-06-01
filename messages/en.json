@@ -1,0 +1,319 @@
+{
+  "meta": {
+    "title": "FluencyCert - Prove Your English Fluency with a Verified Speaking Certificate",
+    "description": "Showcase your speaking club certificate, prove your English proficiency, and get feedback & reactions from the community.",
+    "ogTitle": "FluencyCert - Speaking Club Certificate Platform",
+    "ogDescription": "Upload your speaking certificate, share your journey, and let the community celebrate your progress.",
+    "certificateTitle": "{name} - FluencyCert Certificate",
+    "certificateDescription": "View {name}'s English proficiency certificate on FluencyCert.",
+    "notFoundTitle": "Certificate Not Found - FluencyCert",
+    "landingTitle": "FluencyCert - Prove Your English Fluency with a Verified Speaking Certificate"
+  },
+  "nav": {
+    "howItWorks": "How it works",
+    "showcase": "Showcase",
+    "features": "Features",
+    "testimonials": "Testimonials",
+    "getStarted": "Get Started",
+    "admin": "Admin",
+    "myCertificate": "My Certificate",
+    "fluencyCert": "FluencyCert"
+  },
+  "hero": {
+    "title": "Prove Your",
+    "titleHighlight": "English Fluency",
+    "titleEnd": "with a Verified Speaking Certificate",
+    "subtitle": "Submit your speaking club information, get verified by our team, and receive a personalized certificate to showcase your English proficiency.",
+    "claimButton": "Claim Your Certificate",
+    "exploreGallery": "Explore Gallery",
+    "certificatesIssued": "Certificates Issued",
+    "activeMembers": "Active Members",
+    "reactionsSent": "Reactions Sent"
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "subtitle": "Three simple steps to get your verified speaking certificate.",
+    "step1Title": "Submit Your Claim",
+    "step1Description": "Tell us about your speaking club journey — your English level, clubs you've attended, and hours of practice. Our team reviews and verifies your information.",
+    "step2Title": "Get Your Certificate",
+    "step2Description": "Once approved, your personalized certificate is generated with your achievements. Choose from multiple templates to make it your own.",
+    "step3Title": "Share & Connect",
+    "step3Description": "Share your certificate page with the community. Other members can upvote and leave feedback — and you decide which feedback to feature on your page."
+  },
+  "features": {
+    "title": "Everything You Need",
+    "subtitle": "Built for speaking club members who want to showcase their English proficiency.",
+    "certificateDisplay": "Certificate Display",
+    "certificateDisplayDesc": "Your personalized certificate showcases your English level, club participation, and achievements in an elegant design.",
+    "certificateTemplates": "Certificate Templates",
+    "certificateTemplatesDesc": "Choose from multiple beautifully designed templates to personalize the look and feel of your certificate.",
+    "upvoteRosette": "Upvote Rosette",
+    "upvoteRosetteDesc": "Get recognition from the community. Other members can upvote your certificate to celebrate your achievement.",
+    "moderatedFeedback": "Moderated Feedback",
+    "moderatedFeedbackDesc": "Receive feedback from other approved members. You control which testimonials appear on your public page.",
+    "shareAnywhere": "Share Anywhere",
+    "shareAnywhereDesc": "Share your unique certificate page on social media, CV, or LinkedIn with a single link.",
+    "adminVerification": "Admin Verification",
+    "adminVerificationDesc": "Each certificate is reviewed and verified by our admin team, ensuring authenticity and credibility."
+  },
+  "showcase": {
+    "title": "Member Certificates",
+    "subtitle": "See how members proudly display their verified speaking certificates.",
+    "certificate": "Certificate",
+    "clubs": "clubs"
+  },
+  "testimonials": {
+    "title": "Loved by the Community",
+    "subtitle": "Hear from members who earned their verified certificates.",
+    "role1": "Speaking Club Member",
+    "text1": "The verification process was smooth. I submitted my club info and had my certificate approved within a day. Now I share it on my LinkedIn and job applications.",
+    "role2": "Club Coordinator",
+    "text2": "We recommend FluencyCert to all our members. The certificates look professional with the template options, and members love the upvote and feedback system.",
+    "role3": "English Learner",
+    "text3": "Getting my speaking hours recognized with a verified certificate pushed me to attend more clubs. The feedback from other approved members keeps me motivated."
+  },
+  "stats": {
+    "speakingClubs": "Speaking Clubs",
+    "certificatesIssued": "Certificates Issued",
+    "reactionsSent": "Reactions Sent",
+    "averageRating": "Average Rating"
+  },
+  "cta": {
+    "title": "Ready to Showcase Your Fluency?",
+    "subtitle": "Join thousands of speaking club members. Submit your claim, get verified, and share your achievement with the community.",
+    "claimButton": "Claim Your Free Certificate",
+    "browseExamples": "Browse Examples",
+    "freeTag": "Free for speaking club members. No credit card required."
+  },
+  "footer": {
+    "description": "The platform for speaking club members to showcase their English proficiency certificates and connect with the community.",
+    "platform": "Platform",
+    "community": "Community",
+    "howItWorks": "How it Works",
+    "features": "Features",
+    "showcase": "Showcase",
+    "testimonials": "Testimonials",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "allRightsReserved": "All rights reserved.",
+    "backToSite": "Back to site"
+  },
+  "gallery": {
+    "title": "Certificate Templates",
+    "subtitle": "Browse all available certificate templates. Each certificate is personalized with the member's English level, club participation, and admin verification note. Choose the style that best represents your achievement.",
+    "backToHome": "Back to FluencyCert"
+  },
+  "templateDescriptions": {
+    "guillocheSecurity": "Classic security pattern with intricate background design.",
+    "modernGlass": "Modern frosted glass design with elegant gold accents.",
+    "neubrutal": "Bold minimalist design with thick borders and high contrast.",
+    "memphisRetro": "Playful retro-inspired design with vibrant geometric patterns.",
+    "cyberNeon": "Dark futuristic design with neon accents and grid overlay.",
+    "naturalGreen": "Warm organic design with emerald tones and natural shapes."
+  },
+  "myCertificate": {
+    "title": "No Certificate Claim Yet",
+    "noClaimDesc": "You haven't requested a certificate claim. Go back to the home page to get started.",
+    "pendingTitle": "Claim Pending",
+    "pendingDesc": "Your certificate claim has been submitted and is awaiting review by an admin. You'll be notified once a decision is made.",
+    "submittedOn": "Submitted on {date}",
+    "approvedTitle": "Claim Approved!",
+    "approvedDesc": "Your certificate is live and ready to share.",
+    "adminFeedback": "Admin Feedback",
+    "viewCertificate": "View Public Certificate",
+    "controlPanel": "Control Panel & Feedback",
+    "rejectedTitle": "Claim Not Approved",
+    "reason": "Reason",
+    "contactSupport": "If you have questions, please reach out to support.",
+    "backToHome": "Back to home"
+  },
+  "certificateControl": {
+    "title": "Certificate Control Panel",
+    "subtitle": "Manage your certificate settings and community feedback.",
+    "yourCertificate": "Your Certificate",
+    "level": "Level",
+    "clubs": "Clubs",
+    "hours": "Hours",
+    "viewPublicPage": "View Public Page",
+    "certificateTemplate": "Certificate Template",
+    "templateDescription": "Choose how your certificate looks. Changes are instantly reflected on your public page.",
+    "savingTemplate": "Saving template…",
+    "templateSaved": "Template saved!",
+    "failedUpdateTemplate": "Failed to update template",
+    "feedbackManagement": "Feedback Management",
+    "feedbackDescription": "Review feedback from other users. Accept feedback to show it on your public certificate page, or decline it. Drag the ▲▼ buttons to reorder how they appear.",
+    "backToMyCertificate": "Back to My Certificate"
+  },
+  "certificatePage": {
+    "backToHome": "Back to FluencyCert",
+    "footer": "FluencyCert — Verified English Speaking Certificates",
+    "certificateHolder": "Certificate Holder"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "panel": "Admin Panel",
+    "totalUsers": "Total Users",
+    "admins": "Admins",
+    "pendingClaims": "Pending Claims",
+    "signedInAs": "Signed in as",
+    "certificateClaims": "Certificate Claims",
+    "users": "Users",
+    "user": "User",
+    "email": "Email",
+    "username": "Username",
+    "phone": "Phone",
+    "role": "Role",
+    "joined": "Joined",
+    "status": "Status",
+    "submitted": "Submitted",
+    "feedback": "Feedback",
+    "actions": "Actions",
+    "processed": "Processed",
+    "noClaimsFound": "No claims found.",
+    "noUsersFound": "No users found. Users will appear here once they sign up and the Clerk webhook syncs them.",
+    "adminBadge": "Admin",
+    "userBadge": "User",
+    "pending": "pending",
+    "approved": "approved",
+    "rejected": "rejected",
+    "backToSite": "← Back to site"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "claims": "Claims",
+    "adminPanel": "Admin Panel",
+    "backToSite": "← Back to site"
+  },
+  "feedback": {
+    "leaveFeedback": "Leave Your Feedback",
+    "placeholder": "Share your thoughts about this certificate...",
+    "nameAppearance": "How would you like your name to appear?",
+    "username": "Username",
+    "fullName": "Full Name",
+    "linkedinUrl": "LinkedIn URL (optional)",
+    "linkedinPlaceholder": "https://linkedin.com/in/...",
+    "submitting": "Submitting...",
+    "submitFeedback": "Submit Feedback",
+    "submittedSuccess": "Your feedback has been submitted and is pending review by the certificate owner.",
+    "somethingWentWrong": "Something went wrong",
+    "noFeedback": "No feedback received yet.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "hide": "Hide",
+    "show": "Show",
+    "visible": "visible",
+    "linkedinAttached": "LinkedIn attached",
+    "anonymous": "Anonymous",
+    "pending": "pending",
+    "approved": "approved",
+    "rejected": "rejected"
+  },
+  "claimButton": {
+    "reviewStatus": "Review Claim Status"
+  },
+  "copyShareLink": {
+    "copy": "Copy Share Link",
+    "copied": "Copied!"
+  },
+  "upvote": {
+    "youUpvoted": "You upvoted this",
+    "showSupport": "Show your support",
+    "communityUpvotes": "Upvotes from the community"
+  },
+  "testimonialsMarquee": {
+    "heading": "Testimonials",
+    "anonymous": "Anonymous"
+  },
+  "certificateLabels": {
+    "fluencyCert": "FluencyCert",
+    "certificateOfProficiency": "Certificate of English Proficiency",
+    "thisIsToCertify": "This is to certify that",
+    "hasDemonstrated": "has demonstrated English proficiency at the following level:",
+    "speakingClubs": "Speaking Clubs",
+    "hoursParticipated": "Hours Participated",
+    "certificateId": "Certificate ID",
+    "administratorNote": "Administrator's Note",
+    "issuedOn": "Issued on",
+    "id": "ID",
+    "unknownTemplate": "Unknown certificate template: {templateId}"
+  },
+  "templateNames": {
+    "guillocheSecurity": "Security Pattern",
+    "modernGlass": "Modern Glass",
+    "neubrutal": "Neubrutal",
+    "memphisRetro": "Memphis Retro",
+    "cyberNeon": "Cyber Neon",
+    "naturalGreen": "Natural Green"
+  },
+  "claimActions": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "cancel": "Cancel",
+    "processing": "Processing...",
+    "somethingWentWrong": "Something went wrong",
+    "approveTitle": "Approve Claim",
+    "rejectTitle": "Reject Claim",
+    "provideFeedbackDetails": "Provide feedback and certificate details.",
+    "provideRejectionReason": "Provide a reason for rejection to the user.",
+    "englishLevel": "English Level",
+    "selectLevel": "Select level...",
+    "speakingClubsVisited": "Speaking Clubs Visited",
+    "hoursParticipatedOptional": "Hours Participated (optional)",
+    "backgroundTemplate": "Background Template",
+    "feedbackPlaceholderApprove": "e.g. Congratulations on completing your speaking certificate!",
+    "feedbackPlaceholderReject": "e.g. Additional verification required...",
+    "clubsPlaceholder": "e.g. 12",
+    "hoursPlaceholder": "e.g. 48",
+    "levelA1": "A1 (Beginner)",
+    "levelA2": "A2 (Elementary)",
+    "levelB1": "B1 (Intermediate)",
+    "levelB2": "B2 (Upper-Intermediate)",
+    "levelC1": "C1 (Advanced)",
+    "levelC2": "C2 (Proficient)"
+  },
+  "common": {
+    "loading": "Loading..."
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "backHome": "← Back to home"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: June 1, 2026",
+    "section1Title": "Information We Collect",
+    "section1Text": "When you sign up for FluencyCert, we collect your name, email address, and profile information from your Clerk account. We also collect information about your speaking club participation, including English level, clubs attended, and hours of practice.",
+    "section2Title": "How We Use Your Information",
+    "section2Text": "We use your information to create and display your verified speaking certificate, connect you with the community through upvotes and feedback, and improve our platform. Your public certificate page displays your name, English level, and club participation data.",
+    "section3Title": "Data Sharing",
+    "section3Text": "We do not sell your personal information. Public certificate data (name, English level, club participation) is displayed on your certificate page as you configure it. Feedback you leave on others' certificates is visible to the certificate owner and, if accepted, to the public.",
+    "section4Title": "Data Retention",
+    "section4Text": "We retain your account information for as long as your account is active. You can request deletion of your data by contacting our support team.",
+    "section5Title": "Contact",
+    "section5Text": "If you have questions about this privacy policy, please reach out to our support team.",
+    "backHome": "Back to FluencyCert"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: June 1, 2026",
+    "section1Title": "Acceptance of Terms",
+    "section1Text": "By using FluencyCert, you agree to these Terms of Service. If you do not agree, please do not use our platform.",
+    "section2Title": "User Accounts",
+    "section2Text": "You are responsible for maintaining the confidentiality of your account credentials. You must provide accurate information when creating your certificate claim.",
+    "section3Title": "Certificate Claims",
+    "section3Text": "All certificate claims are subject to review and verification by our admin team. We reserve the right to approve or reject any claim. Providing false information may result in rejection and account suspension.",
+    "section4Title": "Community Guidelines",
+    "section4Text": "Users are expected to interact respectfully. Harassment, spam, or inappropriate feedback will not be tolerated. We reserve the right to remove content and suspend accounts that violate these guidelines.",
+    "section5Title": "Intellectual Property",
+    "section5Text": "The FluencyCert platform, including certificate templates and design, is our intellectual property. Your certificate content belongs to you and is displayed per your configuration.",
+    "section6Title": "Limitation of Liability",
+    "section6Text": "FluencyCert is provided 'as is'. We make no guarantees about the accuracy or availability of the platform and are not liable for any damages arising from its use.",
+    "backHome": "Back to FluencyCert"
+  },
+  "locale": {
+    "en": "English",
+    "uk": "Українська"
+  }
+}

@@ -1,10 +1,13 @@
-import Link from "next/link"
+import { getTranslations } from 'next-intl/server'
+import { Link } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Certificate02Icon } from "@hugeicons/core-free-icons"
 import { ClaimCertificateButton } from "@/components/landing/claim-certificate-button"
 
-export function CTASection() {
+export async function CTASection() {
+  const t = await getTranslations('cta')
+
   return (
     <section className="bg-gradient-to-b from-bright-sky/5 via-white to-white px-4 py-20 md:py-28 dark:from-graphite/90 dark:via-graphite dark:to-graphite">
       <div className="mx-auto max-w-6xl">
@@ -20,25 +23,25 @@ export function CTASection() {
             </div>
 
             <h2 className="text-3xl font-bold text-snow md:text-4xl">
-              Ready to Showcase Your Fluency?
+              {t('title')}
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-base text-snow/65">
-              Join thousands of speaking club members. Submit your claim, get verified, and share your achievement with the community.
+              {t('subtitle')}
             </p>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <ClaimCertificateButton
-                label="Claim Your Free Certificate"
+                label={t('claimButton')}
                 className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20"
               />
               <Link href="/gallery">
                 <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
-                  Browse Examples
+                  {t('browseExamples')}
                 </Button>
               </Link>
             </div>
 
-            <p className="mt-6 text-xs text-snow/40">Free for speaking club members. No credit card required.</p>
+            <p className="mt-6 text-xs text-snow/40">{t('freeTag')}</p>
           </div>
         </div>
       </div>

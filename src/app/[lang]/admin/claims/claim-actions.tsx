@@ -1,10 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from 'next-intl'
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 export function ClaimActions({ claimId }: { claimId: string }) {
+  const t = useTranslations('admin')
+  const ca = useTranslations('claimActions')
+  const tn = useTranslations('templateNames')
   const router = useRouter()
   const [open, setOpen] = useState<'approve' | 'reject' | null>(null)
   const [feedback, setFeedback] = useState("")
@@ -38,7 +42,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
 
     if (!res.ok) {
       const data = await res.json()
-      setError(data.error || 'Something went wrong')
+      setError(data.error || ca('somethingWentWrong'))
       setSubmitting(false)
       return
     }
@@ -59,7 +63,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
         className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950"
         onClick={() => setOpen('approve')}
       >
-        Approve
+        {ca('approve')}
       </Button>
       <Button
         size="sm"
@@ -67,7 +71,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
         className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
         onClick={() => setOpen('reject')}
       >
-        Reject
+        {ca('reject')}
       </Button>
 
       {open && (
@@ -77,78 +81,76 @@ export function ClaimActions({ claimId }: { claimId: string }) {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold mb-2">
-              {open === 'approve' ? 'Approve Claim' : 'Reject Claim'}
+              {open === 'approve' ? ca('approveTitle') : ca('rejectTitle')}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {open === 'approve'
-                ? 'Provide feedback and certificate details.'
-                : 'Provide a reason for rejection to the user.'}
+              {open === 'approve' ? ca('provideFeedbackDetails') : ca('provideRejectionReason')}
             </p>
 
             <div className="space-y-4">
               {open === 'approve' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium mb-1">English Level</label>
+                    <label className="block text-sm font-medium mb-1">{ca('englishLevel')}</label>
                     <select
                       className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                       value={englishLevel}
                       onChange={(e) => setEnglishLevel(e.target.value)}
                     >
-                      <option value="">Select level...</option>
-                      <option value="A1 (Beginner)">A1 (Beginner)</option>
-                      <option value="A2 (Elementary)">A2 (Elementary)</option>
-                      <option value="B1 (Intermediate)">B1 (Intermediate)</option>
-                      <option value="B2 (Upper-Intermediate)">B2 (Upper-Intermediate)</option>
-                      <option value="C1 (Advanced)">C1 (Advanced)</option>
-                      <option value="C2 (Proficient)">C2 (Proficient)</option>
+                      <option value="">{ca('selectLevel')}</option>
+                      <option value="A1 (Beginner)">{ca('levelA1')}</option>
+                      <option value="A2 (Elementary)">{ca('levelA2')}</option>
+                      <option value="B1 (Intermediate)">{ca('levelB1')}</option>
+                      <option value="B2 (Upper-Intermediate)">{ca('levelB2')}</option>
+                      <option value="C1 (Advanced)">{ca('levelC1')}</option>
+                      <option value="C2 (Proficient)">{ca('levelC2')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Speaking Clubs Visited</label>
+                    <label className="block text-sm font-medium mb-1">{ca('speakingClubsVisited')}</label>
                     <input
                       type="number"
                       min="0"
                       className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                      placeholder="e.g. 12"
+                      placeholder={ca('clubsPlaceholder')}
                       value={speakingClubsCount}
                       onChange={(e) => setSpeakingClubsCount(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Hours Participated (optional)</label>
+                    <label className="block text-sm font-medium mb-1">{ca('hoursParticipatedOptional')}</label>
                     <input
                       type="number"
                       min="0"
                       className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                      placeholder="e.g. 48"
+                      placeholder={ca('hoursPlaceholder')}
                       value={hoursParticipated}
                       onChange={(e) => setHoursParticipated(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Background Template</label>
+                    <label className="block text-sm font-medium mb-1">{ca('backgroundTemplate')}</label>
                     <select
                       className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                       value={backgroundTemplate}
                       onChange={(e) => setBackgroundTemplate(e.target.value)}
                     >
-                      <option value="modern-glass">Modern Glass</option>
-                      <option value="guilloche-security">Security Pattern</option>
-                      <option value="neubrutal">Neubrutal</option>
-                      <option value="memphis-retro">Memphis Retro</option>
-                      <option value="cyber-neon">Cyber Neon</option>
-                      <option value="natural-green">Natural Green</option>
+                      <option value="modern-glass">{tn('modernGlass')}</option>
+                      <option value="guilloche-security">{tn('guillocheSecurity')}</option>
+                      <option value="neubrutal">{tn('neubrutal')}</option>
+                      <option value="memphis-retro">{tn('memphisRetro')}</option>
+                      <option value="cyber-neon">{tn('cyberNeon')}</option>
+                      <option value="natural-green">{tn('naturalGreen')}</option>
                     </select>
                   </div>
                 </>
               )}
 
               <div>
-                <label className="block text-sm font-medium mb-1">Admin Feedback</label>
+                <label className="block text-sm font-medium mb-1">{t('feedback')}</label>
                 <textarea
                   className="w-full rounded-lg border bg-background p-3 text-sm min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                  placeholder={open === 'approve' ? 'e.g. Congratulations on completing your speaking certificate!' : 'e.g. Additional verification required...'}
+                  placeholder={open === 'approve' ? ca('feedbackPlaceholderApprove') : ca('feedbackPlaceholderReject')}
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                 />
@@ -165,7 +167,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
                 variant="outline"
                 onClick={() => { setOpen(null); setError("") }}
               >
-                Cancel
+                {ca('cancel')}
               </Button>
               <Button
                 size="sm"
@@ -180,7 +182,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
                   : 'bg-red-600 text-white hover:bg-red-700'
                 }
               >
-                {submitting ? 'Processing...' : open === 'approve' ? 'Approve' : 'Reject'}
+                {submitting ? ca('processing') : open === 'approve' ? ca('approve') : ca('reject')}
               </Button>
             </div>
           </div>

@@ -1,31 +1,21 @@
-import Link from "next/link"
+import { getTranslations } from 'next-intl/server'
+import { Link } from "@/i18n/routing"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Certificate02Icon } from "@hugeicons/core-free-icons"
 
-const links = [
-  { label: "How it Works", href: "/#how-it-works" },
-  { label: "Features", href: "/#features" },
-  { label: "Showcase", href: "/#showcase" },
-]
-
-const communityLinks = [
-  { label: "Testimonials", href: "/#testimonials" },
-]
-
-function FooterLinks({ items }: { items: { label: string; href: string }[] }) {
-  return (
-    <>
-      {items.map((item) => (
-        <li key={item.label}>
-          <Link href={item.href} className="text-sm text-graphite/50 transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">{item.label}</Link>
-        </li>
-      ))}
-    </>
-  )
-}
-
-export function Footer() {
+export async function Footer() {
+  const t = await getTranslations('footer')
   const year = new Date().getFullYear()
+
+  const links = [
+    { label: t('howItWorks'), href: "/#how-it-works" },
+    { label: t('features'), href: "/#features" },
+    { label: t('showcase'), href: "/#showcase" },
+  ]
+
+  const communityLinks = [
+    { label: t('testimonials'), href: "/#testimonials" },
+  ]
 
   return (
     <footer className="border-t border-bright-sky/10 bg-gradient-to-b from-white to-bright-sky/[0.03] px-4 py-12 md:py-16 dark:border-snow/5 dark:from-graphite dark:to-graphite/95" suppressHydrationWarning>
@@ -41,30 +31,38 @@ export function Footer() {
               </span>
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-graphite/50 dark:text-snow/40">
-              The platform for speaking club members to showcase their English proficiency certificates and connect with the community.
+              {t('description')}
             </p>
           </div>
 
           <div>
-            <h4 className="mb-4 text-sm font-semibold text-graphite dark:text-snow">Platform</h4>
+            <h4 className="mb-4 text-sm font-semibold text-graphite dark:text-snow">{t('platform')}</h4>
             <ul className="space-y-2.5">
-              <FooterLinks items={links} />
+              {links.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-sm text-graphite/50 transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">{item.label}</Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           <div>
-            <h4 className="mb-4 text-sm font-semibold text-graphite dark:text-snow">Community</h4>
+            <h4 className="mb-4 text-sm font-semibold text-graphite dark:text-snow">{t('community')}</h4>
             <ul className="space-y-2.5">
-              <FooterLinks items={communityLinks} />
+              {communityLinks.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-sm text-graphite/50 transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">{item.label}</Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-8 text-xs text-graphite/40 md:flex-row dark:border-snow/10 dark:text-snow/40">
-          <p>&copy; {year} FluencyCert. All rights reserved.</p>
+          <p>&copy; {year} FluencyCert. {t('allRightsReserved')}</p>
           <div className="flex gap-6">
-            <Link href="/privacy" className="transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">Privacy Policy</Link>
-            <Link href="/terms" className="transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">Terms of Service</Link>
+            <Link href="/privacy" className="transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">{t('privacyPolicy')}</Link>
+            <Link href="/terms" className="transition-colors hover:text-bright-sky dark:text-snow/40 dark:hover:text-bright-sky">{t('termsOfService')}</Link>
           </div>
         </div>
       </div>

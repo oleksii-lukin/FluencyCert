@@ -1,8 +1,10 @@
+import { getTranslations } from 'next-intl/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Image from 'next/image'
 import { ClaimActions } from './claim-actions'
 
-export default async function AdminClaimsPage() {
+export default async function AdminClaimsPage({ params }: { params: Promise<{ lang: string }> }) {
+  const t = await getTranslations('admin')
   const supabase = createAdminClient()
 
   const { data: claims } = await supabase
@@ -12,17 +14,17 @@ export default async function AdminClaimsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Certificate Claims</h1>
+      <h1 className="text-3xl font-bold mb-8">{t('certificateClaims')}</h1>
 
       <div className="rounded-xl border overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">User</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Submitted</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Feedback</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Actions</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('user')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('status')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('submitted')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('feedback')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -52,7 +54,7 @@ export default async function AdminClaimsPage() {
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={claim.status} />
+                  <StatusBadge status={claim.status} t={t} />
                 </td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
                   {new Date(claim.created_at).toLocaleDateString()}
@@ -64,7 +66,7 @@ export default async function AdminClaimsPage() {
                   {claim.status === 'pending' ? (
                     <ClaimActions claimId={claim.id} />
                   ) : (
-                    <span className="text-xs text-muted-foreground">Processed</span>
+                    <span className="text-xs text-muted-foreground">{t('processed')}</span>
                   )}
                 </td>
               </tr>
@@ -72,7 +74,7 @@ export default async function AdminClaimsPage() {
             {(!claims || claims.length === 0) && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                  No claims found.
+                  {t('noClaimsFound')}
                 </td>
               </tr>
             )}
@@ -83,16 +85,22 @@ export default async function AdminClaimsPage() {
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
   const styles: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
     approved: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
     rejected: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
   }
 
+  const labels: Record<string, string> = {
+    pending: t('pending'),
+    approved: t('approved'),
+    rejected: t('rejected'),
+  }
+
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles[status] || ''}`}>
-      {status}
+      {labels[status] || status}
     </span>
   )
 }

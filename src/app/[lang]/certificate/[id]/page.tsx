@@ -1,17 +1,18 @@
 import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
+import { Link } from '@/i18n/routing'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CertificateRenderer } from '@/components/certificate/certificate-renderer'
 import { UpvoteRosette } from '@/components/certificate/upvote-rosette'
 import { TestimonialsMarquee } from '@/components/certificate/testimonials-marquee'
 import { FeedbackForm } from '@/components/certificate/feedback-form'
-import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft02Icon } from '@hugeicons/core-free-icons'
 import '@/components/certificate/guilloche-pattern.css'
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ lang: string; id: string }>
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -27,10 +28,12 @@ export async function generateMetadata({ params }: PageProps) {
     return { title: 'Certificate Not Found - FluencyCert' }
   }
 
+  const meta = await getTranslations('meta')
   const name = [claim.profiles.first_name, claim.profiles.last_name].filter(Boolean).join(' ') || 'Certificate'
+
   return {
-    title: `${name} - FluencyCert Certificate`,
-    description: `View ${name}'s English proficiency certificate on FluencyCert.`,
+    title: meta('certificateTitle', { name }),
+    description: meta('certificateDescription', { name }),
   }
 }
 
@@ -38,6 +41,7 @@ export default async function CertificatePage({ params }: PageProps) {
   const { id } = await params
   const { userId } = await auth()
   const supabase = createAdminClient()
+  const t = await getTranslations('certificatePage')
 
   const { data: claim } = await supabase
     .from('certificate_claims')
@@ -121,7 +125,7 @@ export default async function CertificatePage({ params }: PageProps) {
     hasUpvoted = !!existingUpvote
   }
 
-  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Certificate Holder'
+  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || t('certificateHolder')
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
@@ -131,7 +135,7 @@ export default async function CertificatePage({ params }: PageProps) {
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
-          Back to FluencyCert
+          {t('backToHome')}
         </Link>
 
         <div className="flex flex-col items-start gap-8 lg:flex-row lg:items-start">
@@ -167,7 +171,7 @@ export default async function CertificatePage({ params }: PageProps) {
         )}
 
         <div className="mt-12 border-t border-gray-100 py-6 text-center text-xs text-muted-foreground dark:border-gray-800">
-          <p>FluencyCert — Verified English Speaking Certificates</p>
+          <p>{t('footer')}</p>
         </div>
       </div>
     </div>

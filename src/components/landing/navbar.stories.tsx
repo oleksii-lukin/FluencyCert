@@ -6,6 +6,12 @@ const meta: Meta<typeof Navbar> = {
   component: Navbar,
   parameters: {
     layout: "fullscreen",
+    nextjs: {
+      appDirectory: true,
+      navigation: {
+        pathname: "/en/",
+      },
+    },
   },
 }
 

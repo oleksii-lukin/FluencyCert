@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { HeartIcon, Message01Icon, Certificate02Icon, Clock01Icon } from "@hugeicons/core-free-icons"
 
@@ -57,16 +58,18 @@ function ClubBadge({ count }: { count: number }) {
   )
 }
 
-export function ShowcaseSection() {
+export async function ShowcaseSection() {
+  const t = await getTranslations('showcase')
+
   return (
     <section id="showcase" className="bg-gradient-to-b from-bright-sky/15 via-bright-sky/5 to-white px-4 py-20 md:py-28 dark:from-bright-sky/8 dark:via-graphite/90 dark:to-graphite">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-graphite dark:text-snow md:text-4xl">
-            Member Certificates
+            {t('title')}
           </h2>
           <p className="mt-4 text-lg text-graphite/60 dark:text-snow/60">
-            See how members proudly display their verified speaking certificates.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -80,7 +83,7 @@ export function ShowcaseSection() {
                 <div className="flex h-full w-full items-center justify-center rounded-xl border-2 border-white/60 bg-white/40 backdrop-blur-sm dark:border-snow/20 dark:bg-graphite/60">
                   <div className="text-center">
                     <HugeiconsIcon icon={Certificate02Icon} className="mx-auto size-10 text-graphite/20 dark:text-snow/20" />
-                    <p className="mt-2 text-[10px] font-medium text-graphite/30 dark:text-snow/30">Certificate</p>
+                    <p className="mt-2 text-[10px] font-medium text-graphite/30 dark:text-snow/30">{t('certificate')}</p>
                   </div>
                 </div>
                 <span className={`absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${cert.badge}`}>
@@ -93,7 +96,7 @@ export function ShowcaseSection() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-graphite dark:text-snow">{cert.name}</h3>
                 </div>
-                <p className="text-xs text-graphite/50 dark:text-snow/50">{cert.club} · {cert.clubs} clubs</p>
+                <p className="text-xs text-graphite/50 dark:text-snow/50">{cert.club} · {cert.clubs} {t('clubs')}</p>
 
                 <div className="mt-3 flex items-center gap-3 border-t border-gray-100 pt-3 text-xs text-graphite/50 dark:border-snow/10 dark:text-snow/50">
                   <span className="flex items-center gap-1">

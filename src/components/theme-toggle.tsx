@@ -29,10 +29,10 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="flex size-8 items-center justify-center rounded-lg text-graphite/60 transition-colors hover:bg-graphite/5 hover:text-graphite dark:text-snow/60 dark:hover:bg-snow/10 dark:hover:text-snow"
+      className="flex size-7 items-center justify-center rounded-xl border border-bright-sky/40 shadow-sm shadow-bright-sky/10 text-graphite/60 transition-colors hover:bg-bright-sky/10 hover:text-bright-sky dark:text-snow/60 dark:hover:bg-bright-sky/15 dark:hover:text-bright-sky"
       aria-label="Toggle dark mode"
     >
-      <HugeiconsIcon icon={dark ? Sun01Icon : Moon02Icon} className="size-4" />
+      <HugeiconsIcon icon={dark ? Sun01Icon : Moon02Icon} className="size-3.5" />
     </button>
   )
 }
