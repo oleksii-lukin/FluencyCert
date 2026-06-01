@@ -3,17 +3,13 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Certificate02Icon } from "@hugeicons/core-free-icons"
 
 const links = [
-  { label: "How it Works", href: "/how-it-works" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Gallery", href: "/gallery" },
-  { label: "FAQ", href: "/faq" },
+  { label: "How it Works", href: "/#how-it-works" },
+  { label: "Features", href: "/#features" },
+  { label: "Showcase", href: "/#showcase" },
 ]
 
 const communityLinks = [
-  { label: "Speaking Clubs", href: "/clubs" },
-  { label: "Blog", href: "/blog" },
-  { label: "Forum", href: "/forum" },
-  { label: "Contact", href: "/contact" },
+  { label: "Testimonials", href: "/#testimonials" },
 ]
 
 function FooterLinks({ items }: { items: { label: string; href: string }[] }) {

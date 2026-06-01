@@ -1,49 +1,49 @@
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Certificate02Icon,
-  Image01Icon,
+  LayoutGridIcon,
   HeartIcon,
   Message01Icon,
-  UserGroupIcon,
   Share01Icon,
+  IdVerifiedIcon,
 } from "@hugeicons/core-free-icons"
 
 const features = [
   {
     icon: Certificate02Icon,
     title: "Certificate Display",
-    description: "Upload your main certificate image as the centerpiece of your profile.",
+    description: "Your personalized certificate showcases your English level, club participation, and achievements in an elegant design.",
     bg: "bg-bright-sky/15 dark:bg-bright-sky/20",
   },
   {
-    icon: Image01Icon,
-    title: "Multiple Photos",
-    description: "Add pictures from your speaking club sessions to tell your full story.",
+    icon: LayoutGridIcon,
+    title: "Certificate Templates",
+    description: "Choose from multiple beautifully designed templates to personalize the look and feel of your certificate.",
     bg: "bg-bright-sky/20 dark:bg-bright-sky/25",
   },
   {
     icon: HeartIcon,
-    title: "Reactions",
-    description: "Send reactions to celebrate fellow members&apos; achievements and milestones.",
+    title: "Upvote Rosette",
+    description: "Get recognition from the community. Other members can upvote your certificate to celebrate your achievement.",
     bg: "bg-bright-sky/12 dark:bg-bright-sky/15",
   },
   {
     icon: Message01Icon,
-    title: "Feedback & Comments",
-    description: "Leave encouraging feedback and tips for other speakers in the community.",
+    title: "Moderated Feedback",
+    description: "Receive feedback from other approved members. You control which testimonials appear on your public page.",
     bg: "bg-harvest-orange/12 dark:bg-harvest-orange/15",
-  },
-  {
-    icon: UserGroupIcon,
-    title: "Community Network",
-    description: "Connect with other speaking club members and follow their progress.",
-    bg: "bg-harvest-orange/10 dark:bg-harvest-orange/15",
   },
   {
     icon: Share01Icon,
     title: "Share Anywhere",
-    description: "Share your certificate profile on social media, CV, or LinkedIn.",
+    description: "Share your unique certificate page on social media, CV, or LinkedIn with a single link.",
     bg: "bg-banana-cream/15 dark:bg-banana-cream/10",
+  },
+  {
+    icon: IdVerifiedIcon,
+    title: "Admin Verification",
+    description: "Each certificate is reviewed and verified by our admin team, ensuring authenticity and credibility.",
+    bg: "bg-harvest-orange/10 dark:bg-harvest-orange/15",
   },
 ]
 

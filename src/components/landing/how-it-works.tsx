@@ -4,20 +4,20 @@ import { Upload01Icon, Certificate02Icon, MessageFavourite01Icon } from "@hugeic
 const steps = [
   {
     icon: Upload01Icon,
-    title: "Upload Your Certificate",
-    description: "Upload your main speaking certificate image along with photos from your club sessions to showcase your journey.",
+    title: "Submit Your Claim",
+    description: "Tell us about your speaking club journey — your English level, clubs you've attended, and hours of practice. Our team reviews and verifies your information.",
     color: "bg-bright-sky/15 text-bright-sky dark:bg-bright-sky/20",
   },
   {
     icon: Certificate02Icon,
-    title: "Showcase Your Fluency",
-    description: "Build your profile with proof of English proficiency. Highlight your level, achievements, and club participation.",
+    title: "Get Your Certificate",
+    description: "Once approved, your personalized certificate is generated with your achievements. Choose from multiple templates to make it your own.",
     color: "bg-bright-sky/20 text-bright-sky dark:bg-bright-sky/25",
   },
   {
     icon: MessageFavourite01Icon,
-    title: "Get Feedback & Reactions",
-    description: "Receive reactions and encouraging feedback from the community. Celebrate milestones together.",
+    title: "Share & Connect",
+    description: "Share your certificate page with the community. Other members can upvote and leave feedback — and you decide which feedback to feature on your page.",
     color: "bg-bright-sky/15 text-bright-sky dark:bg-bright-sky/20",
   },
 ]
@@ -31,14 +31,14 @@ export function HowItWorks() {
             How It Works
           </h2>
           <p className="mt-4 text-lg text-graphite/60 dark:text-snow/60">
-            Three simple steps to show the world what you&apos;ve accomplished in your speaking club.
+            Three simple steps to get your verified speaking certificate.
           </p>
         </div>
 
         <div className="relative grid gap-8 md:grid-cols-3">
           {steps.map((step, i) => (
             <div key={step.title} className="group relative">
-              <div className="flex flex-col items-center rounded-2xl border border-bright-sky/15 bg-gradient-to-b from-white to-bright-sky/[0.03] p-8 text-center shadow-sm shadow-bright-sky/5 transition-all duration-300 hover:border-bright-sky/30 hover:shadow-lg hover:shadow-bright-sky/15 dark:border-snow/10 dark:from-graphite/80 dark:to-graphite/90 dark:shadow-black/10 dark:hover:border-bright-sky/30 dark:hover:shadow-bright-sky/10">
+              <div className="flex h-full flex-col items-center rounded-2xl border border-bright-sky/15 bg-gradient-to-b from-white to-bright-sky/[0.03] p-8 text-center shadow-sm shadow-bright-sky/5 transition-all duration-300 hover:border-bright-sky/30 hover:shadow-lg hover:shadow-bright-sky/15 dark:border-snow/10 dark:from-graphite/80 dark:to-graphite/90 dark:shadow-black/10 dark:hover:border-bright-sky/30 dark:hover:shadow-bright-sky/10">
                 <div className={`mb-5 flex size-14 items-center justify-center rounded-2xl ${step.color} transition-transform duration-300 group-hover:scale-110`}>
                   <HugeiconsIcon icon={step.icon} className="size-6" />
                 </div>
@@ -52,7 +52,7 @@ export function HowItWorks() {
               </div>
 
               {i < steps.length - 1 && (
-                <div className="absolute top-1/3 -right-4 hidden text-bright-sky/30 md:block dark:text-bright-sky/20">
+                <div className="absolute top-1/2 -right-7 -translate-y-1/2 hidden text-bright-sky/30 md:block dark:text-bright-sky/20">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M13 5l7 7-7 7" />
                   </svg>

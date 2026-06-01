@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { SparklesIcon, UserGroupIcon, MedalFirstPlaceIcon } from "@hugeicons/core-free-icons"
@@ -30,7 +31,7 @@ export function HeroSection() {
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-graphite/60 dark:text-snow/70">
-              Showcase your speaking club participation, upload your certificate, and let the community celebrate your progress with reactions and feedback.
+              Submit your speaking club information, get verified by our team, and receive a personalized certificate to showcase your English proficiency.
             </p>
 
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row">
@@ -38,9 +39,11 @@ export function HeroSection() {
                 label="Claim Your Certificate"
                 className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20"
               />
-              <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
-                Explore Gallery
-              </Button>
+              <Link href="/gallery">
+                <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
+                  Explore Gallery
+                </Button>
+              </Link>
             </div>
 
             <div className="mt-12 flex flex-wrap items-center gap-8">

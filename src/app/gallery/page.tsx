@@ -1,0 +1,131 @@
+import Link from "next/link"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ArrowLeft02Icon } from "@hugeicons/core-free-icons"
+import { listTemplates } from "@/components/certificate/template-registry"
+import { CertificateRenderer } from "@/components/certificate/certificate-renderer"
+
+const fakeUsers: Record<string, {
+  fullName: string
+  englishLevel: string
+  speakingClubsCount: number
+  hoursParticipated: number | null
+  adminFeedback: string
+  createdAt: string
+  claimId: string
+}> = {
+  "guilloche-security": {
+    fullName: "Sarah Chen",
+    englishLevel: "C1",
+    speakingClubsCount: 3,
+    hoursParticipated: 120,
+    adminFeedback: "Excellent speaking skills demonstrated through consistent club participation across multiple venues.",
+    createdAt: "2025-12-15T10:00:00Z",
+    claimId: "demo-guilloche",
+  },
+  "modern-glass": {
+    fullName: "Marcus Johnson",
+    englishLevel: "B2",
+    speakingClubsCount: 2,
+    hoursParticipated: 85,
+    adminFeedback: "Great improvement shown over the past quarter. Confident and articulate speaker.",
+    createdAt: "2026-02-20T14:30:00Z",
+    claimId: "demo-modern-glass",
+  },
+  "neubrutal": {
+    fullName: "Elena Rodriguez",
+    englishLevel: "C1",
+    speakingClubsCount: 4,
+    hoursParticipated: 200,
+    adminFeedback: "Outstanding dedication to public speaking. Regularly leads club discussion sessions.",
+    createdAt: "2025-11-08T09:15:00Z",
+    claimId: "demo-neubrutal",
+  },
+  "memphis-retro": {
+    fullName: "Aisha Patel",
+    englishLevel: "C2",
+    speakingClubsCount: 5,
+    hoursParticipated: 250,
+    adminFeedback: "Exceptional fluency and command of the language. A true inspiration to other members.",
+    createdAt: "2026-01-10T16:45:00Z",
+    claimId: "demo-memphis",
+  },
+  "cyber-neon": {
+    fullName: "David Kim",
+    englishLevel: "Native",
+    speakingClubsCount: 6,
+    hoursParticipated: null,
+    adminFeedback: "Demonstrates native-level proficiency. Leads advanced conversation circles with ease.",
+    createdAt: "2026-03-05T11:20:00Z",
+    claimId: "demo-cyber",
+  },
+  "natural-green": {
+    fullName: "Priya Sharma",
+    englishLevel: "A2",
+    speakingClubsCount: 8,
+    hoursParticipated: 24,
+    adminFeedback: "Remarkable progress for a beginner. Shows great enthusiasm and willingness to learn.",
+    createdAt: "2026-04-01T08:00:00Z",
+    claimId: "demo-green",
+  },
+}
+
+export default function GalleryPage() {
+  const templates = listTemplates()
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <Link
+          href="/"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
+          Back to FluencyCert
+        </Link>
+
+        <div className="mb-12">
+          <h1 className="text-3xl font-bold tracking-tight text-graphite dark:text-snow md:text-4xl">
+            Certificate Templates
+          </h1>
+          <p className="mt-3 text-base text-muted-foreground max-w-2xl">
+            Browse all available certificate templates. Each certificate is personalized with the member&apos;s English level, club participation, and admin verification note. Choose the style that best represents your achievement.
+          </p>
+        </div>
+
+        <div className="space-y-16">
+          {templates.map((template) => {
+            const user = fakeUsers[template.id] ?? fakeUsers["guilloche-security"]
+
+            return (
+              <section key={template.id}>
+                <div className="mb-4 border-b border-gray-200 pb-3 dark:border-gray-700">
+                  <h2 className="text-xl font-semibold text-graphite dark:text-snow">
+                    {template.name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {template.id === "guilloche-security" && "Classic security pattern with intricate background design"}
+                    {template.id === "modern-glass" && "Modern frosted glass design with elegant gold accents"}
+                    {template.id === "neubrutal" && "Bold minimalist design with thick borders and high contrast"}
+                    {template.id === "memphis-retro" && "Playful retro-inspired design with vibrant geometric patterns"}
+                    {template.id === "cyber-neon" && "Dark futuristic design with neon accents and grid overlay"}
+                    {template.id === "natural-green" && "Warm organic design with emerald tones and natural shapes"}
+                  </p>
+                </div>
+                <CertificateRenderer
+                  templateId={template.id}
+                  fullName={user.fullName}
+                  englishLevel={user.englishLevel}
+                  speakingClubsCount={user.speakingClubsCount}
+                  hoursParticipated={user.hoursParticipated}
+                  adminFeedback={user.adminFeedback}
+                  createdAt={user.createdAt}
+                  claimId={user.claimId}
+                />
+              </section>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}

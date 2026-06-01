@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Certificate02Icon } from "@hugeicons/core-free-icons"
@@ -22,7 +23,7 @@ export function CTASection() {
               Ready to Showcase Your Fluency?
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-base text-snow/65">
-              Join thousands of speaking club members. Upload your certificate, share your journey, and get celebrated by the community.
+              Join thousands of speaking club members. Submit your claim, get verified, and share your achievement with the community.
             </p>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -30,9 +31,11 @@ export function CTASection() {
                 label="Claim Your Free Certificate"
                 className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20"
               />
-              <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
-                Browse Examples
-              </Button>
+              <Link href="/gallery">
+                <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
+                  Browse Examples
+                </Button>
+              </Link>
             </div>
 
             <p className="mt-6 text-xs text-snow/40">Free for speaking club members. No credit card required.</p>

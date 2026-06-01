@@ -1,14 +1,15 @@
 import { HugeiconsIcon } from "@hugeicons/react"
-import { HeartIcon, Message01Icon, StarIcon, Certificate02Icon, Image01Icon } from "@hugeicons/core-free-icons"
+import { HeartIcon, Message01Icon, Certificate02Icon, Clock01Icon } from "@hugeicons/core-free-icons"
 
 const certificates = [
   {
     name: "Sarah Chen",
     level: "Advanced (C1)",
     club: "Global Speakers NYC",
-    reactions: 234,
+    clubs: 3,
+    hours: 120,
+    upvotes: 234,
     feedback: 18,
-    rating: 4.9,
     gradient: "from-bright-sky/25 to-bright-sky/5 dark:from-bright-sky/20 dark:to-graphite",
     badge: "bg-bright-sky text-white",
   },
@@ -16,9 +17,10 @@ const certificates = [
     name: "Marcus Johnson",
     level: "Upper-Intermediate (B2)",
     club: "London Speaking Circle",
-    reactions: 189,
+    clubs: 2,
+    hours: 85,
+    upvotes: 189,
     feedback: 14,
-    rating: 4.8,
     gradient: "from-bright-sky/20 to-snow/50 dark:from-bright-sky/15 dark:to-graphite",
     badge: "bg-bright-sky/90 text-white",
   },
@@ -26,9 +28,10 @@ const certificates = [
     name: "Elena Rodriguez",
     level: "Advanced (C1)",
     club: "Madrid English Hub",
-    reactions: 312,
+    clubs: 4,
+    hours: 200,
+    upvotes: 312,
     feedback: 24,
-    rating: 5.0,
     gradient: "from-banana-cream/25 to-snow/50 dark:from-banana-cream/15 dark:to-graphite",
     badge: "bg-harvest-orange text-white",
   },
@@ -36,25 +39,20 @@ const certificates = [
     name: "Aisha Patel",
     level: "Proficient (C2)",
     club: "Dubai Speakers Forum",
-    reactions: 278,
+    clubs: 5,
+    hours: 250,
+    upvotes: 278,
     feedback: 21,
-    rating: 4.9,
     gradient: "from-bright-sky/20 to-harvest-orange/10 dark:from-bright-sky/15 dark:to-harvest-orange/10",
     badge: "bg-bright-sky text-white",
   },
 ]
 
-function StarRating({ rating }: { rating: number }) {
+function ClubBadge({ count }: { count: number }) {
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <HugeiconsIcon
-          key={i}
-          icon={StarIcon}
-          className={`size-3.5 ${i < Math.floor(rating) ? "text-banana-cream" : "text-gray-200 dark:text-snow/10"}`}
-        />
-      ))}
-      <span className="ml-1 text-xs font-medium text-graphite/50 dark:text-snow/50">{rating}</span>
+    <div className="flex items-center gap-1 rounded-full bg-white/80 px-2 py-0.5 text-[10px] text-graphite/50 backdrop-blur-sm dark:bg-graphite/80 dark:text-snow/50">
+      <HugeiconsIcon icon={Clock01Icon} className="size-3" />
+      <span>{count}h</span>
     </div>
   )
 }
@@ -68,7 +66,7 @@ export function ShowcaseSection() {
             Member Certificates
           </h2>
           <p className="mt-4 text-lg text-graphite/60 dark:text-snow/60">
-            See how members proudly display their speaking achievements.
+            See how members proudly display their verified speaking certificates.
           </p>
         </div>
 
@@ -78,33 +76,29 @@ export function ShowcaseSection() {
               key={cert.name}
               className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm shadow-bright-sky/5 transition-all duration-300 hover:border-bright-sky/30 hover:shadow-xl hover:shadow-bright-sky/15 dark:border-snow/10 dark:bg-graphite/80 dark:shadow-black/10 dark:hover:border-bright-sky/30 dark:hover:shadow-bright-sky/10"
             >
-              <div className={`aspect-[4/3] bg-gradient-to-br ${cert.gradient} relative flex items-center justify-center p-6`}>
-                <div className="flex h-full w-full items-center justify-center rounded-xl border-2 border-dashed border-white/60 bg-white/40 backdrop-blur-sm dark:border-snow/20 dark:bg-graphite/60">
+                <div className={`aspect-[4/3] bg-gradient-to-br ${cert.gradient} relative flex items-center justify-center p-6`}>
+                <div className="flex h-full w-full items-center justify-center rounded-xl border-2 border-white/60 bg-white/40 backdrop-blur-sm dark:border-snow/20 dark:bg-graphite/60">
                   <div className="text-center">
                     <HugeiconsIcon icon={Certificate02Icon} className="mx-auto size-10 text-graphite/20 dark:text-snow/20" />
-                    <p className="mt-2 text-[10px] font-medium text-graphite/30 dark:text-snow/30">Certificate Preview</p>
+                    <p className="mt-2 text-[10px] font-medium text-graphite/30 dark:text-snow/30">Certificate</p>
                   </div>
                 </div>
                 <span className={`absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${cert.badge}`}>
                   {cert.level}
                 </span>
-                <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/80 px-2 py-0.5 text-[10px] text-graphite/50 backdrop-blur-sm dark:bg-graphite/80 dark:text-snow/50">
-                  <HugeiconsIcon icon={Image01Icon} className="size-3" />
-                  <span>+3</span>
-                </div>
+                <ClubBadge count={cert.hours} />
               </div>
 
               <div className="p-4">
-                <div className="mb-1 flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-graphite dark:text-snow">{cert.name}</h3>
-                  <StarRating rating={cert.rating} />
                 </div>
-                <p className="text-xs text-graphite/50 dark:text-snow/50">{cert.club}</p>
+                <p className="text-xs text-graphite/50 dark:text-snow/50">{cert.club} · {cert.clubs} clubs</p>
 
                 <div className="mt-3 flex items-center gap-3 border-t border-gray-100 pt-3 text-xs text-graphite/50 dark:border-snow/10 dark:text-snow/50">
                   <span className="flex items-center gap-1">
                     <HugeiconsIcon icon={HeartIcon} className="size-3.5" />
-                    {cert.reactions}
+                    {cert.upvotes}
                   </span>
                   <span className="flex items-center gap-1">
                     <HugeiconsIcon icon={Message01Icon} className="size-3.5" />

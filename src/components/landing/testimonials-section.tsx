@@ -5,19 +5,19 @@ const testimonials = [
   {
     name: "David Kim",
     role: "Speaking Club Member",
-    text: "This platform gave me the confidence to showcase my English journey. The feedback from other members has been incredibly motivating.",
+    text: "The verification process was smooth. I submitted my club info and had my certificate approved within a day. Now I share it on my LinkedIn and job applications.",
     rating: 5,
   },
   {
     name: "Priya Sharma",
     role: "Club Coordinator",
-    text: "We use FluencyCert for all our members. It's the perfect way to track progress and celebrate milestones as a community.",
+    text: "We recommend FluencyCert to all our members. The certificates look professional with the template options, and members love the upvote and feedback system.",
     rating: 5,
   },
   {
     name: "Carlos Mendez",
     role: "English Learner",
-    text: "Uploading my certificate and getting reactions from the community pushed me to aim for the next level. Highly recommend!",
+    text: "Getting my speaking hours recognized with a verified certificate pushed me to attend more clubs. The feedback from other approved members keeps me motivated.",
     rating: 5,
   },
 ]
@@ -31,7 +31,7 @@ export function TestimonialsSection() {
             Loved by the Community
           </h2>
           <p className="mt-4 text-lg text-graphite/60 dark:text-snow/60">
-            Hear from members who transformed their speaking club experience.
+            Hear from members who earned their verified certificates.
           </p>
         </div>
 
