@@ -77,7 +77,7 @@ export default async function MyCertificatePage({ params }: { params: Promise<{ 
                 )}
                 <div className="mt-6 flex w-full flex-col gap-3">
                   <Link
-                    href={`/certificate/${claim.id}`}
+                    href={`/certificate/${claim.slug}`}
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-bright-sky px-4 py-2.5 text-sm font-medium text-white hover:bg-bright-sky/90 transition-colors"
                   >
                     <HugeiconsIcon icon={Share01Icon} className="size-4" />

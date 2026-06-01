@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
+import { generateSlug } from '@/lib/slug'
 
 const getAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 20, characteristics: ["userId"] }),
@@ -70,11 +71,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Already have a pending claim', claim: existing }, { status: 409 })
   }
 
-  const { data: claim, error } = await supabase
-    .from('certificate_claims')
-    .insert({ user_id: userId, status: 'pending' })
-    .select()
-    .single()
+  let claim
+  let error
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const slug = generateSlug()
+    const result = await supabase
+      .from('certificate_claims')
+      .insert({ user_id: userId, status: 'pending', slug })
+      .select()
+      .maybeSingle()
+    claim = result.data
+    error = result.error
+    if (!error) break
+    if (error.code === '23505') continue
+    break
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

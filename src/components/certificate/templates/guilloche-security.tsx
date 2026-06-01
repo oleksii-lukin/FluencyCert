@@ -17,7 +17,7 @@ export function GuillocheSecurityCertificate({
   hoursParticipated,
   adminFeedback,
   createdAt,
-  claimId,
+  slug,
 }: CertificateTemplateProps) {
   const t = useTranslations('certificateLabels')
 
@@ -67,7 +67,7 @@ export function GuillocheSecurityCertificate({
           {hoursParticipated == null && (
             <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
               <p className="text-xs font-medium text-muted-foreground">{t('certificateId')}</p>
-              <p className="mt-1 text-xs font-mono text-muted-foreground break-all">{claimId.slice(0, 8)}</p>
+              <p className="mt-1 text-xs font-mono text-muted-foreground break-all">{slug}</p>
             </div>
           )}
         </div>
@@ -92,7 +92,7 @@ export function GuillocheSecurityCertificate({
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">{t('certificateId')}</p>
-            <p className="text-xs font-mono text-muted-foreground">{claimId.slice(0, 8)}</p>
+            <p className="text-xs font-mono text-muted-foreground">{slug}</p>
           </div>
         </div>
       </div>

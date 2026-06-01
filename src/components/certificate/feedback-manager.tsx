@@ -25,7 +25,7 @@ interface FeedbackItem {
 }
 
 interface FeedbackManagerProps {
-  certificateId: string
+  slug: string
   initialFeedbacks: FeedbackItem[]
 }
 
@@ -36,7 +36,7 @@ function getDisplayName(profile: FeedbackItem["profiles"], preference: string, a
   return profile.username || profile.first_name || anonymousLabel
 }
 
-export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackManagerProps) {
+export function FeedbackManager({ slug, initialFeedbacks }: FeedbackManagerProps) {
   const t = useTranslations('feedback')
   const anonymousLabel = t('anonymous')
   const router = useRouter()
@@ -46,7 +46,7 @@ export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackMan
   async function updateFeedback(feedbackId: string, updates: Record<string, unknown>) {
     setLoading(feedbackId)
     const res = await fetch(
-      `/api/certificates/${certificateId}/feedback/${feedbackId}`,
+      `/api/certificates/${slug}/feedback/${feedbackId}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -76,7 +76,7 @@ export function FeedbackManager({ certificateId, initialFeedbacks }: FeedbackMan
 
     setFeedbacks(newOrder)
 
-    await fetch(`/api/certificates/${certificateId}/feedback/sort`, {
+    await fetch(`/api/certificates/${slug}/feedback/sort`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ order: newOrder.map((f) => f.id) }),

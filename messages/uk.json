@@ -166,6 +166,7 @@
     "joined": "Приєднався",
     "status": "Статус",
     "submitted": "Подано",
+    "slugLabel": "Слаг",
     "feedback": "Відгук",
     "actions": "Дії",
     "processed": "Опрацьовано",
@@ -270,7 +271,10 @@
     "levelB1": "B1 (Середній)",
     "levelB2": "B2 (Вище середнього)",
     "levelC1": "C1 (Просунутий)",
-    "levelC2": "C2 (Досконалий)"
+    "levelC2": "C2 (Досконалий)",
+    "customSlug": "Свій слаг",
+    "customSlugHint": "(A–Z, 0–9, 1–20 символів)",
+    "slugPlaceholder": "напр. ELITE1 (залиште порожнім для автогенерації)"
   },
   "common": {
     "loading": "Завантаження..."

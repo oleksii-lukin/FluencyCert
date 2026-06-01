@@ -10,7 +10,7 @@ const postAj = aj.withRule(
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const { userId } = await auth()
   if (!userId) {
@@ -26,18 +26,20 @@ export async function POST(
   }
 
   const supabase = createAdminClient()
-  const { id } = await params
+  const { slug } = await params
 
   const { data: targetClaim } = await supabase
     .from('certificate_claims')
     .select('id')
-    .eq('id', id)
+    .eq('slug', slug.toUpperCase())
     .eq('status', 'approved')
     .single()
 
   if (!targetClaim) {
     return NextResponse.json({ error: 'Certificate not found' }, { status: 404 })
   }
+
+  const id = targetClaim.id
 
   const { data: ownClaim } = await supabase
     .from('certificate_claims')

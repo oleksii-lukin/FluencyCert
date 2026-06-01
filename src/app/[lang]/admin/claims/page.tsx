@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Image from 'next/image'
 import { ClaimActions } from './claim-actions'
+import { SlugDisplay } from './slug-display'
 
 export default async function AdminClaimsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -23,6 +24,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
             <tr className="border-b bg-muted/50">
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('user')}</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('status')}</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('slugLabel')}</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('submitted')}</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('feedback')}</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('actions')}</th>
@@ -55,7 +57,10 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={claim.status} claimId={claim.id} t={t} lang={lang} />
+                  <StatusBadge status={claim.status} slug={claim.slug} t={t} lang={lang} />
+                </td>
+                <td className="px-4 py-3">
+                  <SlugDisplay slug={claim.slug} claimId={claim.id} />
                 </td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
                   {new Date(claim.created_at).toLocaleDateString()}
@@ -74,7 +79,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
             ))}
             {(!claims || claims.length === 0) && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                   {t('noClaimsFound')}
                 </td>
               </tr>
@@ -86,7 +91,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
   )
 }
 
-function StatusBadge({ status, claimId, t, lang }: { status: string; claimId: string; t: (key: string) => string; lang: string }) {
+function StatusBadge({ status, slug, t, lang }: { status: string; slug: string; t: (key: string) => string; lang: string }) {
   const styles: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
     approved: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
@@ -104,7 +109,7 @@ function StatusBadge({ status, claimId, t, lang }: { status: string; claimId: st
   if (status === 'approved') {
     return (
       <a
-        href={`/${lang}/certificate/${claimId}`}
+        href={`/${lang}/certificate/${slug}`}
         target="_blank"
         rel="noopener noreferrer"
         className={`${className} hover:underline`}

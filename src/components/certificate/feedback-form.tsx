@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 interface FeedbackFormProps {
-  certificateId: string
+  slug: string
   onSuccess?: () => void
 }
 
-export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
+export function FeedbackForm({ slug, onSuccess }: FeedbackFormProps) {
   const t = useTranslations('feedback')
   const router = useRouter()
   const [feedbackText, setFeedbackText] = useState("")
@@ -25,7 +25,7 @@ export function FeedbackForm({ certificateId, onSuccess }: FeedbackFormProps) {
     setSubmitting(true)
     setError("")
 
-    const res = await fetch(`/api/certificates/${certificateId}/feedback`, {
+    const res = await fetch(`/api/certificates/${slug}/feedback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

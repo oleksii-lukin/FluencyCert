@@ -17,7 +17,7 @@ export function MemphisRetroCertificate({
   hoursParticipated,
   adminFeedback,
   createdAt,
-  claimId,
+  slug,
 }: CertificateTemplateProps) {
   const t = useTranslations('certificateLabels')
 
@@ -68,7 +68,7 @@ export function MemphisRetroCertificate({
           ) : (
             <div className="memphis-panel-teal p-5">
               <p className="text-xs font-bold text-[#86CCCA] dark:text-[#5DA8A6] uppercase tracking-wider">{t('certificateId')}</p>
-              <p className="mt-1.5 font-mono text-xs font-bold text-black break-all dark:text-white">{claimId.slice(0, 8)}</p>
+              <p className="mt-1.5 font-mono text-xs font-bold text-black break-all dark:text-white">{slug}</p>
             </div>
           )}
         </div>
@@ -93,7 +93,7 @@ export function MemphisRetroCertificate({
           </div>
           <div className="text-right">
             <p className="text-xs font-bold text-[#6A7BB4] dark:text-[#4E5A8C] uppercase tracking-wider">{t('id')}</p>
-            <p className="mt-0.5 font-mono text-xs font-bold text-black dark:text-white">{claimId.slice(0, 8)}</p>
+            <p className="mt-0.5 font-mono text-xs font-bold text-black dark:text-white">{slug}</p>
           </div>
         </div>
       </div>

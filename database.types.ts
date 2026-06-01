@@ -45,6 +45,7 @@ export type Database = {
           english_level: string | null
           hours_participated: number | null
           id: string
+          slug: string
           speaking_clubs_count: number | null
           status: string
           updated_at: string
@@ -57,6 +58,7 @@ export type Database = {
           english_level?: string | null
           hours_participated?: number | null
           id?: string
+          slug?: string
           speaking_clubs_count?: number | null
           status?: string
           updated_at?: string
@@ -69,6 +71,7 @@ export type Database = {
           english_level?: string | null
           hours_participated?: number | null
           id?: string
+          slug?: string
           speaking_clubs_count?: number | null
           status?: string
           updated_at?: string

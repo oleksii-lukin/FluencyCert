@@ -98,7 +98,7 @@ interface CertificatePageLayoutProps {
   hoursParticipated: number | null
   adminFeedback: string | null
   createdAt: string
-  claimId: string
+  slug: string
   upvoteCount: number
   hasUpvoted: boolean
   canUpvote: boolean
@@ -122,7 +122,7 @@ function CertificatePageLayout({
   hoursParticipated,
   adminFeedback,
   createdAt,
-  claimId,
+  slug,
   upvoteCount,
   hasUpvoted,
   canUpvote,
@@ -151,13 +151,13 @@ function CertificatePageLayout({
               hoursParticipated={hoursParticipated}
               adminFeedback={adminFeedback}
               createdAt={createdAt}
-              claimId={claimId}
+              slug={slug}
             />
           </div>
 
           <div className="flex shrink-0 justify-center lg:pt-12 lg:self-start">
             <UpvoteRosette
-              certificateId={claimId}
+              slug={slug}
               initialCount={upvoteCount}
               initialHasUpvoted={hasUpvoted}
               canUpvote={canUpvote}
@@ -213,7 +213,7 @@ export const Default: Story = {
     hoursParticipated: 48,
     adminFeedback: "Alex has shown remarkable improvement in fluency and confidence. A well-deserved certification.",
     createdAt: "2026-03-15T10:30:00Z",
-    claimId: "claim-abc-123",
+    slug: "ABC123",
     upvoteCount: 42,
     hasUpvoted: false,
     canUpvote: true,

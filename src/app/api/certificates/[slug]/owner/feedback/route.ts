@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const { userId } = await auth()
   if (!userId) {
@@ -12,12 +12,12 @@ export async function GET(
   }
 
   const supabase = createAdminClient()
-  const { id } = await params
+  const { slug } = await params
 
   const { data: claim } = await supabase
     .from('certificate_claims')
-    .select('user_id')
-    .eq('id', id)
+    .select('id, user_id')
+    .eq('slug', slug.toUpperCase())
     .single()
 
   if (!claim) {
@@ -27,6 +27,8 @@ export async function GET(
   if (claim.user_id !== userId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
+
+  const id = claim.id
 
   const { data: feedbacks, error } = await supabase
     .from('certificate_feedback')

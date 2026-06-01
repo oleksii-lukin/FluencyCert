@@ -126,10 +126,11 @@ BEGIN
   ---------------------------------------------------------------------------
   FOR i IN 1..65 LOOP
     claim_admin_fb_idx := 1 + floor(random() * array_length(claim_admin_feedback, 1))::INTEGER;
-    INSERT INTO certificate_claims (user_id, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    INSERT INTO certificate_claims (user_id, status, slug, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
     VALUES (
       user_ids[i],
       'approved',
+      generate_certificate_slug(),
       claim_admin_feedback[claim_admin_fb_idx],
       english_levels[1 + floor(random() * 6)::INTEGER],
       3 + floor(random() * 18)::INTEGER,
@@ -143,10 +144,11 @@ BEGIN
   END LOOP;
 
   FOR i IN 66..75 LOOP
-    INSERT INTO certificate_claims (user_id, status, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    INSERT INTO certificate_claims (user_id, status, slug, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
     VALUES (
       user_ids[i],
       'pending',
+      generate_certificate_slug(),
       english_levels[1 + floor(random() * 4)::INTEGER],
       1 + floor(random() * 8)::INTEGER,
       5 + floor(random() * 40)::INTEGER,

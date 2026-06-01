@@ -66,13 +66,13 @@ export default async function CertificateControlPage({ params }: { params: Promi
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
-              href={`/certificate/${c.id}`}
+              href={`/certificate/${c.slug}`}
               className="inline-flex items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm font-medium text-white hover:bg-bright-sky/90 transition-colors"
             >
               <HugeiconsIcon icon={Share01Icon} className="size-4" />
               {t('viewPublicPage')}
             </Link>
-            <CopyShareLink certificateId={c.id} />
+            <CopyShareLink slug={c.slug} />
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export default async function CertificateControlPage({ params }: { params: Promi
             {t('feedbackDescription')}
           </p>
           <FeedbackManager
-certificateId={c.id}
+ slug={c.slug}
             initialFeedbacks={feedbacks ?? []}
           />
         </div>

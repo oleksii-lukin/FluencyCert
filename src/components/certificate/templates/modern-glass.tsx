@@ -17,7 +17,7 @@ export function ModernGlassCertificate({
   hoursParticipated,
   adminFeedback,
   createdAt,
-  claimId,
+  slug,
 }: CertificateTemplateProps) {
   const t = useTranslations('certificateLabels')
 
@@ -68,7 +68,7 @@ export function ModernGlassCertificate({
           ) : (
             <div className="modern-glass-panel-strong rounded-xl p-5">
               <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('certificateId')}</p>
-              <p className="mt-1.5 font-mono text-xs text-slate-500 break-all dark:text-slate-400">{claimId.slice(0, 8)}</p>
+              <p className="mt-1.5 font-mono text-xs text-slate-500 break-all dark:text-slate-400">{slug}</p>
             </div>
           )}
         </div>
@@ -95,7 +95,7 @@ export function ModernGlassCertificate({
           </div>
           <div className="text-right">
             <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('certificateId')}</p>
-            <p className="mt-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">{claimId.slice(0, 8)}</p>
+            <p className="mt-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">{slug}</p>
           </div>
         </div>
       </div>

@@ -12,16 +12,16 @@ import { ArrowLeft02Icon } from '@hugeicons/core-free-icons'
 import '@/components/certificate/guilloche-pattern.css'
 
 interface PageProps {
-  params: Promise<{ lang: string; id: string }>
+  params: Promise<{ lang: string; slug: string }>
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { id } = await params
+  const { slug } = await params
   const supabase = createAdminClient()
   const { data: claim } = await supabase
     .from('certificate_claims')
     .select('*, profiles!inner(first_name, last_name)')
-    .eq('id', id)
+    .eq('slug', slug.toUpperCase())
     .single()
 
   if (!claim || claim.status !== 'approved') {
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function CertificatePage({ params }: PageProps) {
-  const { id } = await params
+  const { slug } = await params
   const { userId } = await auth()
   const supabase = createAdminClient()
   const t = await getTranslations('certificatePage')
@@ -46,7 +46,7 @@ export default async function CertificatePage({ params }: PageProps) {
   const { data: claim } = await supabase
     .from('certificate_claims')
     .select('*, profiles!inner(id, email, first_name, last_name, username, avatar_url)')
-    .eq('id', id)
+    .eq('slug', slug.toUpperCase())
     .single()
 
   if (!claim || claim.status !== 'approved') {
@@ -54,6 +54,7 @@ export default async function CertificatePage({ params }: PageProps) {
   }
 
   const profile = claim.profiles
+  const id = claim.id
 
   const { count: dbCount } = await supabase
     .from('certificate_upvotes')
@@ -76,11 +77,11 @@ export default async function CertificatePage({ params }: PageProps) {
     const reviewerIds = [...new Set(feedbacks.map((f) => f.reviewer_id))]
     const { data: reviewerClaims } = await supabase
       .from('certificate_claims')
-      .select('user_id, id')
+      .select('user_id, slug')
       .eq('status', 'approved')
       .in('user_id', reviewerIds)
 
-    const certByUserId = new Map((reviewerClaims ?? []).map((c) => [c.user_id, c.id]))
+    const certByUserId = new Map((reviewerClaims ?? []).map((c) => [c.user_id, c.slug]))
     feedbacksWithCertIds = feedbacks.map((f) => ({
       ...f,
       reviewer_certificate_id: certByUserId.get(f.reviewer_id) || null,
@@ -148,13 +149,13 @@ export default async function CertificatePage({ params }: PageProps) {
               hoursParticipated={claim.hours_participated}
               adminFeedback={claim.admin_feedback}
               createdAt={claim.created_at}
-              claimId={claim.id}
+              slug={claim.slug}
             />
           </div>
 
           <div className="flex shrink-0 justify-center lg:pt-12 lg:self-start">
             <UpvoteRosette
-              certificateId={claim.id}
+              slug={claim.slug}
               initialCount={upvoteCount}
               initialHasUpvoted={hasUpvoted}
               canUpvote={canUpvote}
@@ -166,7 +167,7 @@ export default async function CertificatePage({ params }: PageProps) {
 
         {canLeaveFeedback && (
           <div className="mx-auto mt-6 max-w-xl">
-            <FeedbackForm certificateId={claim.id} />
+            <FeedbackForm slug={claim.slug} />
           </div>
         )}
 

@@ -17,7 +17,7 @@ export function CyberNeonCertificate({
   hoursParticipated,
   adminFeedback,
   createdAt,
-  claimId,
+  slug,
 }: CertificateTemplateProps) {
   const t = useTranslations('certificateLabels')
 
@@ -73,7 +73,7 @@ export function CyberNeonCertificate({
           ) : (
             <div className="cyber-panel-strong p-5">
               <p className="font-mono text-xs font-medium text-[#22C55E]/50 uppercase tracking-wider">{t('certificateId')}</p>
-              <p className="mt-1.5 font-mono text-xs font-medium text-[#22C55E]/60 break-all">{claimId.slice(0, 8)}</p>
+              <p className="mt-1.5 font-mono text-xs font-medium text-[#22C55E]/60 break-all">{slug}</p>
             </div>
           )}
         </div>
@@ -100,7 +100,7 @@ export function CyberNeonCertificate({
           </div>
           <div className="text-right">
             <p className="font-mono text-xs font-medium text-[#22C55E]/50 uppercase tracking-wider">{t('id')}</p>
-            <p className="font-mono mt-0.5 text-xs font-medium text-[#22C55E]/60">{claimId.slice(0, 8)}</p>
+            <p className="font-mono mt-0.5 text-xs font-medium text-[#22C55E]/60">{slug}</p>
           </div>
         </div>
       </div>

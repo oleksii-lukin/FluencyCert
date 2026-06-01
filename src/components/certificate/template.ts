@@ -5,7 +5,7 @@ export interface CertificateTemplateProps {
   hoursParticipated: number | null
   adminFeedback: string | null
   createdAt: string
-  claimId: string
+  slug: string
 }
 
 export interface CertificateTemplate {

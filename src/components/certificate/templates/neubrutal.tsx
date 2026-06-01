@@ -17,7 +17,7 @@ export function NeubrutalCertificate({
   hoursParticipated,
   adminFeedback,
   createdAt,
-  claimId,
+  slug,
 }: CertificateTemplateProps) {
   const t = useTranslations('certificateLabels')
 
@@ -68,7 +68,7 @@ export function NeubrutalCertificate({
           ) : (
             <div className="neubrutal-stat p-5">
               <p className="font-mono text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">{t('certificateId')}</p>
-              <p className="mt-1.5 font-mono text-xs font-bold text-neutral-500 break-all dark:text-neutral-400">{claimId.slice(0, 8)}</p>
+              <p className="mt-1.5 font-mono text-xs font-bold text-neutral-500 break-all dark:text-neutral-400">{slug}</p>
             </div>
           )}
         </div>
@@ -95,7 +95,7 @@ export function NeubrutalCertificate({
           </div>
           <div className="text-right">
             <p className="font-mono text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">{t('id')}</p>
-            <p className="font-mono mt-0.5 text-xs font-bold text-neutral-500 dark:text-neutral-400">{claimId.slice(0, 8)}</p>
+            <p className="font-mono mt-0.5 text-xs font-bold text-neutral-500 dark:text-neutral-400">{slug}</p>
           </div>
         </div>
       </div>

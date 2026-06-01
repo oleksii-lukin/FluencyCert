@@ -6,12 +6,12 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { CopyLinkIcon } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
 
-export function CopyShareLink({ certificateId, className }: { certificateId: string; className?: string }) {
+export function CopyShareLink({ slug, className }: { slug: string; className?: string }) {
   const t = useTranslations('copyShareLink')
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
-    const url = `${window.location.origin}/certificate/${certificateId}`
+    const url = `${window.location.origin}/certificate/${slug}`
     await navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)

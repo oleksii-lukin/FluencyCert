@@ -15,11 +15,11 @@ export default async function AdminUsersPage({ params }: { params: Promise<{ lan
   const userIds = profiles?.map(p => p.id) || []
   const { data: claims } = userIds.length > 0 ? await supabase
     .from('certificate_claims')
-    .select('id, user_id, status')
+      .select('id, slug, user_id, status')
     .in('user_id', userIds)
     .order('created_at', { ascending: false }) : { data: [] }
 
-  const latestClaimByUserId = new Map<string, { id: string; status: string }>()
+  const latestClaimByUserId = new Map<string, { slug: string; status: string }>()
   claims?.forEach(claim => {
     if (!latestClaimByUserId.has(claim.user_id)) {
       latestClaimByUserId.set(claim.user_id, claim)
@@ -110,7 +110,7 @@ function UserStatusBadge({
   t,
   lang,
 }: {
-  claim: { id: string; status: string } | null
+  claim: { slug: string; status: string } | null
   t: (key: string) => string
   lang: string
 }) {
@@ -137,7 +137,7 @@ function UserStatusBadge({
   if (claim.status === 'approved') {
     return (
       <a
-        href={`/${lang}/certificate/${claim.id}`}
+        href={`/${lang}/certificate/${claim.slug}`}
         target="_blank"
         rel="noopener noreferrer"
         className={`${className} hover:underline`}

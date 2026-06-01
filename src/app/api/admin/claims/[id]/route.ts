@@ -39,7 +39,43 @@ export async function PATCH(
 
   const { id } = await params
   const body = await request.json()
-  const { status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template } = body
+  const { slug: newSlug, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template } = body
+
+  if (newSlug !== undefined) {
+    const upperSlug = newSlug.toUpperCase()
+    if (typeof newSlug !== 'string' || !/^[A-Z0-9]+$/.test(upperSlug)) {
+      return NextResponse.json({ error: 'Slug must contain only uppercase letters and digits' }, { status: 400 })
+    }
+    if (upperSlug.length < 1 || upperSlug.length > 20) {
+      return NextResponse.json({ error: 'Slug must be 1–20 characters' }, { status: 400 })
+    }
+
+    const { data: existing } = await supabase
+      .from('certificate_claims')
+      .select('id')
+      .eq('slug', upperSlug)
+      .neq('id', id)
+      .maybeSingle()
+
+    if (existing) {
+      return NextResponse.json({ error: 'This slug is already in use' }, { status: 409 })
+    }
+
+    if (!status) {
+      const { data: claim, error } = await supabase
+        .from('certificate_claims')
+        .update({ slug: upperSlug })
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+
+      return NextResponse.json({ claim })
+    }
+  }
 
   if (!status || !['approved', 'rejected'].includes(status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
@@ -75,6 +111,7 @@ export async function PATCH(
   const updateData: {
     status: string
     admin_feedback: string
+    slug?: string
     english_level?: string
     speaking_clubs_count?: number
     hours_participated?: number
@@ -82,6 +119,10 @@ export async function PATCH(
   } = {
     status,
     admin_feedback: admin_feedback.trim(),
+  }
+
+  if (newSlug !== undefined) {
+    updateData.slug = newSlug.toUpperCase()
   }
 
   if (status === 'approved') {

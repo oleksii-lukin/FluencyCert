@@ -17,7 +17,7 @@ export function NaturalGreenCertificate({
   hoursParticipated,
   adminFeedback,
   createdAt,
-  claimId,
+  slug,
 }: CertificateTemplateProps) {
   const t = useTranslations('certificateLabels')
 
@@ -73,7 +73,7 @@ export function NaturalGreenCertificate({
           ) : (
             <div className="natural-panel-strong p-5">
               <p className="text-xs font-medium text-emerald-600/50 dark:text-emerald-300/50 uppercase tracking-wider">{t('certificateId')}</p>
-              <p className="mt-1.5 font-mono text-xs font-medium text-emerald-700/60 break-all dark:text-emerald-300/60">{claimId.slice(0, 8)}</p>
+              <p className="mt-1.5 font-mono text-xs font-medium text-emerald-700/60 break-all dark:text-emerald-300/60">{slug}</p>
             </div>
           )}
         </div>
@@ -100,7 +100,7 @@ export function NaturalGreenCertificate({
           </div>
           <div className="text-right">
             <p className="text-xs font-medium text-emerald-600/50 dark:text-emerald-300/50 uppercase tracking-wider">{t('id')}</p>
-            <p className="mt-0.5 font-mono text-xs font-medium text-emerald-700/60 dark:text-emerald-300/60">{claimId.slice(0, 8)}</p>
+            <p className="mt-0.5 font-mono text-xs font-medium text-emerald-700/60 dark:text-emerald-300/60">{slug}</p>
           </div>
         </div>
       </div>

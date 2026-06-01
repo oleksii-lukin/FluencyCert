@@ -6,14 +6,14 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { ThumbsUpIcon } from "@hugeicons/core-free-icons"
 
 interface UpvoteRosetteProps {
-  certificateId: string
+  slug: string
   initialCount: number
   initialHasUpvoted: boolean
   canUpvote: boolean
 }
 
 export function UpvoteRosette({
-  certificateId,
+  slug,
   initialCount,
   initialHasUpvoted,
   canUpvote,
@@ -34,7 +34,7 @@ export function UpvoteRosette({
     setAnimating(true)
     setTimeout(() => setAnimating(false), 300)
 
-    const res = await fetch(`/api/certificates/${certificateId}/upvote`, {
+    const res = await fetch(`/api/certificates/${slug}/upvote`, {
       method: "POST",
     })
 

@@ -12,7 +12,7 @@ const fakeUsers: Record<string, {
   hoursParticipated: number | null
   adminFeedback: string
   createdAt: string
-  claimId: string
+  slug: string
 }> = {
   "guilloche-security": {
     fullName: "Sarah Chen",
@@ -21,7 +21,7 @@ const fakeUsers: Record<string, {
     hoursParticipated: 120,
     adminFeedback: "Excellent speaking skills demonstrated through consistent club participation across multiple venues.",
     createdAt: "2025-12-15T10:00:00Z",
-    claimId: "demo-guilloche",
+    slug: "DEMOGUI",
   },
   "modern-glass": {
     fullName: "Marcus Johnson",
@@ -30,7 +30,7 @@ const fakeUsers: Record<string, {
     hoursParticipated: 85,
     adminFeedback: "Great improvement shown over the past quarter. Confident and articulate speaker.",
     createdAt: "2026-02-20T14:30:00Z",
-    claimId: "demo-modern-glass",
+    slug: "DEMOMOD",
   },
   "neubrutal": {
     fullName: "Elena Rodriguez",
@@ -39,7 +39,7 @@ const fakeUsers: Record<string, {
     hoursParticipated: 200,
     adminFeedback: "Outstanding dedication to public speaking. Regularly leads club discussion sessions.",
     createdAt: "2025-11-08T09:15:00Z",
-    claimId: "demo-neubrutal",
+    slug: "DEMONEU",
   },
   "memphis-retro": {
     fullName: "Aisha Patel",
@@ -48,7 +48,7 @@ const fakeUsers: Record<string, {
     hoursParticipated: 250,
     adminFeedback: "Exceptional fluency and command of the language. A true inspiration to other members.",
     createdAt: "2026-01-10T16:45:00Z",
-    claimId: "demo-memphis",
+    slug: "DEMOMEM",
   },
   "cyber-neon": {
     fullName: "David Kim",
@@ -57,7 +57,7 @@ const fakeUsers: Record<string, {
     hoursParticipated: null,
     adminFeedback: "Demonstrates native-level proficiency. Leads advanced conversation circles with ease.",
     createdAt: "2026-03-05T11:20:00Z",
-    claimId: "demo-cyber",
+    slug: "DEMOCYB",
   },
   "natural-green": {
     fullName: "Priya Sharma",
@@ -66,7 +66,7 @@ const fakeUsers: Record<string, {
     hoursParticipated: 24,
     adminFeedback: "Remarkable progress for a beginner. Shows great enthusiasm and willingness to learn.",
     createdAt: "2026-04-01T08:00:00Z",
-    claimId: "demo-green",
+    slug: "DEMOGRE",
   },
 }
 
@@ -123,7 +123,7 @@ export default async function GalleryPage({ params }: { params: Promise<{ lang: 
                   hoursParticipated={user.hoursParticipated}
                   adminFeedback={user.adminFeedback}
                   createdAt={user.createdAt}
-                  claimId={user.claimId}
+                  slug={user.slug}
                 />
               </section>
             )

@@ -16,6 +16,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
   const [speakingClubsCount, setSpeakingClubsCount] = useState("")
   const [hoursParticipated, setHoursParticipated] = useState("")
   const [backgroundTemplate, setBackgroundTemplate] = useState("modern-glass")
+  const [slug, setSlug] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -24,6 +25,10 @@ export function ClaimActions({ claimId }: { claimId: string }) {
     setError("")
 
     const body: Record<string, unknown> = { status, admin_feedback: feedback }
+
+    if (slug.trim()) {
+      body.slug = slug.trim()
+    }
 
     if (status === 'approved') {
       body.english_level = englishLevel.trim()
@@ -52,6 +57,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
     setEnglishLevel("")
     setSpeakingClubsCount("")
     setHoursParticipated("")
+    setSlug("")
     router.refresh()
   }
 
@@ -142,6 +148,20 @@ export function ClaimActions({ claimId }: { claimId: string }) {
                       <option value="cyber-neon">{tn('cyberNeon')}</option>
                       <option value="natural-green">{tn('naturalGreen')}</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      {ca('customSlug')}{' '}
+                      <span className="text-xs text-muted-foreground font-normal">{ca('customSlugHint')}</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full rounded-lg border bg-background p-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                      placeholder={ca('slugPlaceholder')}
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                      maxLength={20}
+                    />
                   </div>
                 </>
               )}

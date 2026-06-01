@@ -3,6 +3,7 @@ export type ClaimStatus = 'pending' | 'approved' | 'rejected'
 export type CertificateClaim = {
   id: string
   user_id: string
+  slug: string
   status: ClaimStatus
   admin_feedback: string | null
   english_level: string | null

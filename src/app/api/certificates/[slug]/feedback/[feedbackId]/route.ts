@@ -10,7 +10,7 @@ const patchAj = aj.withRule(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string; feedbackId: string }> },
+  { params }: { params: Promise<{ slug: string; feedbackId: string }> },
 ) {
   const { userId } = await auth()
   if (!userId) {
@@ -26,17 +26,19 @@ export async function PATCH(
   }
 
   const supabase = createAdminClient()
-  const { id, feedbackId } = await params
+  const { slug, feedbackId } = await params
 
   const { data: claim } = await supabase
     .from('certificate_claims')
-    .select('user_id')
-    .eq('id', id)
+    .select('id, user_id')
+    .eq('slug', slug.toUpperCase())
     .single()
 
   if (!claim) {
     return NextResponse.json({ error: 'Certificate not found' }, { status: 404 })
   }
+
+  const id = claim.id
 
   const { data: feedback } = await supabase
     .from('certificate_feedback')

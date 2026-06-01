@@ -10,7 +10,7 @@ const getAj = aj.withRule(
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const decision = await getAj.protect(request, {
     ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || '',
@@ -24,17 +24,19 @@ export async function GET(
 
   const { userId } = await auth()
   const supabase = createAdminClient()
-  const { id } = await params
+  const { slug } = await params
 
   const { data: claim } = await supabase
     .from('certificate_claims')
     .select('*, profiles!inner(id, email, first_name, last_name, username, avatar_url)')
-    .eq('id', id)
+    .eq('slug', slug.toUpperCase())
     .single()
 
   if (!claim || claim.status !== 'approved') {
     return NextResponse.json({ error: 'Certificate not found' }, { status: 404 })
   }
+
+  const id = claim.id
 
   const { count: upvoteCount } = await supabase
     .from('certificate_upvotes')
