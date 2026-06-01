@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { ClaimActions } from './claim-actions'
 
 export default async function AdminClaimsPage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params
   const t = await getTranslations('admin')
   const supabase = createAdminClient()
 
@@ -54,7 +55,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={claim.status} t={t} />
+                  <StatusBadge status={claim.status} claimId={claim.id} t={t} lang={lang} />
                 </td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
                   {new Date(claim.created_at).toLocaleDateString()}
@@ -85,7 +86,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
   )
 }
 
-function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
+function StatusBadge({ status, claimId, t, lang }: { status: string; claimId: string; t: (key: string) => string; lang: string }) {
   const styles: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
     approved: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
@@ -98,8 +99,23 @@ function StatusBadge({ status, t }: { status: string; t: (key: string) => string
     rejected: t('rejected'),
   }
 
+  const className = `inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles[status] || ''}`
+
+  if (status === 'approved') {
+    return (
+      <a
+        href={`/${lang}/certificate/${claimId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${className} hover:underline`}
+      >
+        {labels[status] || status}
+      </a>
+    )
+  }
+
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles[status] || ''}`}>
+    <span className={className}>
       {labels[status] || status}
     </span>
   )
