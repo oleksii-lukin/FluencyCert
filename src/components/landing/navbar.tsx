@@ -37,7 +37,7 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
           </Show>
           <Show when="signed-in">
             {isAdmin && (
-              <Link href="/admin">
+              <Link href="/admin" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm">Admin</Button>
               </Link>
             )}
