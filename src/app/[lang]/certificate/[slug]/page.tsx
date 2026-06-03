@@ -4,6 +4,7 @@ import { Link } from '@/i18n/routing'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CertificateRenderer } from '@/components/certificate/certificate-renderer'
+import { PdfCertificateViewer } from '@/components/certificate/pdf-certificate-viewer'
 import { UpvoteRosette } from '@/components/certificate/upvote-rosette'
 import { TestimonialsMarquee } from '@/components/certificate/testimonials-marquee'
 import { FeedbackForm } from '@/components/certificate/feedback-form'
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function CertificatePage({ params }: PageProps) {
-  const { slug } = await params
+  const { lang, slug } = await params
   const { userId } = await auth()
   const supabase = createAdminClient()
   const t = await getTranslations('certificatePage')
@@ -128,6 +129,54 @@ export default async function CertificatePage({ params }: PageProps) {
 
   const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || t('certificateHolder')
 
+  interface PdfTemplateField {
+    id: string
+    pdf_field_name: string
+    source_type: string
+    source_key: string | null
+    display_label: string
+    is_enabled: boolean
+    font_family: string
+    font_size: number
+    font_source: string
+    uploaded_font_key: string | null
+    custom_default_value: string | null
+    sort_order: number
+  }
+
+  let pdfTemplateData: {
+    fileUrl: string
+    fields: PdfTemplateField[]
+    customValues: Record<string, string>
+  } | null = null
+
+  if (claim.pdf_template_id) {
+    const { data: template } = await supabase
+      .from('pdf_templates')
+      .select('*, pdf_template_fields(*)')
+      .eq('id', claim.pdf_template_id)
+      .order('sort_order', { foreignTable: 'pdf_template_fields', ascending: true })
+      .single()
+
+    if (template) {
+      const { data: customVals } = await supabase
+        .from('pdf_custom_values')
+        .select('field_id, value')
+        .eq('claim_id', claim.id)
+
+      const vals: Record<string, string> = {}
+      for (const cv of customVals ?? []) {
+        vals[cv.field_id] = cv.value
+      }
+
+      pdfTemplateData = {
+        fileUrl: template.file_url as string,
+        fields: (template.pdf_template_fields ?? []) as PdfTemplateField[],
+        customValues: vals,
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <div className="mx-auto max-w-6xl px-4 py-6">
@@ -141,16 +190,36 @@ export default async function CertificatePage({ params }: PageProps) {
 
         <div className="flex flex-col items-start gap-8 lg:flex-row lg:items-start">
           <div className="flex-1">
-            <CertificateRenderer
-              templateId={claim.background_template || 'guilloche-security'}
-              fullName={fullName}
-              englishLevel={claim.english_level || 'Not specified'}
-              speakingClubsCount={claim.speaking_clubs_count ?? 0}
-              hoursParticipated={claim.hours_participated}
-              adminFeedback={claim.admin_feedback}
-              createdAt={claim.created_at}
-              slug={claim.slug}
-            />
+            {pdfTemplateData ? (
+              <div className="w-full">
+                <PdfCertificateViewer
+                  templateFileUrl={pdfTemplateData.fileUrl}
+                  fields={pdfTemplateData.fields}
+                  certificateData={{
+                    fullName,
+                    englishLevel: claim.english_level || 'Not specified',
+                    speakingClubsCount: claim.speaking_clubs_count ?? 0,
+                    hoursParticipated: claim.hours_participated,
+                    adminFeedback: claim.admin_feedback,
+                    createdAt: claim.created_at,
+                    slug: claim.slug,
+                  }}
+                  customValues={pdfTemplateData.customValues}
+                  certificateUrl={`/${lang}/certificate/${claim.slug}`}
+                />
+              </div>
+            ) : (
+              <CertificateRenderer
+                templateId={claim.background_template || 'guilloche-security'}
+                fullName={fullName}
+                englishLevel={claim.english_level || 'Not specified'}
+                speakingClubsCount={claim.speaking_clubs_count ?? 0}
+                hoursParticipated={claim.hours_participated}
+                adminFeedback={claim.admin_feedback}
+                createdAt={claim.created_at}
+                slug={claim.slug}
+              />
+            )}
           </div>
 
           <div className="flex shrink-0 justify-center lg:pt-12 lg:self-start">

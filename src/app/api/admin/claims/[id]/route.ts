@@ -39,7 +39,7 @@ export async function PATCH(
 
   const { id } = await params
   const body = await request.json()
-  const { slug: newSlug, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template } = body
+  const { slug: newSlug, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, pdf_template_id, custom_values } = body
 
   if (newSlug !== undefined) {
     const upperSlug = newSlug.toUpperCase()
@@ -112,6 +112,7 @@ export async function PATCH(
     status: string
     admin_feedback: string
     slug?: string
+    pdf_template_id?: string
     english_level?: string
     speaking_clubs_count?: number
     hours_participated?: number
@@ -125,7 +126,55 @@ export async function PATCH(
     updateData.slug = newSlug.toUpperCase()
   }
 
-  if (status === 'approved') {
+  if (pdf_template_id) {
+    const { data: pdfTemplate } = await supabase
+      .from('pdf_templates')
+      .select('id')
+      .eq('id', pdf_template_id)
+      .single()
+
+    if (!pdfTemplate) {
+      return NextResponse.json({ error: 'PDF template not found' }, { status: 404 })
+    }
+
+    updateData.pdf_template_id = pdf_template_id
+    updateData.english_level = english_level.trim()
+    updateData.speaking_clubs_count = speaking_clubs_count
+    if (hours_participated != null) {
+      updateData.hours_participated = hours_participated
+    }
+    if (background_template) {
+      updateData.background_template = background_template
+    }
+
+    if (custom_values && Array.isArray(custom_values)) {
+      const { data: validFields } = await supabase
+        .from('pdf_template_fields')
+        .select('id, custom_overridable')
+        .eq('template_id', pdf_template_id)
+        .eq('custom_overridable', true)
+
+      const validFieldIds = new Set(validFields?.map((f) => f.id) ?? [])
+
+      const valuesToUpsert = custom_values
+        .filter((cv: { field_id: string }) => validFieldIds.has(cv.field_id))
+        .map((cv: { field_id: string; value: string }) => ({
+          claim_id: id,
+          field_id: cv.field_id,
+          value: cv.value,
+        }))
+
+      if (valuesToUpsert.length > 0) {
+        const { error: cvError } = await supabase
+          .from('pdf_custom_values')
+          .upsert(valuesToUpsert, { onConflict: 'claim_id,field_id' })
+
+        if (cvError) {
+          return NextResponse.json({ error: cvError.message }, { status: 500 })
+        }
+      }
+    }
+  } else if (status === 'approved') {
     updateData.english_level = english_level.trim()
     updateData.speaking_clubs_count = speaking_clubs_count
     if (hours_participated != null) {

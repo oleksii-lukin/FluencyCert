@@ -37,7 +37,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      certificate_claims: {
+        certificate_claims: {
         Row: {
           admin_feedback: string | null
           background_template: string | null
@@ -45,6 +45,7 @@ export type Database = {
           english_level: string | null
           hours_participated: number | null
           id: string
+          pdf_template_id: string | null
           slug: string
           speaking_clubs_count: number | null
           status: string
@@ -58,6 +59,7 @@ export type Database = {
           english_level?: string | null
           hours_participated?: number | null
           id?: string
+          pdf_template_id?: string | null
           slug?: string
           speaking_clubs_count?: number | null
           status?: string
@@ -71,6 +73,7 @@ export type Database = {
           english_level?: string | null
           hours_participated?: number | null
           id?: string
+          pdf_template_id?: string | null
           slug?: string
           speaking_clubs_count?: number | null
           status?: string
@@ -179,6 +182,143 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pdf_custom_values: {
+        Row: {
+          claim_id: string
+          created_at: string
+          field_id: string
+          id: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          claim_id: string
+          created_at?: string
+          field_id: string
+          id?: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          claim_id?: string
+          created_at?: string
+          field_id?: string
+          id?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_custom_values_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdf_custom_values_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_template_fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_template_fields: {
+        Row: {
+          created_at: string
+          custom_default_value: string | null
+          custom_overridable: boolean
+          display_label: string
+          font_family: string
+          font_size: number
+          font_source: string
+          id: string
+          is_enabled: boolean
+          pdf_field_name: string
+          sort_order: number
+          source_key: string | null
+          source_type: string
+          template_id: string
+          updated_at: string
+          uploaded_font_key: string | null
+        }
+        Insert: {
+          created_at?: string
+          custom_default_value?: string | null
+          custom_overridable?: boolean
+          display_label: string
+          font_family?: string
+          font_size?: number
+          font_source?: string
+          id?: string
+          is_enabled?: boolean
+          pdf_field_name: string
+          sort_order?: number
+          source_key?: string | null
+          source_type: string
+          template_id: string
+          updated_at?: string
+          uploaded_font_key?: string | null
+        }
+        Update: {
+          created_at?: string
+          custom_default_value?: string | null
+          custom_overridable?: boolean
+          display_label?: string
+          font_family?: string
+          font_size?: number
+          font_source?: string
+          id?: string
+          is_enabled?: boolean
+          pdf_field_name?: string
+          sort_order?: number
+          source_key?: string | null
+          source_type?: string
+          template_id?: string
+          updated_at?: string
+          uploaded_font_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_template_fields_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_key: string
+          file_url: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_key: string
+          file_url: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_key?: string
+          file_url?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

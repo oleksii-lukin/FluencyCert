@@ -1,14 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslations } from 'next-intl'
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+
+interface PdfTemplate {
+  id: string
+  name: string
+}
+
+interface OverridableField {
+  id: string
+  display_label: string
+  custom_default_value: string | null
+  pdf_field_name: string
+  custom_overridable: boolean
+}
 
 export function ClaimActions({ claimId }: { claimId: string }) {
   const t = useTranslations('admin')
   const ca = useTranslations('claimActions')
   const tn = useTranslations('templateNames')
+  const pt = useTranslations('adminPdfTemplates')
   const router = useRouter()
   const [open, setOpen] = useState<'approve' | 'reject' | null>(null)
   const [feedback, setFeedback] = useState("")
@@ -19,6 +33,43 @@ export function ClaimActions({ claimId }: { claimId: string }) {
   const [slug, setSlug] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+
+  const [certType, setCertType] = useState<'react' | 'pdf'>('react')
+  const [pdfTemplates, setPdfTemplates] = useState<PdfTemplate[]>([])
+  const [selectedPdfTemplate, setSelectedPdfTemplate] = useState("")
+  const [overridableFields, setOverridableFields] = useState<OverridableField[]>([])
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (certType === 'pdf') {
+      fetch('/api/admin/pdf-templates')
+        .then((r) => r.json())
+        .then((data) => setPdfTemplates(data.templates ?? []))
+        .catch(() => {})
+    }
+  }, [certType])
+
+  function handleTemplateChange(templateId: string) {
+    setSelectedPdfTemplate(templateId)
+    setOverridableFields([])
+    setCustomFieldValues({})
+
+    if (!templateId) return
+
+    fetch(`/api/admin/pdf-templates/${templateId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const fields = data.template?.pdf_template_fields ?? []
+        const overridable = fields.filter((f: OverridableField) => f.custom_overridable === true)
+        setOverridableFields(overridable)
+        const defaults: Record<string, string> = {}
+        for (const f of overridable) {
+          defaults[f.id] = f.custom_default_value ?? ''
+        }
+        setCustomFieldValues(defaults)
+      })
+      .catch(() => {})
+  }
 
   async function handleSubmit(status: 'approved' | 'rejected') {
     setSubmitting(true)
@@ -33,9 +84,19 @@ export function ClaimActions({ claimId }: { claimId: string }) {
     if (status === 'approved') {
       body.english_level = englishLevel.trim()
       body.speaking_clubs_count = parseInt(speakingClubsCount, 10)
-      body.background_template = backgroundTemplate
+      if (certType === 'react') {
+        body.background_template = backgroundTemplate
+      }
       if (hoursParticipated) {
         body.hours_participated = parseInt(hoursParticipated, 10)
+      }
+
+      if (certType === 'pdf') {
+        body.pdf_template_id = selectedPdfTemplate
+        body.custom_values = Object.entries(customFieldValues).map(([field_id, value]) => ({
+          field_id,
+          value,
+        }))
       }
     }
 
@@ -58,6 +119,10 @@ export function ClaimActions({ claimId }: { claimId: string }) {
     setSpeakingClubsCount("")
     setHoursParticipated("")
     setSlug("")
+    setSelectedPdfTemplate("")
+    setCertType('react')
+    setOverridableFields([])
+    setCustomFieldValues({})
     router.refresh()
   }
 
@@ -83,7 +148,7 @@ export function ClaimActions({ claimId }: { claimId: string }) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setOpen(null)}>
           <div
-            className="w-full max-w-lg rounded-xl border bg-white p-6 shadow-xl dark:bg-graphite"
+            className="w-full max-w-lg rounded-xl border bg-white p-6 shadow-xl dark:bg-graphite max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold mb-2">
@@ -96,6 +161,49 @@ export function ClaimActions({ claimId }: { claimId: string }) {
             <div className="space-y-4">
               {open === 'approve' && (
                 <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{pt('certificateType')}</label>
+                    <select
+                      className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                      value={certType}
+                      onChange={(e) => setCertType(e.target.value as 'react' | 'pdf')}
+                    >
+                      <option value="react">{pt('typeReact')}</option>
+                      <option value="pdf">{pt('typePdf')}</option>
+                    </select>
+                  </div>
+
+                  {certType === 'pdf' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">{pt('pdfTemplate')}</label>
+                        <select
+                          className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                          value={selectedPdfTemplate}
+                          onChange={(e) => handleTemplateChange(e.target.value)}
+                        >
+                          <option value="">{pt('selectTemplate')}</option>
+                          {pdfTemplates.map((ptpl) => (
+                            <option key={ptpl.id} value={ptpl.id}>{ptpl.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {overridableFields.map((field) => (
+                        <div key={field.id}>
+                          <label className="block text-sm font-medium mb-1">{field.display_label}</label>
+                          <input
+                            type="text"
+                            className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                            placeholder={field.display_label}
+                            value={customFieldValues[field.id] ?? ''}
+                            onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [field.id]: e.target.value }))}
+                          />
+                        </div>
+                      ))}
+                    </>
+                  )}
+
                   <div>
                     <label className="block text-sm font-medium mb-1">{ca('englishLevel')}</label>
                     <select
@@ -134,21 +242,23 @@ export function ClaimActions({ claimId }: { claimId: string }) {
                       onChange={(e) => setHoursParticipated(e.target.value)}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{ca('backgroundTemplate')}</label>
-                    <select
-                      className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                      value={backgroundTemplate}
-                      onChange={(e) => setBackgroundTemplate(e.target.value)}
-                    >
-                      <option value="modern-glass">{tn('modernGlass')}</option>
-                      <option value="guilloche-security">{tn('guillocheSecurity')}</option>
-                      <option value="neubrutal">{tn('neubrutal')}</option>
-                      <option value="memphis-retro">{tn('memphisRetro')}</option>
-                      <option value="cyber-neon">{tn('cyberNeon')}</option>
-                      <option value="natural-green">{tn('naturalGreen')}</option>
-                    </select>
-                  </div>
+                  {certType !== 'pdf' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{ca('backgroundTemplate')}</label>
+                      <select
+                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                        value={backgroundTemplate}
+                        onChange={(e) => setBackgroundTemplate(e.target.value)}
+                      >
+                        <option value="modern-glass">{tn('modernGlass')}</option>
+                        <option value="guilloche-security">{tn('guillocheSecurity')}</option>
+                        <option value="neubrutal">{tn('neubrutal')}</option>
+                        <option value="memphis-retro">{tn('memphisRetro')}</option>
+                        <option value="cyber-neon">{tn('cyberNeon')}</option>
+                        <option value="natural-green">{tn('naturalGreen')}</option>
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium mb-1">
                       {ca('customSlug')}{' '}
@@ -194,7 +304,8 @@ export function ClaimActions({ claimId }: { claimId: string }) {
                 disabled={
                   !feedback.trim() ||
                   submitting ||
-                  (open === 'approve' && (!englishLevel || !speakingClubsCount))
+                  (open === 'approve' && (!englishLevel || !speakingClubsCount)) ||
+                  (open === 'approve' && certType === 'pdf' && !selectedPdfTemplate)
                 }
                 onClick={() => handleSubmit(open === 'approve' ? 'approved' : 'rejected')}
                 className={open === 'approve'
