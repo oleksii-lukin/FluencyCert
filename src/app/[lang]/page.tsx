@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Navbar } from "@/components/landing/navbar"
@@ -9,6 +10,33 @@ import { TestimonialsSection } from "@/components/landing/testimonials-section"
 import { StatsSection } from "@/components/landing/stats-section"
 import { CTASection } from "@/components/landing/cta-section"
 import { Footer } from "@/components/landing/footer"
+
+const baseUrl = 'https://fluencycert.com'
+
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'meta' })
+
+  return {
+    title: t('landingTitle'),
+    description: t('description'),
+    alternates: {
+      canonical: `/${lang}`,
+      languages: {
+        en: `${baseUrl}/en`,
+        uk: `${baseUrl}/uk`,
+      },
+    },
+    openGraph: {
+      title: t('ogTitle'),
+      description: t('ogDescription'),
+      url: `${baseUrl}/${lang}`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+  }
+}
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { userId } = await auth()

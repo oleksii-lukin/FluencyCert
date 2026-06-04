@@ -3,6 +3,37 @@ import { Link } from '@/i18n/routing'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft02Icon } from '@hugeicons/core-free-icons'
 
+const baseUrl = 'https://fluencycert.com'
+
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'meta' })
+
+  return {
+    title: t('privacyTitle'),
+    description: t('privacyDescription'),
+    alternates: {
+      canonical: `/${lang}/privacy`,
+      languages: {
+        en: `${baseUrl}/en/privacy`,
+        uk: `${baseUrl}/uk/privacy`,
+      },
+    },
+    openGraph: {
+      title: t('privacyTitle'),
+      description: t('privacyDescription'),
+      url: `${baseUrl}/${lang}/privacy`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+    robots: {
+      index: false,
+      follow: true,
+    },
+  }
+}
+
 export default async function PrivacyPage({ params }: { params: Promise<{ lang: string }> }) {
   const t = await getTranslations('privacy')
 

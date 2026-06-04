@@ -16,8 +16,10 @@ interface PageProps {
   params: Promise<{ lang: string; slug: string }>
 }
 
+const baseUrl = 'https://fluencycert.com'
+
 export async function generateMetadata({ params }: PageProps) {
-  const { slug } = await params
+  const { lang, slug } = await params
   const supabase = createAdminClient()
   const { data: claim } = await supabase
     .from('certificate_claims')
@@ -35,6 +37,33 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: meta('certificateTitle', { name }),
     description: meta('certificateDescription', { name }),
+    alternates: {
+      canonical: `/${lang}/certificate/${slug}`,
+      languages: {
+        en: `${baseUrl}/en/certificate/${slug}`,
+        uk: `${baseUrl}/uk/certificate/${slug}`,
+      },
+    },
+    openGraph: {
+      title: meta('certificateTitle', { name }),
+      description: meta('certificateDescription', { name }),
+      url: `${baseUrl}/${lang}/certificate/${slug}`,
+      type: 'profile',
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: `${name} — FluencyCert Certificate`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: meta('certificateTitle', { name }),
+      description: meta('certificateDescription', { name }),
+      images: ['/og-image.png'],
+    },
   }
 }
 
@@ -177,8 +206,32 @@ export default async function CertificatePage({ params }: PageProps) {
     }
   }
 
+  const certJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Certification',
+    name: 'English Proficiency Certificate',
+    url: `${baseUrl}/${lang}/certificate/${claim.slug}`,
+    certificationStatus: 'CertificationActive',
+    issuedBy: {
+      '@type': 'Organization',
+      name: 'FluencyCert',
+      url: baseUrl,
+    },
+    credentialSubject: {
+      '@type': 'Person',
+      name: fullName,
+    },
+    validFrom: claim.created_at,
+    description: `${claim.english_level || 'English'} proficiency verified through speaking club participation.`,
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(certJsonLd) }}
+      />
+      <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <div className="mx-auto max-w-6xl px-4 py-6">
         <Link
           href="/"
@@ -245,5 +298,6 @@ export default async function CertificatePage({ params }: PageProps) {
         </div>
       </div>
     </div>
+    </>
   )
 }

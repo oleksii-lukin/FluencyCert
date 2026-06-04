@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block admin areas
+Disallow: /en/admin/
+Disallow: /uk/admin/
+Disallow: /admin/
+
+Sitemap: https://fluencycert.com/sitemap.xml

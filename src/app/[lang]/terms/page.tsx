@@ -3,6 +3,37 @@ import { Link } from '@/i18n/routing'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft02Icon } from '@hugeicons/core-free-icons'
 
+const baseUrl = 'https://fluencycert.com'
+
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'meta' })
+
+  return {
+    title: t('termsTitle'),
+    description: t('termsDescription'),
+    alternates: {
+      canonical: `/${lang}/terms`,
+      languages: {
+        en: `${baseUrl}/en/terms`,
+        uk: `${baseUrl}/uk/terms`,
+      },
+    },
+    openGraph: {
+      title: t('termsTitle'),
+      description: t('termsDescription'),
+      url: `${baseUrl}/${lang}/terms`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+    robots: {
+      index: false,
+      follow: true,
+    },
+  }
+}
+
 export default async function TermsPage({ params }: { params: Promise<{ lang: string }> }) {
   const t = await getTranslations('terms')
 

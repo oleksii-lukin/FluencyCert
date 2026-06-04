@@ -2,6 +2,33 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+const baseUrl = 'https://fluencycert.com'
+
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'meta' })
+
+  return {
+    title: t('clubsTitle'),
+    description: t('clubsDescription'),
+    alternates: {
+      canonical: `/${lang}/clubs`,
+      languages: {
+        en: `${baseUrl}/en/clubs`,
+        uk: `${baseUrl}/uk/clubs`,
+      },
+    },
+    openGraph: {
+      title: t('clubsTitle'),
+      description: t('clubsDescription'),
+      url: `${baseUrl}/${lang}/clubs`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+  }
+}
+
 export default async function ClubsPage() {
   const t = await getTranslations('clubs')
   const supabase = createAdminClient()

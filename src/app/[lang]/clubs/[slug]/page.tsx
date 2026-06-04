@@ -6,6 +6,41 @@ import { ClubJoinButton } from './club-join-button'
 import { ClubClaimButton } from './club-claim-button'
 import { CertificateHolders } from './certificate-holders'
 
+const baseUrl = 'https://fluencycert.com'
+
+export async function generateMetadata({ params }: { params: Promise<{ lang: string; slug: string }> }) {
+  const { lang, slug } = await params
+  const supabase = createAdminClient()
+  const { data: club } = await supabase
+    .from('speaking_clubs')
+    .select('name')
+    .eq('slug', slug)
+    .single()
+
+  const clubName = club?.name ?? slug
+  const t = await getTranslations({ locale: lang, namespace: 'meta' })
+
+  return {
+    title: t('clubTitle', { name: clubName }),
+    description: t('clubDescription', { name: clubName }),
+    alternates: {
+      canonical: `/${lang}/clubs/${slug}`,
+      languages: {
+        en: `${baseUrl}/en/clubs/${slug}`,
+        uk: `${baseUrl}/uk/clubs/${slug}`,
+      },
+    },
+    openGraph: {
+      title: t('clubTitle', { name: clubName }),
+      description: t('clubDescription', { name: clubName }),
+      url: `${baseUrl}/${lang}/clubs/${slug}`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+  }
+}
+
 export default async function ClubDetailPage({
   params,
   searchParams,

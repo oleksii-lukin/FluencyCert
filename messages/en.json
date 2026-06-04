@@ -7,7 +7,17 @@
     "certificateTitle": "{name} - FluencyCert Certificate",
     "certificateDescription": "View {name}'s English proficiency certificate on FluencyCert.",
     "notFoundTitle": "Certificate Not Found - FluencyCert",
-    "landingTitle": "FluencyCert - Prove Your English Fluency with a Verified Speaking Certificate"
+    "landingTitle": "FluencyCert - Prove Your English Fluency with a Verified Speaking Certificate",
+    "clubsTitle": "Speaking Clubs - FluencyCert",
+    "clubsDescription": "Find and join English speaking clubs in the community. Browse clubs, see member counts, and start your speaking journey.",
+    "clubTitle": "{name} - Speaking Club | FluencyCert",
+    "clubDescription": "Join {name} speaking club on FluencyCert. Connect with members, earn certificates, and showcase your English proficiency.",
+    "galleryTitle": "Certificate Templates - FluencyCert",
+    "galleryDescription": "Browse all available certificate templates for your verified English speaking certificate. Choose the style that best represents your achievement.",
+    "termsTitle": "Terms of Service - FluencyCert",
+    "termsDescription": "FluencyCert terms of service. Learn about user accounts, certificate claims, community guidelines, and intellectual property.",
+    "privacyTitle": "Privacy Policy - FluencyCert",
+    "privacyDescription": "FluencyCert privacy policy. Learn how we collect, use, and protect your personal information."
   },
   "nav": {
     "howItWorks": "How it works",

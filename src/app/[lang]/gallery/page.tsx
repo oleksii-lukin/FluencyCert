@@ -5,6 +5,33 @@ import { ArrowLeft02Icon } from "@hugeicons/core-free-icons"
 import { listTemplates } from "@/components/certificate/template-registry"
 import { CertificateRenderer } from "@/components/certificate/certificate-renderer"
 
+const baseUrl = 'https://fluencycert.com'
+
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'meta' })
+
+  return {
+    title: t('galleryTitle'),
+    description: t('galleryDescription'),
+    alternates: {
+      canonical: `/${lang}/gallery`,
+      languages: {
+        en: `${baseUrl}/en/gallery`,
+        uk: `${baseUrl}/uk/gallery`,
+      },
+    },
+    openGraph: {
+      title: t('galleryTitle'),
+      description: t('galleryDescription'),
+      url: `${baseUrl}/${lang}/gallery`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+  }
+}
+
 const fakeUsers: Record<string, {
   fullName: string
   englishLevel: string

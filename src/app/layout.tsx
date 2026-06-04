@@ -20,16 +20,44 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const baseUrl = 'https://fluencycert.com'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: "FluencyCert - Prove Your English Fluency with a Verified Speaking Certificate",
   description:
     "Showcase your speaking club certificate, prove your English proficiency, and get feedback & reactions from the community.",
   openGraph: {
+    type: 'website',
+    siteName: 'FluencyCert',
+    url: baseUrl,
     title: "FluencyCert - Speaking Club Certificate Platform",
     description:
       "Upload your speaking certificate, share your journey, and let the community celebrate your progress.",
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'FluencyCert — Verified English Speaking Certificates',
+      },
+    ],
   },
-};
+  twitter: {
+    card: 'summary_large_image',
+    title: "FluencyCert - Speaking Club Certificate Platform",
+    description:
+      "Upload your speaking certificate, share your journey, and let the community celebrate your progress.",
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  other: {
+    'apple-mobile-web-app-title': 'FluencyCert',
+  },
+}
 
 export default function RootLayout({
   children,
@@ -47,9 +75,6 @@ export default function RootLayout({
         outfit.variable,
       )}
     >
-      <head>
-        <meta name="apple-mobile-web-app-title" content="" />
-      </head>
       <body className="min-h-full flex flex-col">
         <ClerkProvider>{children}</ClerkProvider>
       </body>
