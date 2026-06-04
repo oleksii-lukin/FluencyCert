@@ -54,6 +54,12 @@ export async function Sidebar({
             >
               {t('pdfTemplates')}
             </Link>
+            <Link
+              href="/admin/fonts"
+              className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              {t('fonts')}
+            </Link>
           </>
         )}
 
@@ -91,6 +97,12 @@ export async function Sidebar({
                   className="rounded-lg px-6 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                   {t('pdfTemplates')}
+                </Link>
+                <Link
+                  href="/admin/fonts"
+                  className="rounded-lg px-6 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  {t('fonts')}
                 </Link>
                 <Link
                   href={`/admin/clubs/${club.slug}/settings`}

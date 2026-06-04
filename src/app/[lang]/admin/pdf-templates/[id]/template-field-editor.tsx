@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { FontPicker } from '@/components/ui/font-picker'
+import { uploadFiles } from '@/lib/uploadthing'
 
 type SourceType = 'database' | 'custom' | 'qr_code'
 
@@ -20,6 +22,11 @@ interface FieldMapping {
   custom_default_value: string | null
   custom_overridable: boolean
   sort_order: number
+}
+
+interface UploadedFont {
+  key: string
+  name: string
 }
 
 interface TemplateData {
@@ -40,14 +47,6 @@ const DATABASE_SOURCE_KEYS = [
   { key: 'slug', label: 'Certificate Slug' },
 ]
 
-const FONT_FAMILIES = [
-  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat',
-  'Poppins', 'Nunito', 'Raleway', 'Playfair Display', 'Lora',
-  'Merriweather', 'Crimson Text', 'EB Garamond', 'Oswald',
-  'Bebas Neue', 'Lobster', 'Pacifico', 'Caveat', 'Dancing Script',
-  'Fira Code', 'JetBrains Mono', 'Space Mono',
-]
-
 export function TemplateFieldEditor({ templateId, lang }: { templateId: string; lang: string }) {
   const t = useTranslations('adminPdfTemplates')
   const router = useRouter()
@@ -58,6 +57,8 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [showPdfPreview, setShowPdfPreview] = useState(false)
+  const [uploadedFonts, setUploadedFonts] = useState<UploadedFont[]>([])
+  const [uploadingFont, setUploadingFont] = useState(false)
 
   useEffect(() => {
     fetch(`/api/admin/pdf-templates/${templateId}`)
@@ -69,6 +70,13 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       })
       .catch(() => setLoading(false))
   }, [templateId])
+
+  useEffect(() => {
+    fetch('/api/admin/fonts/uploaded')
+      .then((r) => r.json())
+      .then((data) => setUploadedFonts(data.fonts ?? []))
+      .catch(() => {})
+  }, [])
 
   const updateField = useCallback((index: number, updates: Partial<FieldMapping>) => {
     setFields((prev) => prev.map((f, i) => (i === index ? { ...f, ...updates } : f)))
@@ -328,20 +336,99 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
             </div>
 
             <div className="grid grid-cols-2 gap-4 border-t pt-4">
-              <div>
-                <label className="block text-xs font-medium mb-1 text-muted-foreground">
-                  {t('fontFamily')}
+              <div className="col-span-2">
+                <label className="block text-xs font-medium mb-2 text-muted-foreground">
+                  {t('fontSource')}
                 </label>
-                <select
-                  className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                  value={field.font_family}
-                  onChange={(e) => updateField(index, { font_family: e.target.value })}
-                >
-                  {FONT_FAMILIES.map((ff) => (
-                    <option key={ff} value={ff} style={{ fontFamily: ff }}>{ff}</option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateField(index, { font_source: 'google', uploaded_font_key: null })}
+                    className={`rounded-lg px-3 py-1.5 text-sm border transition-colors ${
+                      field.font_source === 'google'
+                        ? 'bg-bright-sky text-white border-bright-sky'
+                        : 'bg-background text-muted-foreground border hover:bg-muted'
+                    }`}
+                  >
+                    {t('fontSourceGoogle')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateField(index, { font_source: 'uploaded', font_family: '' })}
+                    className={`rounded-lg px-3 py-1.5 text-sm border transition-colors ${
+                      field.font_source === 'uploaded'
+                        ? 'bg-bright-sky text-white border-bright-sky'
+                        : 'bg-background text-muted-foreground border hover:bg-muted'
+                    }`}
+                  >
+                    {t('fontSourceUploaded')}
+                  </button>
+                </div>
               </div>
+
+              {field.font_source === 'google' ? (
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                    {t('fontFamily')}
+                  </label>
+                  <FontPicker
+                    value={field.font_family}
+                    onChange={(family) => updateField(index, { font_family: family })}
+                    width={300}
+                    height={250}
+                  />
+                </div>
+              ) : (
+                <div className="col-span-2 space-y-2">
+                  <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                    {t('uploadedFont')}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="flex-1 rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                      value={field.uploaded_font_key ?? ''}
+                      onChange={(e) => {
+                        const selected = uploadedFonts.find((uf) => uf.key === e.target.value)
+                        updateField(index, {
+                          uploaded_font_key: e.target.value || null,
+                          font_family: selected?.name ?? '',
+                        })
+                      }}
+                    >
+                      <option value="">{t('selectUploadedFont')}</option>
+                      {uploadedFonts.map((uf) => (
+                        <option key={uf.key} value={uf.key}>{uf.name}</option>
+                      ))}
+                    </select>
+                    <label className="cursor-pointer rounded-lg border px-3 py-2 text-sm hover:bg-muted">
+                      {uploadingFont ? t('uploading') : t('upload')}
+                      <input
+                        type="file"
+                        accept=".ttf"
+                        className="hidden"
+                        disabled={uploadingFont}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          if (!file.name.endsWith('.ttf')) return
+                          setUploadingFont(true)
+                          try {
+                            await uploadFiles('fontFileUpload', { files: [file] })
+                            const res = await fetch('/api/admin/fonts/uploaded')
+                            const data = await res.json()
+                            setUploadedFonts(data.fonts ?? [])
+                          } catch {
+                            /* ignore */
+                          } finally {
+                            setUploadingFont(false)
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-medium mb-1 text-muted-foreground">
                   {t('fontSize')}
@@ -360,7 +447,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                   <p className="text-xs text-muted-foreground mb-1">{t('preview')}</p>
                   <p
                     style={{
-                      fontFamily: field.font_family,
+                      fontFamily: field.font_source === 'uploaded' ? '"UploadedFontPreview"' : field.font_family,
                       fontSize: `${Math.min(field.font_size, 48)}px`,
                       lineHeight: 1.2,
                     }}
