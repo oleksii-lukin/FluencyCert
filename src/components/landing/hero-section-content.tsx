@@ -4,8 +4,7 @@ import Image from "next/image"
 import { Link } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { SparklesIcon, UserGroupIcon, MedalFirstPlaceIcon } from "@hugeicons/core-free-icons"
-import { ClaimCertificateButton } from "@/components/landing/claim-certificate-button"
+import { SparklesIcon, UserGroupIcon, MedalFirstPlaceIcon, ArrowRight02Icon } from "@hugeicons/core-free-icons"
 
 type HeroSectionContentProps = {
   title: string
@@ -59,10 +58,12 @@ export function HeroSectionContent({
             </p>
 
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row">
-              <ClaimCertificateButton
-                label={claimButton}
-                className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20"
-              />
+              <Link href="/clubs">
+                <Button className="h-12 bg-bright-sky px-8 text-base text-white shadow-lg shadow-bright-sky/30 hover:bg-bright-sky/90 dark:shadow-bright-sky/20">
+                  {claimButton}
+                  <HugeiconsIcon icon={ArrowRight02Icon} className="ml-1.5 size-4" />
+                </Button>
+              </Link>
               <Link href="/gallery">
                 <Button className="h-12 bg-banana-cream px-8 text-base text-graphite shadow-lg shadow-banana-cream/25 hover:bg-banana-cream/90 dark:shadow-banana-cream/15">
                   {exploreGallery}

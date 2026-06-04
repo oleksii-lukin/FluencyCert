@@ -1,6 +1,7 @@
 import { createUploadthing, type FileRouter } from 'uploadthing/next'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getAdminClubIds, isMasterAdmin } from '@/lib/clubs'
 
 const f = createUploadthing()
 
@@ -11,13 +12,10 @@ export const ourFileRouter = {
       if (!userId) throw new Error('Unauthorized')
 
       const supabase = createAdminClient()
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', userId)
-        .single()
+      const isMaster = await isMasterAdmin(userId)
+      const adminClubIds = await getAdminClubIds(userId)
 
-      if (!profile?.is_admin) throw new Error('Forbidden')
+      if (!isMaster && adminClubIds.length === 0) throw new Error('Forbidden')
 
       return { userId }
     })

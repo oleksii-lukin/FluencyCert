@@ -3,10 +3,30 @@ import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
+import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
 
 const apiAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 30, characteristics: ["userId"] }),
 )
+
+async function checkTemplateAccess(userId: string, templateId: string, supabase: ReturnType<typeof createAdminClient>) {
+  const isMaster = await isMasterAdmin(userId)
+  if (isMaster) return null
+
+  const { data: tpl } = await supabase
+    .from('pdf_templates')
+    .select('club_id')
+    .eq('id', templateId)
+    .single()
+
+  if (!tpl) return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+  if (!tpl.club_id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const isAdmin = await isClubAdmin(userId, tpl.club_id)
+  if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  return null
+}
 
 export async function GET(
   request: Request,
@@ -26,18 +46,10 @@ export async function GET(
   }
 
   const supabase = createAdminClient()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', userId)
-    .single()
-
-  if (!profile?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
   const { id } = await params
+
+  const accessError = await checkTemplateAccess(userId, id, supabase)
+  if (accessError) return accessError
 
   const { data: template, error } = await supabase
     .from('pdf_templates')
@@ -75,18 +87,11 @@ export async function PATCH(
   }
 
   const supabase = createAdminClient()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', userId)
-    .single()
-
-  if (!profile?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
   const { id } = await params
+
+  const accessError = await checkTemplateAccess(userId, id, supabase)
+  if (accessError) return accessError
+
   const body = await request.json()
   const { name, description } = body
 
@@ -122,18 +127,10 @@ export async function DELETE(
   }
 
   const supabase = createAdminClient()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', userId)
-    .single()
-
-  if (!profile?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
   const { id } = await params
+
+  const accessError = await checkTemplateAccess(userId, id, supabase)
+  if (accessError) return accessError
 
   const { error } = await supabase
     .from('pdf_templates')

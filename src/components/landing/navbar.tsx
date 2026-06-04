@@ -64,6 +64,7 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
           <a href="#showcase" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('showcase')}</a>
           <a href="#features" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('features')}</a>
           <a href="#testimonials" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('testimonials')}</a>
+          <Link href="/clubs" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('clubs')}</Link>
         </div>
 
         <div className="flex items-center gap-3">

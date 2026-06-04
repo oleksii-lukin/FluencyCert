@@ -1,58 +1,52 @@
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { redirect } from '@/i18n/routing'
-import { getAdminClubIds, isMasterAdmin } from '@/lib/clubs'
+import { notFound, redirect } from 'next/navigation'
+import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
 import Image from 'next/image'
-import { ClaimActions } from './claim-actions'
-import { SlugDisplay } from './slug-display'
+import { ClaimActions } from '@/app/[lang]/admin/claims/claim-actions'
+import { SlugDisplay } from '@/app/[lang]/admin/claims/slug-display'
 
-export default async function AdminClaimsPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
+export default async function AdminClubClaimsPage({
+  params,
+}: {
+  params: Promise<{ lang: string; slug: string }>
+}) {
+  const { lang, slug } = await params
   const { userId } = await auth()
-  if (!userId) redirect({ href: '/', locale: lang })
+  if (!userId) redirect(`/${lang}`)
 
-  const t = await getTranslations('admin')
   const supabase = createAdminClient()
+  const t = await getTranslations('admin')
+
+  const { data: club } = await supabase
+    .from('speaking_clubs')
+    .select('id, name')
+    .eq('slug', slug)
+    .single()
+
+  if (!club) notFound()
 
   const isMaster = await isMasterAdmin(userId)
-  const adminClubIds = await getAdminClubIds(userId)
+  const isClubAdm = await isClubAdmin(userId, club.id)
+  if (!isMaster && !isClubAdm) redirect(`/${lang}/admin`)
 
-  if (!isMaster && adminClubIds.length === 0) {
-    redirect({ href: '/', locale: lang })
-  }
-
-  let query = supabase
+  const { data: claims } = await supabase
     .from('certificate_claims')
     .select('*, profiles!inner(id, email, first_name, last_name, avatar_url)')
+    .eq('club_id', club.id)
     .order('created_at', { ascending: false })
-
-  if (!isMaster && adminClubIds.length > 0) {
-    query = query.in('club_id', adminClubIds)
-  }
-
-  if (!isMaster && adminClubIds.length === 0) {
-    redirect({ href: '/', locale: lang })
-  }
-
-  const { data: claims } = await query
-
-  const clubIds = [...new Set((claims ?? []).map((c) => c.club_id).filter(Boolean))]
-  const { data: clubs } = clubIds.length > 0
-    ? await supabase.from('speaking_clubs').select('id, name').in('id', clubIds)
-    : { data: [] }
-  const clubMap = new Map((clubs ?? []).map((c) => [c.id, c.name]))
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">{t('certificateClaims')}</h1>
+      <h1 className="text-3xl font-bold mb-2">{club.name}</h1>
+      <p className="text-muted-foreground mb-8">{t('certificateClaims')}</p>
 
       <div className="rounded-xl border overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('user')}</th>
-              {isMaster && <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('club')}</th>}
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('status')}</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('slugLabel')}</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t('submitted')}</th>
@@ -80,11 +74,6 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
                     </div>
                   </div>
                 </td>
-                {isMaster && (
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {claim.club_id ? clubMap.get(claim.club_id) || '—' : '—'}
-                  </td>
-                )}
                 <td className="px-4 py-3">
                   <StatusBadge status={claim.status} slug={claim.slug} t={t} lang={lang} />
                 </td>
@@ -108,7 +97,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
             ))}
             {(!claims || claims.length === 0) && (
               <tr>
-                <td colSpan={isMaster ? 7 : 6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                   {t('noClaimsFound')}
                 </td>
               </tr>

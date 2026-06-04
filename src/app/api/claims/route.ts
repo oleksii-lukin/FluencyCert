@@ -60,6 +60,22 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient()
 
+  const body = await request.json()
+  const clubId = body?.club_id
+
+  if (clubId) {
+    const { data: membership } = await supabase
+      .from('club_memberships')
+      .select('id')
+      .eq('club_id', clubId)
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (!membership) {
+      return NextResponse.json({ error: 'You are not a member of this club' }, { status: 403 })
+    }
+  }
+
   const { data: existing } = await supabase
     .from('certificate_claims')
     .select('id, status')
@@ -75,9 +91,11 @@ export async function POST(request: Request) {
   let error
   for (let attempt = 0; attempt < 5; attempt++) {
     const slug = generateSlug()
+    const insertData: Record<string, unknown> = { user_id: userId, status: 'pending', slug }
+    if (clubId) insertData.club_id = clubId
     const result = await supabase
       .from('certificate_claims')
-      .insert({ user_id: userId, status: 'pending', slug })
+      .insert(insertData)
       .select()
       .maybeSingle()
     claim = result.data

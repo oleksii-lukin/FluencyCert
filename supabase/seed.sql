@@ -97,6 +97,14 @@ DECLARE
   claim_admin_fb_idx INTEGER;
   used_reviewers INTEGER[];
   has_linkedin BOOLEAN;
+
+  -- Club variables
+  club_ids UUID[] := '{}';
+  temp_club_id UUID;
+  club_member_count INTEGER;
+  club_member_start INTEGER;
+  club_admin_offset INTEGER;
+  claim_member_idx INTEGER;
 BEGIN
 
   ---------------------------------------------------------------------------
@@ -122,13 +130,122 @@ BEGIN
   END LOOP;
 
   ---------------------------------------------------------------------------
-  -- 2. CERTIFICATE CLAIMS (65 approved + 10 pending)
+  -- 2. SPEAKING CLUBS (5 clubs)
   ---------------------------------------------------------------------------
-  FOR i IN 1..65 LOOP
-    claim_admin_fb_idx := 1 + floor(random() * array_length(claim_admin_feedback, 1))::INTEGER;
-    INSERT INTO certificate_claims (user_id, status, slug, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+  FOR i IN 1..5 LOOP
+    INSERT INTO speaking_clubs (name, slug, description, translations, created_at, updated_at)
     VALUES (
-      user_ids[i],
+      CASE i
+        WHEN 1 THEN 'SpeakEasy Club'
+        WHEN 2 THEN 'Fluent Speakers'
+        WHEN 3 THEN 'English Hub'
+        WHEN 4 THEN 'Confidence Talks'
+        WHEN 5 THEN 'Global Orators'
+      END,
+      CASE i
+        WHEN 1 THEN 'speakeasy'
+        WHEN 2 THEN 'fluent-speakers'
+        WHEN 3 THEN 'english-hub'
+        WHEN 4 THEN 'confidence-talks'
+        WHEN 5 THEN 'global-orators'
+      END,
+      CASE i
+        WHEN 1 THEN 'A relaxed speaking club for intermediate learners to practice conversations.'
+        WHEN 2 THEN 'Advanced speakers refining their fluency through structured debates.'
+        WHEN 3 THEN 'All-level English practice with focus on vocabulary building.'
+        WHEN 4 THEN 'Build your speaking confidence in a supportive environment.'
+        WHEN 5 THEN 'International speakers discussing global topics.'
+      END,
+      CASE i
+        WHEN 1 THEN '{"en":{"name":"SpeakEasy Club","description":"A relaxed speaking club for intermediate learners to practice conversations."},"uk":{"name":"SpeakEasy Club","description":"Розслаблений розмовний клуб для учнів середнього рівня."}}'
+        WHEN 2 THEN '{"en":{"name":"Fluent Speakers","description":"Advanced speakers refining their fluency through structured debates."},"uk":{"name":"Fluent Speakers","description":"Просунуті мовці, які вдосконалюють свою вільність через структуровані дебати."}}'
+        WHEN 3 THEN '{"en":{"name":"English Hub","description":"All-level English practice with focus on vocabulary building."},"uk":{"name":"English Hub","description":"Практика англійської для всіх рівнів з фокусом на розширення словникового запасу."}}'
+        WHEN 4 THEN '{"en":{"name":"Confidence Talks","description":"Build your speaking confidence in a supportive environment."},"uk":{"name":"Confidence Talks","description":"Розвивайте впевненість у мовленні в підтримуючому середовищі."}}'
+        WHEN 5 THEN '{"en":{"name":"Global Orators","description":"International speakers discussing global topics."},"uk":{"name":"Global Orators","description":"Міжнародні мовці, які обговорюють глобальні теми."}}'
+      END::jsonb,
+      NOW() - ((30 - i * 5)::INTEGER * INTERVAL '1 day'),
+      NOW() - (floor(random() * 10)::INTEGER * INTERVAL '1 day')
+    )
+    RETURNING id INTO temp_club_id;
+    club_ids := array_append(club_ids, temp_club_id);
+  END LOOP;
+
+  ---------------------------------------------------------------------------
+  -- 3. CLUB MEMBERSHIPS
+  --    Each club has 1 admin (user_2a0001 is master admin, club admins from pool)
+  --    Club 1: users 2-21 (20 members), admin: user_2a0002
+  --    Club 2: users 22-41 (20 members), admin: user_2a0003
+  --    Club 3: users 42-56 (15 members), admin: user_2a0004
+  --    Club 4: users 57-71 (15 members), admin: user_2a0005
+  --    Club 5: users 2-11 (10 members, overlapping), admin: user_2a0006
+  ---------------------------------------------------------------------------
+
+  -- Club 1 admin
+  INSERT INTO club_memberships (club_id, user_id, role, created_at)
+  VALUES (club_ids[1], 'user_2a0002', 'admin', NOW() - INTERVAL '25 days');
+
+  -- Club 1 members (users 2-21, skip user_2a0002 since already admin)
+  FOR i IN 3..21 LOOP
+    INSERT INTO club_memberships (club_id, user_id, role, created_at)
+    VALUES (club_ids[1], user_ids[i], 'member', NOW() - (random() * INTERVAL '20 days'));
+  END LOOP;
+
+  -- Club 2 admin
+  INSERT INTO club_memberships (club_id, user_id, role, created_at)
+  VALUES (club_ids[2], 'user_2a0003', 'admin', NOW() - INTERVAL '22 days');
+
+  -- Club 2 members (users 22-41)
+  FOR i IN 22..41 LOOP
+    INSERT INTO club_memberships (club_id, user_id, role, created_at)
+    VALUES (club_ids[2], user_ids[i], 'member', NOW() - (random() * INTERVAL '18 days'));
+  END LOOP;
+
+  -- Club 3 admin
+  INSERT INTO club_memberships (club_id, user_id, role, created_at)
+  VALUES (club_ids[3], 'user_2a0004', 'admin', NOW() - INTERVAL '20 days');
+
+  -- Club 3 members (users 42-56)
+  FOR i IN 42..56 LOOP
+    INSERT INTO club_memberships (club_id, user_id, role, created_at)
+    VALUES (club_ids[3], user_ids[i], 'member', NOW() - (random() * INTERVAL '15 days'));
+  END LOOP;
+
+  -- Club 4 admin
+  INSERT INTO club_memberships (club_id, user_id, role, created_at)
+  VALUES (club_ids[4], 'user_2a0005', 'admin', NOW() - INTERVAL '18 days');
+
+  -- Club 4 members (users 57-71)
+  FOR i IN 57..71 LOOP
+    INSERT INTO club_memberships (club_id, user_id, role, created_at)
+    VALUES (club_ids[4], user_ids[i], 'member', NOW() - (random() * INTERVAL '12 days'));
+  END LOOP;
+
+  -- Club 5 admin
+  INSERT INTO club_memberships (club_id, user_id, role, created_at)
+  VALUES (club_ids[5], 'user_2a0006', 'admin', NOW() - INTERVAL '16 days');
+
+  -- Club 5 members (users 2-11 except admin user_2a0006, overlapping with club 1)
+  FOR i IN 2..11 LOOP
+    CONTINUE WHEN i = 6;
+    INSERT INTO club_memberships (club_id, user_id, role, created_at)
+    VALUES (club_ids[5], user_ids[i], 'member', NOW() - (random() * INTERVAL '10 days'));
+  END LOOP;
+
+  ---------------------------------------------------------------------------
+  -- 4. CERTIFICATE CLAIMS (65 approved + 10 pending, club-scoped)
+  --    Club 1: 15 approved + 2 pending
+  --    Club 2: 15 approved + 2 pending
+  --    Club 3: 12 approved + 2 pending
+  --    Club 4: 12 approved + 2 pending
+  --    Club 5: 11 approved + 2 pending
+  ---------------------------------------------------------------------------
+
+  -- Club 1 claims (users 2-18 approved, users 19-20 pending)
+  FOR i IN 2..18 LOOP
+    claim_admin_fb_idx := 1 + floor(random() * array_length(claim_admin_feedback, 1))::INTEGER;
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    VALUES (
+      user_ids[i], club_ids[1],
       'approved',
       generate_certificate_slug(),
       claim_admin_feedback[claim_admin_fb_idx],
@@ -143,10 +260,10 @@ BEGIN
     cert_ids := array_append(cert_ids, temp_cert_id);
   END LOOP;
 
-  FOR i IN 66..75 LOOP
-    INSERT INTO certificate_claims (user_id, status, slug, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+  FOR i IN 19..20 LOOP
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
     VALUES (
-      user_ids[i],
+      user_ids[i], club_ids[1],
       'pending',
       generate_certificate_slug(),
       english_levels[1 + floor(random() * 4)::INTEGER],
@@ -158,10 +275,133 @@ BEGIN
     );
   END LOOP;
 
+  -- Club 2 claims (users 22-36 approved, users 37-38 pending)
+  FOR i IN 22..36 LOOP
+    claim_admin_fb_idx := 1 + floor(random() * array_length(claim_admin_feedback, 1))::INTEGER;
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    VALUES (
+      user_ids[i], club_ids[2],
+      'approved',
+      generate_certificate_slug(),
+      claim_admin_feedback[claim_admin_fb_idx],
+      english_levels[1 + floor(random() * 6)::INTEGER],
+      3 + floor(random() * 18)::INTEGER,
+      20 + floor(random() * 180)::INTEGER,
+      templates[1 + floor(random() * 6)::INTEGER],
+      NOW() - ((20 + floor(random() * 20))::INTEGER * INTERVAL '1 day'),
+      NOW() - (floor(random() * 10)::INTEGER * INTERVAL '1 day')
+    )
+    RETURNING id INTO temp_cert_id;
+    cert_ids := array_append(cert_ids, temp_cert_id);
+  END LOOP;
+
+  FOR i IN 37..38 LOOP
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    VALUES (
+      user_ids[i], club_ids[2],
+      'pending',
+      generate_certificate_slug(),
+      english_levels[1 + floor(random() * 4)::INTEGER],
+      1 + floor(random() * 8)::INTEGER,
+      5 + floor(random() * 40)::INTEGER,
+      templates[1 + floor(random() * 3)::INTEGER],
+      NOW() - (floor(random() * 7)::INTEGER * INTERVAL '1 day'),
+      NOW() - (floor(random() * 3)::INTEGER * INTERVAL '1 day')
+    );
+  END LOOP;
+
+  -- Club 3 claims (users 42-53 approved, users 54-55 pending)
+  FOR i IN 42..53 LOOP
+    claim_admin_fb_idx := 1 + floor(random() * array_length(claim_admin_feedback, 1))::INTEGER;
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    VALUES (
+      user_ids[i], club_ids[3],
+      'approved',
+      generate_certificate_slug(),
+      claim_admin_feedback[claim_admin_fb_idx],
+      english_levels[1 + floor(random() * 6)::INTEGER],
+      3 + floor(random() * 18)::INTEGER,
+      20 + floor(random() * 180)::INTEGER,
+      templates[1 + floor(random() * 6)::INTEGER],
+      NOW() - ((20 + floor(random() * 20))::INTEGER * INTERVAL '1 day'),
+      NOW() - (floor(random() * 10)::INTEGER * INTERVAL '1 day')
+    )
+    RETURNING id INTO temp_cert_id;
+    cert_ids := array_append(cert_ids, temp_cert_id);
+  END LOOP;
+
+  FOR i IN 54..55 LOOP
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    VALUES (
+      user_ids[i], club_ids[3],
+      'pending',
+      generate_certificate_slug(),
+      english_levels[1 + floor(random() * 4)::INTEGER],
+      1 + floor(random() * 8)::INTEGER,
+      5 + floor(random() * 40)::INTEGER,
+      templates[1 + floor(random() * 3)::INTEGER],
+      NOW() - (floor(random() * 7)::INTEGER * INTERVAL '1 day'),
+      NOW() - (floor(random() * 3)::INTEGER * INTERVAL '1 day')
+    );
+  END LOOP;
+
+  -- Club 4 claims (users 57-68 approved, users 69-70 pending)
+  FOR i IN 57..68 LOOP
+    claim_admin_fb_idx := 1 + floor(random() * array_length(claim_admin_feedback, 1))::INTEGER;
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    VALUES (
+      user_ids[i], club_ids[4],
+      'approved',
+      generate_certificate_slug(),
+      claim_admin_feedback[claim_admin_fb_idx],
+      english_levels[1 + floor(random() * 6)::INTEGER],
+      3 + floor(random() * 18)::INTEGER,
+      20 + floor(random() * 180)::INTEGER,
+      templates[1 + floor(random() * 6)::INTEGER],
+      NOW() - ((20 + floor(random() * 20))::INTEGER * INTERVAL '1 day'),
+      NOW() - (floor(random() * 10)::INTEGER * INTERVAL '1 day')
+    )
+    RETURNING id INTO temp_cert_id;
+    cert_ids := array_append(cert_ids, temp_cert_id);
+  END LOOP;
+
+  FOR i IN 69..70 LOOP
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    VALUES (
+      user_ids[i], club_ids[4],
+      'pending',
+      generate_certificate_slug(),
+      english_levels[1 + floor(random() * 4)::INTEGER],
+      1 + floor(random() * 8)::INTEGER,
+      5 + floor(random() * 40)::INTEGER,
+      templates[1 + floor(random() * 3)::INTEGER],
+      NOW() - (floor(random() * 7)::INTEGER * INTERVAL '1 day'),
+      NOW() - (floor(random() * 3)::INTEGER * INTERVAL '1 day')
+    );
+  END LOOP;
+
+  -- Club 5 claims (users 2-12 approved, users 13-14 pending — overlapping members)
+  FOR i IN 2..12 LOOP
+    claim_admin_fb_idx := 1 + floor(random() * array_length(claim_admin_feedback, 1))::INTEGER;
+    INSERT INTO certificate_claims (user_id, club_id, status, slug, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, created_at, updated_at)
+    VALUES (
+      user_ids[i], club_ids[5],
+      'approved',
+      generate_certificate_slug(),
+      claim_admin_feedback[claim_admin_fb_idx],
+      english_levels[1 + floor(random() * 6)::INTEGER],
+      3 + floor(random() * 18)::INTEGER,
+      20 + floor(random() * 180)::INTEGER,
+      templates[1 + floor(random() * 6)::INTEGER],
+      NOW() - ((20 + floor(random() * 20))::INTEGER * INTERVAL '1 day'),
+      NOW() - (floor(random() * 10)::INTEGER * INTERVAL '1 day')
+    )
+    RETURNING id INTO temp_cert_id;
+    cert_ids := array_append(cert_ids, temp_cert_id);
+  END LOOP;
+
   ---------------------------------------------------------------------------
-  -- 3. PEER FEEDBACK on approved certificates
-  --    15 certs with 21-30 feedback (3 rows), 20 with 11-20 (2 rows),
-  --    30 with 3-10 (1 row).  Tracks used reviewers per cert to avoid dupes.
+  -- 5. PEER FEEDBACK on approved certificates
   ---------------------------------------------------------------------------
   FOR i IN 1..array_length(cert_ids, 1) LOOP
     IF i <= 15 THEN
@@ -204,7 +444,7 @@ BEGIN
   END LOOP;
 
   ---------------------------------------------------------------------------
-  -- 4. ADMIN FEEDBACK on ~60% of approved certificates
+  -- 6. ADMIN FEEDBACK on ~60% of approved certificates
   ---------------------------------------------------------------------------
   FOR i IN 1..array_length(cert_ids, 1) LOOP
     IF random() < 0.6 THEN
@@ -225,8 +465,7 @@ BEGIN
   END LOOP;
 
   ---------------------------------------------------------------------------
-  -- 5. UPVOTES on approved certificates
-  --    Each cert gets 10-50 upvotes from random approved users.
+  -- 7. UPVOTES on approved certificates
   ---------------------------------------------------------------------------
   FOR i IN 1..array_length(cert_ids, 1) LOOP
     num_upvotes := 10 + floor(random() * 41)::INTEGER;

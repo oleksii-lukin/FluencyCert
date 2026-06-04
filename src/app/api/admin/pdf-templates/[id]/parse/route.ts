@@ -5,6 +5,7 @@ import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
 import { UTApi } from 'uploadthing/server'
 import { PDFDocument } from 'pdf-lib'
+import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
 
 const parseAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 10, characteristics: ["userId"] }),
@@ -64,18 +65,22 @@ export async function POST(
   }
 
   const supabase = createAdminClient()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', userId)
-    .single()
-
-  if (!profile?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
   const { id } = await params
+
+  const isMaster = await isMasterAdmin(userId)
+  if (!isMaster) {
+    const { data: tpl } = await supabase
+      .from('pdf_templates')
+      .select('club_id')
+      .eq('id', id)
+      .single()
+
+    if (!tpl) return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    if (!tpl.club_id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    const isAdmin = await isClubAdmin(userId, tpl.club_id)
+    if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { data: template } = await supabase
     .from('pdf_templates')

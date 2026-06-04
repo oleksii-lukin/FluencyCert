@@ -7,40 +7,18 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
-        certificate_claims: {
+      certificate_claims: {
         Row: {
           admin_feedback: string | null
           background_template: string | null
+          club_id: string | null
           created_at: string
           english_level: string | null
           hours_participated: number | null
@@ -55,12 +33,13 @@ export type Database = {
         Insert: {
           admin_feedback?: string | null
           background_template?: string | null
+          club_id?: string | null
           created_at?: string
           english_level?: string | null
           hours_participated?: number | null
           id?: string
           pdf_template_id?: string | null
-          slug?: string
+          slug: string
           speaking_clubs_count?: number | null
           status?: string
           updated_at?: string
@@ -69,6 +48,7 @@ export type Database = {
         Update: {
           admin_feedback?: string | null
           background_template?: string | null
+          club_id?: string | null
           created_at?: string
           english_level?: string | null
           hours_participated?: number | null
@@ -81,6 +61,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "certificate_claims_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "speaking_clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_claims_pdf_template_id_fkey"
+            columns: ["pdf_template_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "certificate_claims_user_id_fkey"
             columns: ["user_id"]
@@ -176,6 +170,45 @@ export type Database = {
           },
           {
             foreignKeyName: "certificate_upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_memberships: {
+        Row: {
+          club_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          club_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          club_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_memberships_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "speaking_clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_memberships_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -292,6 +325,7 @@ export type Database = {
       }
       pdf_templates: {
         Row: {
+          club_id: string | null
           created_at: string
           description: string | null
           file_key: string
@@ -301,6 +335,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          club_id?: string | null
           created_at?: string
           description?: string | null
           file_key: string
@@ -310,6 +345,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          club_id?: string | null
           created_at?: string
           description?: string | null
           file_key?: string
@@ -318,7 +354,15 @@ export type Database = {
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pdf_templates_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "speaking_clubs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -362,12 +406,42 @@ export type Database = {
         }
         Relationships: []
       }
+      speaking_clubs: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          translations: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          translations?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          translations?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_certificate_slug: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
@@ -496,9 +570,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

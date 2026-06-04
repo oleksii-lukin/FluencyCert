@@ -1,9 +1,17 @@
 import { getTranslations } from 'next-intl/server'
+import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { redirect } from '@/i18n/routing'
+import { isMasterAdmin } from '@/lib/clubs'
 import Image from 'next/image'
 
 export default async function AdminUsersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
+  const { userId } = await auth()
+
+  const isMaster = await isMasterAdmin(userId!)
+  if (!isMaster) redirect({ href: '/', locale: lang })
+
   const t = await getTranslations('admin')
   const supabase = createAdminClient()
 

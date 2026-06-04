@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
+import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
 
 const updateAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 30, characteristics: ["userId"] }),
@@ -27,14 +28,18 @@ export async function PATCH(
 
   const supabase = createAdminClient()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', userId)
-    .single()
+  const isMaster = await isMasterAdmin(userId)
 
-  if (!profile?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!isMaster) {
+    const { data: claim } = await supabase
+      .from('certificate_claims')
+      .select('club_id')
+      .eq('id', (await params).id)
+      .single()
+
+    if (!claim?.club_id || !(await isClubAdmin(userId, claim.club_id))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
   }
 
   const { id } = await params
