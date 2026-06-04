@@ -6,46 +6,11 @@ import { slidingWindow } from '@arcjet/next'
 import { UTApi } from 'uploadthing/server'
 import { PDFDocument } from 'pdf-lib'
 import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
+import { inferFieldMapping } from '@/lib/pdf-field-mapping'
 
 const parseAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 10, characteristics: ["userId"] }),
 )
-
-const DATABASE_FIELDS: Record<string, string> = {
-  recipientName: 'fullName',
-  fullName: 'fullName',
-  name: 'fullName',
-  englishLevel: 'englishLevel',
-  level: 'englishLevel',
-  speakingClubs: 'speakingClubsCount',
-  clubs: 'speakingClubsCount',
-  speakingClubsCount: 'speakingClubsCount',
-  hours: 'hoursParticipated',
-  hoursParticipated: 'hoursParticipated',
-  adminFeedback: 'adminFeedback',
-  feedback: 'adminFeedback',
-  createdAt: 'createdAt',
-  date: 'createdAt',
-  issuedOn: 'createdAt',
-  slug: 'slug',
-  certificateId: 'slug',
-  id: 'slug',
-  qrCode: 'qr_code',
-  qr: 'qr_code',
-}
-
-function inferMapping(pdfFieldName: string): { source_type: string; source_key: string | null } {
-  const lower = pdfFieldName.replace(/[\s_-]/g, '')
-  for (const [pattern, mapping] of Object.entries(DATABASE_FIELDS)) {
-    if (lower === pattern.toLowerCase()) {
-      if (mapping === 'qr_code') {
-        return { source_type: 'qr_code', source_key: null }
-      }
-      return { source_type: 'database', source_key: mapping }
-    }
-  }
-  return { source_type: 'custom', source_key: pdfFieldName }
-}
 
 export async function POST(
   request: Request,
@@ -119,7 +84,7 @@ export async function POST(
   const newFieldsData = detectedFields
     .filter((f) => !existingNames.has(f.pdf_field_name))
     .map((detected, index) => {
-      const mapping = inferMapping(detected.pdf_field_name)
+      const mapping = inferFieldMapping(detected.pdf_field_name)
       return {
         template_id: id,
         pdf_field_name: detected.pdf_field_name,

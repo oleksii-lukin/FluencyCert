@@ -5,10 +5,9 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { FontPicker } from '@/components/ui/font-picker'
 import { uploadFiles } from '@/lib/uploadthing'
+import { DATABASE_FIELD_MAP, type SourceType } from '@/lib/pdf-field-mapping'
 
-type SourceType = 'database' | 'custom' | 'qr_code'
-
-interface FieldMapping {
+type FieldMapping = {
   id: string
   pdf_field_name: string
   source_type: SourceType
@@ -36,16 +35,6 @@ interface TemplateData {
   file_url: string
   pdf_template_fields: FieldMapping[]
 }
-
-const DATABASE_SOURCE_KEYS = [
-  { key: 'fullName', label: 'Full Name' },
-  { key: 'englishLevel', label: 'English Level' },
-  { key: 'speakingClubsCount', label: 'Speaking Clubs Count' },
-  { key: 'hoursParticipated', label: 'Hours Participated' },
-  { key: 'adminFeedback', label: 'Admin Feedback' },
-  { key: 'createdAt', label: 'Created At' },
-  { key: 'slug', label: 'Certificate Slug' },
-]
 
 export function TemplateFieldEditor({ templateId, lang }: { templateId: string; lang: string }) {
   const t = useTranslations('adminPdfTemplates')
@@ -281,7 +270,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                     onChange={(e) => updateField(index, { source_key: e.target.value })}
                   >
                     <option value="">{t('selectField')}</option>
-                    {DATABASE_SOURCE_KEYS.map((dk) => (
+                    {DATABASE_FIELD_MAP.map((dk) => (
                       <option key={dk.key} value={dk.key}>{dk.label}</option>
                     ))}
                   </select>
