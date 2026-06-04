@@ -383,7 +383,10 @@
     "typeReact": "HTML шаблон (React)",
     "typePdf": "PDF шаблон",
     "pdfTemplate": "PDF шаблон",
-    "selectTemplate": "Виберіть PDF шаблон..."
+    "selectTemplate": "Виберіть PDF шаблон...",
+    "pdfFontsUsed": "Шрифти, використані в PDF",
+    "fontEmbedded": "Вбудований",
+    "fontStandard": "Стандартний"
   },
   "claimActions": {
     "approve": "Схвалити",

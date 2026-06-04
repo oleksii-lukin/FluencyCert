@@ -7,6 +7,7 @@ import { UTApi } from 'uploadthing/server'
 import { PDFDocument } from 'pdf-lib'
 import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
 import { inferFieldMapping } from '@/lib/pdf-field-mapping'
+import { extractPdfFonts } from '@/lib/pdf-fonts'
 
 const parseAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 10, characteristics: ["userId"] }),
@@ -67,6 +68,7 @@ export async function POST(
 
   const pdfBytes = await response.arrayBuffer()
   const pdfDoc = await PDFDocument.load(pdfBytes)
+  const pdfFonts = extractPdfFonts(pdfDoc)
   const form = pdfDoc.getForm()
   const fields = form.getFields()
 
@@ -121,5 +123,6 @@ export async function POST(
   return NextResponse.json({
     fields: allFields ?? [],
     newFieldsAdded: newFieldsData.length,
+    pdfFonts,
   })
 }

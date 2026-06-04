@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { FontPicker } from '@/components/ui/font-picker'
 import { uploadFiles } from '@/lib/uploadthing'
 import { DATABASE_FIELD_MAP, type SourceType } from '@/lib/pdf-field-mapping'
+import type { PdfFontInfo } from '@/lib/pdf-fonts'
 
 type FieldMapping = {
   id: string
@@ -48,6 +49,8 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const [showPdfPreview, setShowPdfPreview] = useState(false)
   const [uploadedFonts, setUploadedFonts] = useState<UploadedFont[]>([])
   const [uploadingFont, setUploadingFont] = useState(false)
+  const [pdfFonts, setPdfFonts] = useState<PdfFontInfo[]>([])
+  const [showPdfFonts, setShowPdfFonts] = useState(false)
 
   useEffect(() => {
     fetch(`/api/admin/pdf-templates/${templateId}`)
@@ -132,6 +135,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       }
       const data = await res.json()
       setFields(data.fields)
+      setPdfFonts(data.pdfFonts ?? [])
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Parse failed')
@@ -205,6 +209,34 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       {success && (
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600">
           {t('savedSuccess')}
+        </div>
+      )}
+
+      {pdfFonts.length > 0 && (
+        <div className="rounded-xl border p-4 space-y-3">
+          <button
+            type="button"
+            onClick={() => setShowPdfFonts(!showPdfFonts)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h3 className="text-sm font-semibold">{t('pdfFontsUsed')} ({pdfFonts.length})</h3>
+            <span className="text-xs text-muted-foreground">{showPdfFonts ? '▲' : '▼'}</span>
+          </button>
+          {showPdfFonts && (
+            <div className="space-y-1.5">
+              {pdfFonts.map((font) => (
+                <div key={font.name} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{font.name}</span>
+                    <span className="text-xs text-muted-foreground">{font.subtype}</span>
+                  </div>
+                  <span className={`text-xs ${font.embedded ? 'text-green-600' : 'text-amber-600'}`}>
+                    {font.embedded ? t('fontEmbedded') : t('fontStandard')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
