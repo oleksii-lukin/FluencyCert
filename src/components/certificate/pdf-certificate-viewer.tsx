@@ -70,7 +70,7 @@ export function PdfCertificateViewer({
       const pdfjsLib = pdfjsRef.current!
 
       // TODO: remove verbose [PDF] debug logs once font handling is stable
-      console.log('[PDF] Step 1: downloading template from', templateFileUrl)
+      console.log('[PDF] Step 1: downloading template')
       const pdfRes = await fetch(templateFileUrl)
       if (!pdfRes.ok) throw new Error('Failed to download template PDF')
       if (cancelled) return
@@ -98,12 +98,7 @@ export function PdfCertificateViewer({
         }
 
         try {
-          console.log('[PDF]   processing field', field.pdf_field_name, {
-            source_type: field.source_type,
-            font_family: field.font_family,
-            font_source: field.font_source,
-            uploaded_font_key: field.uploaded_font_key,
-          })
+          console.log('[PDF]   processing field', field.pdf_field_name)
           const pdfField = form.getTextField(field.pdf_field_name)
           if (cancelled) return
 
@@ -115,7 +110,6 @@ export function PdfCertificateViewer({
           }
 
           pdfField.setText(value)
-          console.log('[PDF]   set text:', JSON.stringify(value))
 
           const fontKey = `${field.font_family}-${field.font_source}-${field.uploaded_font_key}`
           if (!fieldFontCache[fontKey]) {
@@ -124,7 +118,7 @@ export function PdfCertificateViewer({
               console.log('[PDF]   loading google font:', field.font_family)
               fontBytes = await getGoogleFontBytes(field.font_family)
             } else if (field.uploaded_font_key) {
-              console.log('[PDF]   loading uploaded font key:', field.uploaded_font_key)
+              console.log('[PDF]   loading uploaded font')
               const fontRes = await fetch(`/api/fonts/uploaded?key=${field.uploaded_font_key}`)
               if (!fontRes.ok) throw new Error(`Font fetch returned ${fontRes.status}`)
               fontBytes = await fontRes.arrayBuffer()
@@ -133,10 +127,6 @@ export function PdfCertificateViewer({
               fontBytes = await getGoogleFontBytes(field.font_family)
             }
             console.log('[PDF]   font bytes:', fontBytes.byteLength)
-            const hexDump = Array.from(new Uint8Array(fontBytes.slice(0, 16)))
-              .map(b => b.toString(16).padStart(2, '0'))
-              .join(' ')
-            console.log('[PDF]   font header (first 16 bytes):', hexDump)
             fieldFontCache[fontKey] = new Uint8Array(fontBytes)
           }
 
@@ -187,7 +177,7 @@ export function PdfCertificateViewer({
           const rect = qrWidgets[0].getRectangle()
           console.log('[PDF]   QR rect:', rect)
 
-          console.log('[PDF]   generating QR code with URL:', certificateUrl)
+          console.log('[PDF]   generating QR code')
           const qr = new QrCodeWithLogo({
             content: certificateUrl,
             width: 300,
@@ -269,7 +259,7 @@ export function PdfCertificateViewer({
           await generate()
           return
         } catch (err) {
-          console.error('[PDF] ERROR:', err)
+          console.error('[PDF] ERROR:', err instanceof Error ? err.message : String(err))
           if (attempt === 0 && err instanceof RangeError) {
             console.log('[PDF] save failed, retrying with Helvetica fallback')
             clearFontCompatibilityCache()
