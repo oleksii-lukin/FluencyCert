@@ -389,7 +389,9 @@
     "selectTemplate": "Виберіть PDF шаблон...",
     "pdfFontsUsed": "Шрифти, використані в PDF",
     "fontEmbedded": "Вбудований",
-    "fontStandard": "Стандартний"
+    "fontStandard": "Стандартний",
+    "saveFont": "Зберегти шрифт",
+    "savingFont": "Збереження..."
   },
   "claimActions": {
     "approve": "Схвалити",
@@ -418,7 +420,10 @@
     "levelC2": "C2 (Досконалий)",
     "customSlug": "Свій слаг",
     "customSlugHint": "(A–Z, 0–9, 1–20 символів)",
-    "slugPlaceholder": "напр. ELITE1 (залиште порожнім для автогенерації)"
+    "slugPlaceholder": "напр. ELITE1 (залиште порожнім для автогенерації)",
+    "update": "Оновити",
+    "updateTitle": "Оновити заявку",
+    "provideUpdateDetails": "Оновіть деталі сертифіката для цієї заявки."
   },
   "common": {
     "loading": "Завантаження..."

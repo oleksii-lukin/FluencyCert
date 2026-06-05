@@ -89,6 +89,21 @@ export default async function AdminClubClaimsPage({
                 <td className="px-4 py-3">
                   {claim.status === 'pending' ? (
                     <ClaimActions claimId={claim.id} />
+                  ) : claim.status === 'approved' ? (
+                    <ClaimActions
+                      claimId={claim.id}
+                      mode="update"
+                      initialData={{
+                        english_level: claim.english_level,
+                        speaking_clubs_count: claim.speaking_clubs_count,
+                        hours_participated: claim.hours_participated,
+                        background_template: claim.background_template,
+                        slug: claim.slug,
+                        admin_feedback: claim.admin_feedback,
+                        pdf_template_id: claim.pdf_template_id,
+                        status: claim.status,
+                      }}
+                    />
                   ) : (
                     <span className="text-xs text-muted-foreground">{t('processed')}</span>
                   )}

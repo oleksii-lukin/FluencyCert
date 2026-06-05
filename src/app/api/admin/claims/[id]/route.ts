@@ -66,7 +66,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'This slug is already in use' }, { status: 409 })
     }
 
-    if (!status) {
+    // Slug-only update shortcut (only non-status fields)
+    const hasOnlySlug = status === undefined &&
+      admin_feedback === undefined &&
+      english_level === undefined &&
+      speaking_clubs_count === undefined &&
+      hours_participated === undefined &&
+      background_template === undefined &&
+      pdf_template_id === undefined &&
+      custom_values === undefined
+
+    if (hasOnlySlug) {
       const { data: claim, error } = await supabase
         .from('certificate_claims')
         .update({ slug: upperSlug })
@@ -82,23 +92,6 @@ export async function PATCH(
     }
   }
 
-  if (!status || !['approved', 'rejected'].includes(status)) {
-    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
-  }
-
-  if (typeof admin_feedback !== 'string' || admin_feedback.trim().length === 0) {
-    return NextResponse.json({ error: 'admin_feedback is required' }, { status: 400 })
-  }
-
-  if (status === 'approved') {
-    if (!english_level || typeof english_level !== 'string') {
-      return NextResponse.json({ error: 'english_level is required when approving' }, { status: 400 })
-    }
-    if (speaking_clubs_count == null || typeof speaking_clubs_count !== 'number') {
-      return NextResponse.json({ error: 'speaking_clubs_count is required when approving' }, { status: 400 })
-    }
-  }
-
   const { data: existing } = await supabase
     .from('certificate_claims')
     .select('id, status')
@@ -109,13 +102,29 @@ export async function PATCH(
     return NextResponse.json({ error: 'Claim not found' }, { status: 404 })
   }
 
-  if (existing.status !== 'pending') {
-    return NextResponse.json({ error: 'Claim is not pending' }, { status: 400 })
+  const isUpdate = status === undefined
+  const effectiveStatus = isUpdate ? existing.status : status
+
+  if (!isUpdate && (!status || !['approved', 'rejected'].includes(status))) {
+    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+  }
+
+  if (typeof admin_feedback !== 'string' || admin_feedback.trim().length === 0) {
+    return NextResponse.json({ error: 'admin_feedback is required' }, { status: 400 })
+  }
+
+  if (effectiveStatus === 'approved') {
+    if (!english_level || typeof english_level !== 'string') {
+      return NextResponse.json({ error: 'english_level is required when approving' }, { status: 400 })
+    }
+    if (speaking_clubs_count == null || typeof speaking_clubs_count !== 'number') {
+      return NextResponse.json({ error: 'speaking_clubs_count is required when approving' }, { status: 400 })
+    }
   }
 
   const updateData: {
-    status: string
-    admin_feedback: string
+    status?: string
+    admin_feedback?: string
     slug?: string
     pdf_template_id?: string
     english_level?: string
@@ -123,7 +132,7 @@ export async function PATCH(
     hours_participated?: number
     background_template?: string
   } = {
-    status,
+    status: effectiveStatus,
     admin_feedback: admin_feedback.trim(),
   }
 
@@ -179,7 +188,7 @@ export async function PATCH(
         }
       }
     }
-  } else if (status === 'approved') {
+  } else if (effectiveStatus === 'approved') {
     updateData.english_level = english_level.trim()
     updateData.speaking_clubs_count = speaking_clubs_count
     if (hours_participated != null) {

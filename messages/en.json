@@ -388,7 +388,9 @@
     "selectTemplate": "Select a PDF template...",
     "pdfFontsUsed": "Fonts Used in PDF",
     "fontEmbedded": "Embedded",
-    "fontStandard": "Standard"
+    "fontStandard": "Standard",
+    "saveFont": "Save Font",
+    "savingFont": "Saving..."
   },
   "claimActions": {
     "approve": "Approve",
@@ -417,7 +419,10 @@
     "levelC2": "C2 (Proficient)",
     "customSlug": "Custom Slug",
     "customSlugHint": "(A–Z, 0–9, 1–20 chars)",
-    "slugPlaceholder": "e.g. ELITE1 (leave blank to auto-generate)"
+    "slugPlaceholder": "e.g. ELITE1 (leave blank to auto-generate)",
+    "update": "Update",
+    "updateTitle": "Update Claim",
+    "provideUpdateDetails": "Update certificate details for this claim."
   },
   "common": {
     "loading": "Loading..."
