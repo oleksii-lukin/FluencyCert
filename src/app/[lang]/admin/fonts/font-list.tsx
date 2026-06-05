@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { uploadFiles } from '@/lib/uploadthing'
 import { testFontCompatibility } from '@/lib/font-compat'
+import { FontPreview } from './font-preview'
 
 interface UploadedFont {
   key: string
@@ -173,12 +174,17 @@ export function FontList() {
               {fonts.map((font) => (
                 <tr key={font.key} className="border-b last:border-0">
                   <td className="px-4 py-3 font-medium">
-                    {font.name}
-                    {incompatibleKeys.has(font.key) && (
-                      <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-inset ring-amber-200">
-                        {t('fontIncompatibleWarning')}
+                    <div className="flex flex-col gap-0.5">
+                      <span>
+                        {font.name}
+                        {incompatibleKeys.has(font.key) && (
+                          <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-inset ring-amber-200">
+                            {t('fontIncompatibleWarning')}
+                          </span>
+                        )}
                       </span>
-                    )}
+                      <FontPreview fontKey={font.key} />
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{formatSize(font.size)}</td>
                   <td className="px-4 py-3 text-muted-foreground">
