@@ -481,7 +481,8 @@
     "actions": "Actions",
     "noFonts": "No fonts uploaded yet.",
     "loading": "Loading...",
-    "fontIncompatibleWarning": "Incompatible font — may not render in PDFs"
+    "fontIncompatibleWarning": "Incompatible font — may not render in PDFs",
+    "pangram": "The quick brown fox jumps over the lazy dog"
   },
   "locale": {
     "en": "English",

@@ -1,18 +1,12 @@
 'use client'
 
 import { useEffect, useState, useId } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
-// These pangrams demonstrate how a font renders every letter of the alphabet.
-// A pangram is a sentence that uses every letter of the alphabet at least once.
-// When adding a new language, provide a PROPER PANGRAM for that language —
-// NOT a literal translation of the English text. A literal translation likely won't
-// contain all the target language's letters, making it useless for font preview.
-// Example: "Швидкий коричневий лис стрибає через ледачого собаку" is NOT a valid
-// Ukrainian pangram — it's missing Ґ, Ї, Ж, І, Ц, Щ, Ь, Ю, Я, Ф, П, Х, М.
-// Research the canonical pangram(s) for your language before writing one.
-const previewEn = 'The quick brown fox jumps over the lazy dog'
-const previewUk = 'Чуєш їх, доцю, га? Кумедна ж ти, прощайся без ґольфів!'
+// Hardcoded English pangram shown alongside any non-English preview so admins
+// can compare how the font renders both scripts. Per-locale pangrams live in
+// translation files (adminFonts.pangram) — they MUST be proper pangrams (sentences
+// using every letter of the alphabet), NOT literal translations of the English text.
 
 interface FontPreviewProps {
   fontKey: string
@@ -21,6 +15,7 @@ interface FontPreviewProps {
 export function FontPreview({ fontKey }: FontPreviewProps) {
   const id = useId()
   const locale = useLocale()
+  const t = useTranslations('adminFonts')
   const family = `font-${fontKey.replace(/[^a-zA-Z0-9-]/g, '-')}`
   const [loaded, setLoaded] = useState(false)
 
@@ -54,6 +49,13 @@ export function FontPreview({ fontKey }: FontPreviewProps) {
     }
   }, [fontKey, family, id])
 
+  // Per-locale pangram from translation file (adminFonts.pangram) — must be a
+  // proper pangram for the target language, NOT a translation of the English text.
+  const localePangram = t('pangram')
+
+  // Hardcoded English pangram shown as secondary preview for non-English locales.
+  const previewEn = 'The quick brown fox jumps over the lazy dog'
+
   if (locale === 'en') {
     return (
       <span
@@ -68,7 +70,7 @@ export function FontPreview({ fontKey }: FontPreviewProps) {
   return (
     <div className={`flex flex-col gap-0.5 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
       <span className="block text-lg leading-relaxed" style={{ fontFamily: loaded ? family : undefined }}>
-        {previewUk}
+        {localePangram}
       </span>
       <span className="block text-lg leading-relaxed text-muted-foreground/60" style={{ fontFamily: loaded ? family : undefined }}>
         {previewEn}
