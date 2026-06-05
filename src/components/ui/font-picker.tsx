@@ -31,10 +31,12 @@ function FontListItem({
   font,
   isSelected,
   onSelect,
+  localePangram,
 }: {
   font: GoogleFont;
   isSelected: boolean;
   onSelect: () => void;
+  localePangram?: string;
 }) {
   const [isFontLoaded, setIsFontLoaded] = React.useState(false);
 
@@ -60,19 +62,46 @@ function FontListItem({
           isSelected ? "opacity-100" : "opacity-0",
         )}
       />
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
         <span className="text-sm font-medium">{font.family}</span>
-        <span
-          className={cn(
-            "text-muted-foreground text-xs transition-opacity duration-300",
-            isFontLoaded ? "opacity-100" : "opacity-0",
-          )}
-          style={{
-            fontFamily: isFontLoaded ? font.family : "system-ui",
-          }}
-        >
-          The quick brown fox
-        </span>
+        {localePangram ? (
+          <>
+            <span
+              className={cn(
+                "text-muted-foreground text-xs leading-relaxed transition-opacity duration-300",
+                isFontLoaded ? "opacity-100" : "opacity-0",
+              )}
+              style={{
+                fontFamily: isFontLoaded ? font.family : "system-ui",
+              }}
+            >
+              {localePangram}
+            </span>
+            <span
+              className={cn(
+                "text-muted-foreground/60 text-xs leading-relaxed transition-opacity duration-300",
+                isFontLoaded ? "opacity-100" : "opacity-0",
+              )}
+              style={{
+                fontFamily: isFontLoaded ? font.family : "system-ui",
+              }}
+            >
+              The quick brown fox
+            </span>
+          </>
+        ) : (
+          <span
+            className={cn(
+              "text-muted-foreground text-xs transition-opacity duration-300",
+              isFontLoaded ? "opacity-100" : "opacity-0",
+            )}
+            style={{
+              fontFamily: isFontLoaded ? font.family : "system-ui",
+            }}
+          >
+            The quick brown fox
+          </span>
+        )}
       </div>
     </CommandItem>
   );
@@ -85,6 +114,7 @@ interface FontPickerProps {
   height?: number;
   className?: string;
   showFilters?: boolean;
+  localePangram?: string;
 }
 
 export function FontPicker({
@@ -94,6 +124,7 @@ export function FontPicker({
   height = 300,
   className,
   showFilters = true,
+  localePangram,
 }: FontPickerProps) {
   const [selectedFont, setSelectedFont] = React.useState<GoogleFont | null>(
     null,
@@ -168,10 +199,12 @@ export function FontPicker({
     fonts,
     selectedFont,
     onSelectFont,
+    localePangram,
   }: RowComponentProps<{
     fonts: GoogleFont[];
     selectedFont: GoogleFont | null;
     onSelectFont: (font: GoogleFont) => void;
+    localePangram?: string;
   }>) => {
     const font = fonts[index];
     return (
@@ -180,6 +213,7 @@ export function FontPicker({
           font={font}
           isSelected={selectedFont?.family === font.family}
           onSelect={() => onSelectFont(font)}
+          localePangram={localePangram}
         />
       </div>
     );
@@ -275,11 +309,12 @@ export function FontPicker({
                   <List
                     rowComponent={RowComponent}
                     rowCount={filteredFonts.length}
-                    rowHeight={55}
+                    rowHeight={localePangram ? 75 : 55}
                     rowProps={{
                       fonts: filteredFonts,
                       selectedFont,
                       onSelectFont: handleSelectFont,
+                      localePangram,
                     }}
                   />
                 </div>

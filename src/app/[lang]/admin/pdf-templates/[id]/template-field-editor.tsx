@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { FontPicker } from '@/components/ui/font-picker'
 import { uploadFiles } from '@/lib/uploadthing'
@@ -40,6 +40,9 @@ interface TemplateData {
 
 export function TemplateFieldEditor({ templateId, lang }: { templateId: string; lang: string }) {
   const t = useTranslations('adminPdfTemplates')
+  const langPicker = useTranslations('adminFonts')
+  const locale = useLocale()
+  const localePangram = locale !== 'en' ? langPicker('pangram') : undefined
   const router = useRouter()
   const [template, setTemplate] = useState<TemplateData | null>(null)
   const [fields, setFields] = useState<FieldMapping[]>([])
@@ -542,6 +545,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                       onChange={(family) => updateField(index, { font_family: family })}
                       width={300}
                       height={250}
+                      localePangram={localePangram}
                     />
                     <button
                       type="button"
