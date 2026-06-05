@@ -1,50 +1,14 @@
 "use client"
 
-import { useLocale, useTranslations } from 'next-intl'
-import { Link, usePathname, useRouter } from "@/i18n/routing"
+import { useTranslations } from 'next-intl'
+import { Link } from "@/i18n/routing"
 import Image from "next/image"
 import { SignUpButton, UserButton, Show } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { LanguageToggle } from "@/components/language-toggle"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Certificate02Icon } from "@hugeicons/core-free-icons"
-
-function LanguageToggle() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const currentLocale = useLocale()
-
-  function switchLocale(locale: string) {
-    router.replace(pathname, { locale: locale as 'en' | 'uk' })
-  }
-
-  const isEn = currentLocale === 'en'
-
-  return (
-    <div className="flex items-center rounded-lg border border-bright-sky/40 shadow-sm shadow-bright-sky/10 overflow-hidden">
-      <button
-        onClick={() => switchLocale('en')}
-        className={`px-2.5 py-1 text-xs font-semibold border-r border-bright-sky/40 transition-colors ${
-          isEn
-            ? "bg-bright-sky text-white shadow-sm"
-            : "text-muted-foreground hover:text-foreground hover:bg-bright-sky/10"
-        }`}
-      >
-        EN
-      </button>
-      <button
-        onClick={() => switchLocale('uk')}
-        className={`px-2.5 py-1 text-xs font-semibold transition-colors ${
-          !isEn
-            ? "bg-bright-sky text-white shadow-sm"
-            : "text-muted-foreground hover:text-foreground hover:bg-bright-sky/10"
-        }`}
-      >
-        UA
-      </button>
-    </div>
-  )
-}
 
 export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   const t = useTranslations('nav')

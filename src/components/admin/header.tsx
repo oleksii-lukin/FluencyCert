@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import { UserButton } from "@clerk/nextjs"
 import { Link } from "@/i18n/routing"
+import { LanguageToggle } from "@/components/language-toggle"
 
 export function AdminHeader({
   lang,
@@ -57,6 +58,7 @@ export function AdminHeader({
       </div>
 
       <div className="flex items-center gap-3">
+        <LanguageToggle />
         <Link
           href="/"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
