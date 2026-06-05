@@ -76,15 +76,30 @@ export async function POST(request: Request) {
     }
   }
 
-  const { data: existing } = await supabase
-    .from('certificate_claims')
-    .select('id, status')
-    .eq('user_id', userId)
-    .eq('status', 'pending')
-    .maybeSingle()
+  if (clubId) {
+    const { data: existing } = await supabase
+      .from('certificate_claims')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('club_id', clubId)
+      .eq('status', 'pending')
+      .maybeSingle()
 
-  if (existing) {
-    return NextResponse.json({ error: 'Already have a pending claim', claim: existing }, { status: 409 })
+    if (existing) {
+      return NextResponse.json({ error: 'Already have a pending claim for this club' }, { status: 409 })
+    }
+  } else {
+    const { data: existing } = await supabase
+      .from('certificate_claims')
+      .select('id')
+      .eq('user_id', userId)
+      .is('club_id', null)
+      .eq('status', 'pending')
+      .maybeSingle()
+
+    if (existing) {
+      return NextResponse.json({ error: 'Already have a pending claim' }, { status: 409 })
+    }
   }
 
   let claim

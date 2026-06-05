@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
+import { Link } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
 
 export function ClubClaimButton({ clubId, lang }: { clubId: string; lang: string }) {
@@ -28,23 +29,32 @@ export function ClubClaimButton({ clubId, lang }: { clubId: string; lang: string
 
       if (!res.ok) {
         const data = await res.json()
-        setError(data.error || "Something went wrong")
+        if (data.error === 'Already have a pending claim for this club') {
+          setError(t('alreadyPendingClaim'))
+        } else {
+          setError(data.error || t('claimError'))
+        }
         setClaiming(false)
         return
       }
 
       router.push(`/${lang}/my-certificate`)
     } catch {
-      setError("Something went wrong")
+      setError(t('claimError'))
     }
     setClaiming(false)
   }
 
   return (
     <div className="mt-4">
-      <Button onClick={handleClaim} disabled={claiming} className="bg-bright-sky text-white">
-        {claiming ? "..." : t("claimCertificate")}
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button onClick={handleClaim} disabled={claiming} className="bg-bright-sky text-white">
+          {claiming ? "..." : t("claimCertificate")}
+        </Button>
+        <Link href={`/my-certificate`} className="text-sm text-bright-sky hover:underline">
+          {t("viewMyCertificate")}
+        </Link>
+      </div>
       {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
     </div>
   )
