@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
         const { valid, format } = checkFontFormat(bytes)
         console.log(`[Fonts API] Developer API: ${bytes.length} bytes, format: ${format}`)
         if (valid) {
-          return new NextResponse(bytes, {
+          return new NextResponse(bytes as BodyInit, {
             headers: {
               'Content-Type': 'font/ttf',
               'Cache-Control': 'public, max-age=31536000, immutable',
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    return new NextResponse(bytes, {
+    return new NextResponse(bytes as BodyInit, {
       headers: {
         'Content-Type': 'font/ttf',
         'Cache-Control': 'public, max-age=31536000, immutable',

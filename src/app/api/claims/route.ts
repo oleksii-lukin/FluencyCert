@@ -106,8 +106,7 @@ export async function POST(request: Request) {
   let error
   for (let attempt = 0; attempt < 5; attempt++) {
     const slug = generateSlug()
-    const insertData: Record<string, unknown> = { user_id: userId, status: 'pending', slug }
-    if (clubId) insertData.club_id = clubId
+    const insertData = { user_id: userId, status: 'pending' as const, slug, ...(clubId ? { club_id: clubId } : {}) }
     const result = await supabase
       .from('certificate_claims')
       .insert(insertData)

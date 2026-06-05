@@ -14,7 +14,7 @@ const createAj = aj.withRule(
 )
 
 export async function GET(request: Request) {
-  const decision = await listAj.protect(request)
+  const decision = await listAj.protect(request, { ip: request.headers.get('x-forwarded-for') ?? '' })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })

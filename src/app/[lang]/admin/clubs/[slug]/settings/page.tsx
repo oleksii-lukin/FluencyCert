@@ -50,7 +50,7 @@ export default async function AdminClubSettingsPage({
       <p className="text-muted-foreground mb-8">{t('settings')}</p>
 
       <div className="grid gap-8 max-w-2xl">
-        <ClubSettingsForm club={club} />
+        <ClubSettingsForm club={club as Parameters<typeof ClubSettingsForm>[0]['club']} />
 
         <AdminManagement
           clubSlug={slug}

@@ -8,7 +8,7 @@ interface Club {
   name: string
   slug: string
   description: string | null
-  translations: Record<string, unknown>
+  translations: string | number | boolean | null | { [key: string]: unknown } | unknown[]
 }
 
 export function ClubDashboard({

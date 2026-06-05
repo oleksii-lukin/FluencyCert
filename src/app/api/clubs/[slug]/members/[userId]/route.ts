@@ -18,7 +18,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const decision = await manageAj.protect(request, { currentUserId })
+  const decision = await manageAj.protect(request, { userId: currentUserId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -85,7 +85,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const decision = await manageAj.protect(request, { currentUserId })
+  const decision = await manageAj.protect(request, { userId: currentUserId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })

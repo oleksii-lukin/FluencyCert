@@ -16,7 +16,7 @@ export default async function AdminLayout({
   const { userId } = await auth()
 
   if (!userId) {
-    redirect({ href: '/', locale: lang })
+    return redirect({ href: '/', locale: lang })
   }
 
   const supabase = createAdminClient()

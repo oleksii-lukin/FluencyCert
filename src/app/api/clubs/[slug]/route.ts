@@ -21,7 +21,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const decision = await getAj.protect(request)
+  const decision = await getAj.protect(request, { ip: request.headers.get('x-forwarded-for') ?? '' })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -100,10 +100,11 @@ export async function PATCH(
   if (forbidden) return forbidden
 
   const body = await request.json()
-  const updateData: Record<string, unknown> = {}
-  if (body.name !== undefined) updateData.name = body.name.trim()
-  if (body.description !== undefined) updateData.description = body.description?.trim() || null
-  if (body.translations !== undefined) updateData.translations = body.translations
+  const updateData = {
+    ...(body.name !== undefined ? { name: body.name.trim() } : {}),
+    ...(body.description !== undefined ? { description: body.description?.trim() || null } : {}),
+    ...(body.translations !== undefined ? { translations: body.translations } : {}),
+  }
 
   const { data: updated, error } = await supabase
     .from('speaking_clubs')

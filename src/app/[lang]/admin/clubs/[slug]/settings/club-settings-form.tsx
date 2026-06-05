@@ -17,7 +17,7 @@ export function ClubSettingsForm({
     name: string
     slug: string
     description: string | null
-    translations: Translations
+    translations: Translations | null
   }
 }) {
   const t = useTranslations("admin")

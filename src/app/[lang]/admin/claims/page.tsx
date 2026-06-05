@@ -10,7 +10,7 @@ import { SlugDisplay } from './slug-display'
 export default async function AdminClaimsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   const { userId } = await auth()
-  if (!userId) redirect({ href: '/', locale: lang })
+  if (!userId) return redirect({ href: '/', locale: lang })
 
   const t = await getTranslations('admin')
   const supabase = createAdminClient()
@@ -37,7 +37,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
 
   const { data: claims } = await query
 
-  const clubIds = [...new Set((claims ?? []).map((c) => c.club_id).filter(Boolean))]
+  const clubIds = [...new Set((claims ?? []).map((c) => c.club_id).filter((id): id is string => id !== null))]
   const { data: clubs } = clubIds.length > 0
     ? await supabase.from('speaking_clubs').select('id, name').in('id', clubIds)
     : { data: [] }
