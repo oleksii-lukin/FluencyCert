@@ -1,7 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { Link } from '@/i18n/routing'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowLeft02Icon } from '@hugeicons/core-free-icons'
+import { PublicPageLayout } from "@/components/layout/public-page-layout"
 
 const baseUrl = 'https://fluencycert.com'
 
@@ -38,16 +36,8 @@ export default async function PrivacyPage({ params }: { params: Promise<{ lang: 
   const t = await getTranslations('privacy')
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <Link
-          href="/"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
-          {t('backHome')}
-        </Link>
-
+    <PublicPageLayout>
+      <div className="mx-auto max-w-3xl px-4 pt-28 pb-16">
         <h1 className="text-3xl font-bold tracking-tight text-graphite dark:text-snow md:text-4xl">{t('title')}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{t('lastUpdated')}</p>
 
@@ -59,7 +49,7 @@ export default async function PrivacyPage({ params }: { params: Promise<{ lang: 
           <Section title={t('section5Title')} text={t('section5Text')} />
         </div>
       </div>
-    </div>
+    </PublicPageLayout>
   )
 }
 

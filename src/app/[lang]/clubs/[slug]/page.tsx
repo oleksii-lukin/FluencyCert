@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
+import { PublicPageLayout } from "@/components/layout/public-page-layout"
 import { ClubJoinButton } from './club-join-button'
 import { ClubClaimButton } from './club-claim-button'
 import { CertificateHolders } from './certificate-holders'
@@ -106,9 +107,9 @@ export default async function ClubDetailPage({
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-4xl px-4 pt-32 pb-16">
-        <div className="rounded-xl border p-8 mb-10">
+    <PublicPageLayout>
+      <div className="mx-auto max-w-4xl px-4 pt-28 pb-16">
+        <div className="rounded-xl border border-banana-cream/20 bg-white/35 p-8 shadow-md shadow-banana-cream/10 backdrop-blur-xl mb-10 dark:bg-graphite/35">
           <h1 className="text-4xl font-bold mb-3">{club.name}</h1>
           {club.description && (
             <p className="text-lg text-muted-foreground mb-6">{club.description}</p>
@@ -139,6 +140,6 @@ export default async function ClubDetailPage({
           slug={slug}
         />
       </div>
-    </div>
+    </PublicPageLayout>
   )
 }

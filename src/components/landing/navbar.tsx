@@ -60,10 +60,10 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          <a href="#how-it-works" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('howItWorks')}</a>
-          <a href="#showcase" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('showcase')}</a>
-          <a href="#features" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('features')}</a>
-          <a href="#testimonials" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('testimonials')}</a>
+          <Link href="/#how-it-works" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('howItWorks')}</Link>
+          <Link href="/#showcase" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('showcase')}</Link>
+          <Link href="/#features" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('features')}</Link>
+          <Link href="/#testimonials" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('testimonials')}</Link>
           <Link href="/clubs" className="text-sm font-medium text-graphite/70 transition-colors hover:text-graphite dark:text-snow/60 dark:hover:text-snow">{t('clubs')}</Link>
         </div>
 

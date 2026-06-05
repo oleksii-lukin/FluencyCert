@@ -7,6 +7,7 @@ import { CopyShareLink } from '@/components/certificate/copy-share-link'
 import { TemplateSelector } from '@/components/certificate/template-selector'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft02Icon, Share01Icon, Certificate02Icon, LayoutGridIcon } from '@hugeicons/core-free-icons'
+import { PublicPageLayout } from "@/components/layout/public-page-layout"
 
 export default async function CertificateControlPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -38,8 +39,8 @@ export default async function CertificateControlPage({ params }: { params: Promi
     .order('created_at', { ascending: false })
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      <div className="mx-auto max-w-3xl px-4 py-8">
+    <PublicPageLayout>
+      <div className="mx-auto max-w-3xl px-4 pt-28 pb-16">
         <Link
           href="/my-certificate"
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -55,7 +56,7 @@ export default async function CertificateControlPage({ params }: { params: Promi
           </p>
         </div>
 
-        <div className="mb-8 rounded-xl border bg-white p-6 dark:bg-gray-800">
+        <div className="mb-8 rounded-xl border bg-white/50 p-6 shadow-lg dark:bg-graphite/50">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-graphite dark:text-snow mb-2">
             <HugeiconsIcon icon={Certificate02Icon} className="size-5 text-bright-sky" />
             {t('yourCertificate')}
@@ -76,7 +77,7 @@ export default async function CertificateControlPage({ params }: { params: Promi
           </div>
         </div>
 
-        <div className="mb-8 rounded-xl border bg-white p-6 dark:bg-gray-800">
+        <div className="mb-8 rounded-xl border bg-white/50 p-6 shadow-lg dark:bg-graphite/50">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-graphite dark:text-snow mb-2">
             <HugeiconsIcon icon={LayoutGridIcon} className="size-5 text-bright-sky" />
             {t('certificateTemplate')}
@@ -90,7 +91,7 @@ export default async function CertificateControlPage({ params }: { params: Promi
           />
         </div>
 
-        <div className="rounded-xl border bg-white p-6 dark:bg-gray-800">
+        <div className="rounded-xl border bg-white/50 p-6 shadow-lg dark:bg-graphite/50">
           <h2 className="text-lg font-semibold text-graphite dark:text-snow mb-4">
             {t('feedbackManagement')}
           </h2>
@@ -103,6 +104,6 @@ export default async function CertificateControlPage({ params }: { params: Promi
           />
         </div>
       </div>
-    </div>
+    </PublicPageLayout>
   )
 }

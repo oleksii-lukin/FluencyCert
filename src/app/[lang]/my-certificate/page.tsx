@@ -3,7 +3,8 @@ import { Link, redirect } from '@/i18n/routing'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Certificate02Icon, Clock01Icon, CheckmarkCircle02Icon, Cancel01Icon, ArrowLeft02Icon, Settings02Icon, Share01Icon, ClubIcon } from "@hugeicons/core-free-icons"
+import { Certificate02Icon, Clock01Icon, CheckmarkCircle02Icon, Cancel01Icon, Settings02Icon, Share01Icon, ClubIcon } from "@hugeicons/core-free-icons"
+import { PublicPageLayout } from "@/components/layout/public-page-layout"
 
 export default async function MyCertificatePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -21,13 +22,9 @@ export default async function MyCertificatePage({ params }: { params: Promise<{ 
 
   if (!claims || claims.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bright-sky/10 via-white to-white p-4 dark:from-bright-sky/5 dark:via-graphite dark:to-graphite">
-        <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
-            {t('backToHome')}
-          </Link>
-          <div className="rounded-2xl border bg-white p-8 shadow-lg dark:bg-graphite/80">
+      <PublicPageLayout>
+        <div className="mx-auto max-w-md px-4 pt-28 pb-16">
+          <div className="rounded-2xl border bg-white/50 p-8 shadow-lg dark:bg-graphite/50">
             <div className="flex flex-col items-center text-center">
               <div className="mb-6 flex size-16 items-center justify-center rounded-2xl bg-bright-sky/15">
                 <HugeiconsIcon icon={Certificate02Icon} className="size-7 text-bright-sky" />
@@ -37,23 +34,18 @@ export default async function MyCertificatePage({ params }: { params: Promise<{ 
             </div>
           </div>
         </div>
-      </div>
+      </PublicPageLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bright-sky/10 via-white to-white p-4 dark:from-bright-sky/5 dark:via-graphite dark:to-graphite">
-      <div className="mx-auto max-w-2xl py-8">
-        <Link href="/" className="mb-8 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
-          {t('backToHome')}
-        </Link>
-
+    <PublicPageLayout>
+      <div className="mx-auto max-w-2xl px-4 pt-28 pb-16">
         <div className="space-y-6">
           {claims.map((claim) => {
             const clubName = claim.speaking_clubs?.name || null
             return (
-              <div key={claim.id} className="rounded-2xl border bg-white p-8 shadow-lg dark:bg-graphite/80">
+              <div key={claim.id} className="rounded-2xl border bg-white/50 p-8 shadow-lg dark:bg-graphite/50">
                 <div className="flex flex-col items-center text-center">
                   <StatusIcon status={claim.status} />
 
@@ -64,14 +56,14 @@ export default async function MyCertificatePage({ params }: { params: Promise<{ 
                     </div>
                   )}
 
-                  <StatusContent claim={claim} t={t} lang={lang} />
+                  <StatusContent claim={claim} t={t} />
                 </div>
               </div>
             )
           })}
         </div>
       </div>
-    </div>
+    </PublicPageLayout>
   )
 }
 
@@ -104,7 +96,7 @@ type ClaimData = {
   created_at: string
 }
 
-function StatusContent({ claim, t }: { claim: ClaimData; t: (key: string, opts?: Record<string, unknown>) => string }) {
+function StatusContent({ claim, t }: { claim: ClaimData; t: any }) {
   if (claim.status === 'pending') {
     return (
       <>

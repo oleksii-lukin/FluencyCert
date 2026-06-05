@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { PublicPageLayout } from "@/components/layout/public-page-layout"
 
 const baseUrl = 'https://fluencycert.com'
 
@@ -56,8 +57,8 @@ export default async function ClubsPage() {
   )
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-6xl px-4 pt-32 pb-16">
+    <PublicPageLayout>
+      <div className="mx-auto max-w-6xl px-4 pt-28 pb-16">
         <h1 className="text-4xl font-bold mb-2">{t('title')}</h1>
         <p className="text-lg text-muted-foreground mb-10">{t('subtitle')}</p>
 
@@ -70,7 +71,7 @@ export default async function ClubsPage() {
             <Link
               key={club.id}
               href={`/clubs/${club.slug}`}
-              className="rounded-xl border p-6 hover:shadow-lg transition-shadow"
+              className="rounded-xl border border-banana-cream/20 bg-white/35 p-6 shadow-md shadow-banana-cream/10 backdrop-blur-xl transition-shadow hover:shadow-xl hover:shadow-banana-cream/20 dark:bg-graphite/35"
             >
               <h3 className="text-xl font-semibold mb-2">{club.name}</h3>
               {club.description && (
@@ -84,6 +85,6 @@ export default async function ClubsPage() {
           ))}
         </div>
       </div>
-    </div>
+    </PublicPageLayout>
   )
 }
