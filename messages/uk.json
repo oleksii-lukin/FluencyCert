@@ -391,7 +391,8 @@
     "fontEmbedded": "Вбудований",
     "fontStandard": "Стандартний",
     "saveFont": "Зберегти шрифт",
-    "savingFont": "Збереження..."
+    "savingFont": "Збереження...",
+    "fontIncompatibleWarning": "Цей шрифт може відображатися некоректно в PDF-сертифікатах. Він буде замінений на шрифт за замовчуванням."
   },
   "claimActions": {
     "approve": "Схвалити",
@@ -480,7 +481,8 @@
     "uploadedAt": "Завантажено",
     "actions": "Дії",
     "noFonts": "Шрифти ще не завантажені.",
-    "loading": "Завантаження..."
+    "loading": "Завантаження...",
+    "fontIncompatibleWarning": "Несумісний шрифт — може не відображатися в PDF"
   },
   "locale": {
     "en": "English",

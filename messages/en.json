@@ -390,7 +390,8 @@
     "fontEmbedded": "Embedded",
     "fontStandard": "Standard",
     "saveFont": "Save Font",
-    "savingFont": "Saving..."
+    "savingFont": "Saving...",
+    "fontIncompatibleWarning": "This font may not render correctly in PDF certificates. It will be replaced with a default font."
   },
   "claimActions": {
     "approve": "Approve",
@@ -479,7 +480,8 @@
     "uploadedAt": "Uploaded",
     "actions": "Actions",
     "noFonts": "No fonts uploaded yet.",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "fontIncompatibleWarning": "Incompatible font — may not render in PDFs"
   },
   "locale": {
     "en": "English",

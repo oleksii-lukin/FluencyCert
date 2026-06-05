@@ -7,6 +7,7 @@ import { FontPicker } from '@/components/ui/font-picker'
 import { uploadFiles } from '@/lib/uploadthing'
 import { DATABASE_FIELD_MAP, type SourceType } from '@/lib/pdf-field-mapping'
 import type { PdfFontInfo } from '@/lib/pdf-fonts'
+import { testFontCompatibility } from '@/lib/font-compat'
 
 type FieldMapping = {
   id: string
@@ -49,8 +50,11 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const [showPdfPreview, setShowPdfPreview] = useState(false)
   const [uploadedFonts, setUploadedFonts] = useState<UploadedFont[]>([])
   const [uploadingFont, setUploadingFont] = useState(false)
+  const [savingFont, setSavingFont] = useState(false)
   const [pdfFonts, setPdfFonts] = useState<PdfFontInfo[]>([])
   const [showPdfFonts, setShowPdfFonts] = useState(false)
+  const [incompatibleFontKeys, setIncompatibleFontKeys] = useState<Set<string>>(new Set())
+  const [incompatibleGoogleFonts, setIncompatibleGoogleFonts] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetch(`/api/admin/pdf-templates/${templateId}`)
@@ -69,6 +73,110 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       .then((data) => setUploadedFonts(data.fonts ?? []))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    const uploadedKeys = fields
+      .filter((f) => f.font_source === 'uploaded' && f.uploaded_font_key)
+      .map((f) => f.uploaded_font_key!)
+
+    const existing = document.getElementById('uploaded-font-styles')
+    if (existing) existing.remove()
+
+    if (uploadedKeys.length === 0) return
+
+    const styleEl = document.createElement('style')
+    styleEl.id = 'uploaded-font-styles'
+    styleEl.textContent = uploadedKeys
+      .map(
+        (key) =>
+          `@font-face{font-family:UPLOADED_FONT_${key};src:url("/api/fonts/uploaded?key=${key}") format("truetype");}`,
+      )
+      .join('')
+    document.head.appendChild(styleEl)
+
+    return () => {
+      const el = document.getElementById('uploaded-font-styles')
+      if (el) el.remove()
+    }
+  }, [fields])
+
+  useEffect(() => {
+    const uploadedKeys = fields
+      .filter((f) => f.font_source === 'uploaded' && f.uploaded_font_key)
+      .map((f) => f.uploaded_font_key!)
+
+    if (uploadedKeys.length === 0) return
+
+    let cancelled = false
+
+    Promise.all(
+      uploadedKeys.map(async (key) => {
+        try {
+          const res = await fetch(`/api/fonts/uploaded?key=${key}`)
+          if (!res.ok) {
+            console.warn('[FontCheck] fetch failed for uploaded font', key, res.status)
+            return null
+          }
+          const buf = await res.arrayBuffer()
+          const compatible = await testFontCompatibility(new Uint8Array(buf), `uploaded:${key}`)
+          return compatible ? null : key
+        } catch (err) {
+          console.warn('[FontCheck] error checking uploaded font', key, err)
+          return null
+        }
+      }),
+    ).then((results) => {
+      if (cancelled) return
+      const incompatible = results.filter(Boolean) as string[]
+      if (incompatible.length === 0) return
+      setIncompatibleFontKeys((prev) => {
+        const next = new Set(prev)
+        for (const key of incompatible) next.add(key)
+        return next
+      })
+    })
+
+    return () => { cancelled = true }
+  }, [fields])
+
+  useEffect(() => {
+    const googleFonts = fields
+      .filter((f) => f.font_source === 'google' && f.font_family)
+      .map((f) => f.font_family)
+
+    if (googleFonts.length === 0) return
+
+    let cancelled = false
+
+    Promise.all(
+      googleFonts.map(async (family) => {
+        try {
+          const res = await fetch(`/api/fonts?family=${encodeURIComponent(family)}`)
+          if (!res.ok) {
+            console.warn('[FontCheck] fetch failed for Google font', family, res.status)
+            return null
+          }
+          const buf = await res.arrayBuffer()
+          const compatible = await testFontCompatibility(new Uint8Array(buf), `google:${family}`)
+          return compatible ? null : family
+        } catch (err) {
+          console.warn('[FontCheck] error checking Google font', family, err)
+          return null
+        }
+      }),
+    ).then((results) => {
+      if (cancelled) return
+      const incompatible = results.filter(Boolean) as string[]
+      if (incompatible.length === 0) return
+      setIncompatibleGoogleFonts((prev) => {
+        const next = new Set(prev)
+        for (const family of incompatible) next.add(family)
+        return next
+      })
+    })
+
+    return () => { cancelled = true }
+  }, [fields])
 
   const updateField = useCallback((index: number, updates: Partial<FieldMapping>) => {
     setFields((prev) => prev.map((f, i) => (i === index ? { ...f, ...updates } : f)))
@@ -152,6 +260,42 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       router.push(`/${lang}/admin/pdf-templates`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed')
+    }
+  }
+
+  async function handleSaveFont(index: number) {
+    const field = fields[index]
+    if (!field.font_family) return
+
+    setSavingFont(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/fonts?family=${encodeURIComponent(field.font_family)}`)
+      if (!res.ok) throw new Error('Failed to download font')
+      const blob = await res.blob()
+
+      const fileName = `${field.font_family}.ttf`
+      const file = new File([blob], fileName, { type: 'font/ttf' })
+
+      await uploadFiles('fontFileUpload', { files: [file] })
+
+      const fontsRes = await fetch('/api/admin/fonts/uploaded')
+      const data = await fontsRes.json()
+      const updatedFonts = data.fonts ?? []
+      setUploadedFonts(updatedFonts)
+
+      const uploaded = updatedFonts.find((uf: UploadedFont) => uf.name === fileName)
+      if (uploaded) {
+        updateField(index, {
+          font_source: 'uploaded',
+          uploaded_font_key: uploaded.key,
+          font_family: uploaded.name,
+        })
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save font')
+    } finally {
+      setSavingFont(false)
     }
   }
 
@@ -392,12 +536,27 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                   <label className="block text-xs font-medium mb-1 text-muted-foreground">
                     {t('fontFamily')}
                   </label>
-                  <FontPicker
-                    value={field.font_family}
-                    onChange={(family) => updateField(index, { font_family: family })}
-                    width={300}
-                    height={250}
-                  />
+                  <div className="flex items-start gap-2">
+                    <FontPicker
+                      value={field.font_family}
+                      onChange={(family) => updateField(index, { font_family: family })}
+                      width={300}
+                      height={250}
+                    />
+                    <button
+                      type="button"
+                      disabled={!field.font_family || savingFont}
+                      onClick={() => handleSaveFont(index)}
+                      className="rounded-lg bg-bright-sky px-3 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {savingFont ? t('savingFont') : t('saveFont')}
+                    </button>
+                  </div>
+                  {field.font_family && incompatibleGoogleFonts.has(field.font_family) && (
+                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
+                      {t('fontIncompatibleWarning')}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="col-span-2 space-y-2">
@@ -447,6 +606,11 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                       />
                     </label>
                   </div>
+                  {field.uploaded_font_key && incompatibleFontKeys.has(field.uploaded_font_key) && (
+                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      {t('fontIncompatibleWarning')}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -468,7 +632,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                   <p className="text-xs text-muted-foreground mb-1">{t('preview')}</p>
                   <p
                     style={{
-                      fontFamily: field.font_source === 'uploaded' ? '"UploadedFontPreview"' : field.font_family,
+                      fontFamily: field.font_source === 'uploaded' && field.uploaded_font_key ? `UPLOADED_FONT_${field.uploaded_font_key}` : field.font_family,
                       fontSize: `${Math.min(field.font_size, 48)}px`,
                       lineHeight: 1.2,
                     }}

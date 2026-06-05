@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { uploadFiles } from '@/lib/uploadthing'
+import { testFontCompatibility } from '@/lib/font-compat'
 
 interface UploadedFont {
   key: string
@@ -19,10 +20,40 @@ export function FontList() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [incompatibleKeys, setIncompatibleKeys] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchFonts()
   }, [])
+
+  useEffect(() => {
+    if (fonts.length === 0) return
+    let cancelled = false
+    const newIncKeys = new Set<string>()
+
+    Promise.all(
+      fonts.map(async (font) => {
+        try {
+          const res = await fetch(`/api/fonts/uploaded?key=${font.key}`)
+          if (!res.ok) {
+            console.warn('[FontCheck] fetch failed for font', font.key, res.status)
+            return
+          }
+          const buf = await res.arrayBuffer()
+          const compatible = await testFontCompatibility(new Uint8Array(buf), `uploaded:${font.key}`)
+          if (!compatible) {
+            newIncKeys.add(font.key)
+          }
+        } catch (err) {
+          console.warn('[FontCheck] error checking font', font.key, err)
+        }
+      }),
+    ).then(() => {
+      if (!cancelled) setIncompatibleKeys(newIncKeys)
+    })
+
+    return () => { cancelled = true }
+  }, [fonts])
 
   async function fetchFonts() {
     try {
@@ -141,7 +172,14 @@ export function FontList() {
             <tbody>
               {fonts.map((font) => (
                 <tr key={font.key} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-medium">{font.name}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {font.name}
+                    {incompatibleKeys.has(font.key) && (
+                      <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-inset ring-amber-200">
+                        {t('fontIncompatibleWarning')}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">{formatSize(font.size)}</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(font.uploadedAt).toLocaleDateString()}

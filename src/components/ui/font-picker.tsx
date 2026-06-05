@@ -115,6 +115,7 @@ export function FontPicker({
         const font = fetchedFonts.find((font) => font.family === value);
         if (font) {
           setSelectedFont(font);
+          loadFont(font.family, font).catch(() => {});
         }
         setError(null);
       } catch (err) {
