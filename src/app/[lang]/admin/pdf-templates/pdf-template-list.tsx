@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
 import { uploadFiles } from '@/lib/uploadthing'
-import { Link } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 
 interface PdfTemplate {
   id: string
@@ -83,7 +82,7 @@ export function PdfTemplateList() {
       setUploadOpen(false)
       setNewName('')
       setNewDescription('')
-      router.refresh()
+      router.push(`/admin/pdf-templates/${template.id}`)
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
