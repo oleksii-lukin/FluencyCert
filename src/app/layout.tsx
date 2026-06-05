@@ -3,6 +3,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { PostHogIdentify } from "@/components/posthog-identify";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -76,7 +77,10 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
-        <ClerkProvider>{children}</ClerkProvider>
+        <ClerkProvider>
+          <PostHogIdentify />
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );

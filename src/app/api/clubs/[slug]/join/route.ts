@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 const joinAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 10, characteristics: ["userId"] }),
@@ -58,6 +59,13 @@ export async function POST(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  const posthog = getPostHogClient()
+  posthog.capture({
+    distinctId: userId,
+    event: 'club_member_joined',
+    properties: { club_slug: slug, club_id: club.id },
+  })
 
   return NextResponse.json({ membership }, { status: 201 })
 }

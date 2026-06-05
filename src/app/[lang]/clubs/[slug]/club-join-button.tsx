@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { SignInButton, useAuth } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
+import posthog from "posthog-js"
 
 export function ClubJoinButton({
   slug,
@@ -51,10 +52,13 @@ export function ClubJoinButton({
   async function handleJoin() {
     setJoining(true)
     try {
-      await fetch(`/api/clubs/${slug}/join`, { method: "POST" })
+      const res = await fetch(`/api/clubs/${slug}/join`, { method: "POST" })
+      if (res.ok) {
+        posthog.capture('club_joined', { club_slug: slug })
+      }
       router.refresh()
-    } catch {
-      // ignore
+    } catch (err) {
+      posthog.captureException(err)
     }
     setJoining(false)
   }

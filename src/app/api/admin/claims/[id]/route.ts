@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
 import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 const updateAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 30, characteristics: ["userId"] }),
@@ -208,6 +209,18 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (!isUpdate && claim.user_id && (status === 'approved' || status === 'rejected')) {
+    const posthog = getPostHogClient()
+    posthog.capture({
+      distinctId: claim.user_id,
+      event: status === 'approved' ? 'certificate_claim_approved' : 'certificate_claim_rejected',
+      properties: {
+        claim_id: id,
+        english_level: claim.english_level ?? null,
+      },
+    })
   }
 
   return NextResponse.json({ claim })

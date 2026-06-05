@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { CopyLinkIcon } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
+import posthog from "posthog-js"
 
 export function CopyShareLink({ slug, className }: { slug: string; className?: string }) {
   const t = useTranslations('copyShareLink')
@@ -15,6 +16,7 @@ export function CopyShareLink({ slug, className }: { slug: string; className?: s
     await navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+    posthog.capture('certificate_share_link_copied', { certificate_slug: slug })
   }
 
   return (

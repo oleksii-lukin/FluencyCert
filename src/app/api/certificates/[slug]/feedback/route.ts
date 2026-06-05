@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 const postAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 10, characteristics: ["userId"] }),
@@ -108,6 +109,16 @@ export async function POST(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  const posthog = getPostHogClient()
+  posthog.capture({
+    distinctId: userId,
+    event: 'certificate_feedback_submitted',
+    properties: {
+      certificate_slug: slug,
+      display_name_preference: pref,
+    },
+  })
 
   return NextResponse.json({ feedback }, { status: 201 })
 }

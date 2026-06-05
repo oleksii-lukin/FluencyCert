@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
 import { Link } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
+import posthog from "posthog-js"
 
 export function ClubClaimButton({ clubId, lang }: { clubId: string; lang: string }) {
   const t = useTranslations("clubs")
@@ -38,8 +39,10 @@ export function ClubClaimButton({ clubId, lang }: { clubId: string; lang: string
         return
       }
 
+      posthog.capture('club_certificate_claim_submitted', { club_id: clubId })
       router.push(`/${lang}/my-certificate`)
-    } catch {
+    } catch (err) {
+      posthog.captureException(err)
       setError(t('claimError'))
     }
     setClaiming(false)

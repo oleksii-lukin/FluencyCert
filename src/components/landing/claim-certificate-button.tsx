@@ -9,6 +9,7 @@ import type { CertificateClaim } from "@/types/certificate-claim"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowRight02Icon, Clock01Icon } from "@hugeicons/core-free-icons"
+import posthog from "posthog-js"
 
 type ClaimButtonProps = {
   label: string
@@ -37,7 +38,10 @@ export function ClaimCertificateButton({ label, icon, className }: ClaimButtonPr
       const data = await res.json()
       if (res.ok) {
         setClaim(data.claim)
+        posthog.capture('certificate_claim_submitted', { source: 'landing_page' })
       }
+    } catch (err) {
+      posthog.captureException(err)
     } finally {
       setLoading(false)
     }

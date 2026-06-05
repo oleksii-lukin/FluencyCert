@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
 import { generateSlug } from '@/lib/slug'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 const getAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 20, characteristics: ["userId"] }),
@@ -122,6 +123,13 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  const posthog = getPostHogClient()
+  posthog.capture({
+    distinctId: userId,
+    event: 'certificate_claim_created',
+    properties: { club_id: clubId ?? null },
+  })
 
   return NextResponse.json({ claim }, { status: 201 })
 }

@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 const postAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 20, characteristics: ["userId"] }),
@@ -78,6 +79,13 @@ export async function POST(
     .from('certificate_upvotes')
     .select('id', { count: 'exact', head: true })
     .eq('certificate_id', id)
+
+  const posthog = getPostHogClient()
+  posthog.capture({
+    distinctId: userId,
+    event: existing ? 'certificate_upvote_removed' : 'certificate_upvoted',
+    properties: { certificate_slug: slug },
+  })
 
   return NextResponse.json({
     hasUpvoted: !existing,
