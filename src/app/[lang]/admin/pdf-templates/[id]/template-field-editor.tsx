@@ -4,10 +4,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { FontPicker } from '@/components/ui/font-picker'
+import { ColorPicker } from '@/components/ui/color-picker'
 import { uploadFiles } from '@/lib/uploadthing'
 import { DATABASE_FIELD_MAP, type SourceType } from '@/lib/pdf-field-mapping'
 import type { PdfFontInfo } from '@/lib/pdf-fonts'
 import { testFontCompatibility } from '@/lib/font-compat'
+import { getPreviewDate, getPreviewLevel } from '@/lib/pdf-formatting'
 
 type FieldMapping = {
   id: string
@@ -22,6 +24,9 @@ type FieldMapping = {
   uploaded_font_key: string | null
   custom_default_value: string | null
   custom_overridable: boolean
+  date_format: string | null
+  level_format: string | null
+  text_color: string | null
   sort_order: number
 }
 
@@ -36,6 +41,18 @@ interface TemplateData {
   description: string | null
   file_url: string
   pdf_template_fields: FieldMapping[]
+}
+
+function getContrastBg(hex: string | null): string {
+  if (!hex || hex === '#000000') return ''
+  const clean = hex.replace('#', '')
+  if (clean.length !== 6 && clean.length !== 3) return ''
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean
+  const r = parseInt(full.substring(0, 2), 16) / 255
+  const g = parseInt(full.substring(2, 4), 16) / 255
+  const b = parseInt(full.substring(4, 6), 16) / 255
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return luminance > 0.5 ? '#1a1a2e' : '#f8f9fa'
 }
 
 export function TemplateFieldEditor({ templateId, lang }: { templateId: string; lang: string }) {
@@ -201,6 +218,9 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         uploaded_font_key: null,
         custom_default_value: '',
         custom_overridable: false,
+        date_format: null,
+        level_format: null,
+        text_color: null,
         sort_order: prev.length,
       },
     ])
@@ -631,17 +651,86 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                   onChange={(e) => updateField(index, { font_size: parseInt(e.target.value, 10) || 12 })}
                 />
               </div>
+            </div>
+
+            <div className="border-t pt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-medium mb-2 text-muted-foreground">
+                  {t('textColor')}
+                </label>
+                <ColorPicker
+                  value={field.text_color || '#000000'}
+                  onChange={(color) => updateField(index, { text_color: color === '#000000' ? null : color })}
+                />
+              </div>
+
+              {field.source_type === 'database' && field.source_key === 'createdAt' && (
+                <div>
+                  <label className="block text-xs font-medium mb-2 text-muted-foreground">
+                    {t('dateFormat')}
+                  </label>
+                  <div className="flex gap-2">
+                    {(['usa', 'gb', 'locale'] as const).map((fmt) => (
+                      <button
+                        key={fmt}
+                        type="button"
+                        onClick={() => updateField(index, { date_format: fmt === 'usa' ? null : fmt })}
+                        className={`rounded-lg px-3 py-1.5 text-sm border transition-colors ${
+                          (field.date_format || 'usa') === fmt
+                            ? 'bg-bright-sky text-white border-bright-sky'
+                            : 'bg-background text-muted-foreground border hover:bg-muted'
+                        }`}
+                      >
+                        {t(`dateFormat${fmt.charAt(0).toUpperCase()}${fmt.slice(1)}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {field.source_type === 'database' && field.source_key === 'englishLevel' && (
+                <div>
+                  <label className="block text-xs font-medium mb-2 text-muted-foreground">
+                    {t('levelFormat')}
+                  </label>
+                  <div className="flex gap-2">
+                    {(['short', 'text', 'long'] as const).map((fmt) => (
+                      <button
+                        key={fmt}
+                        type="button"
+                        onClick={() => updateField(index, { level_format: fmt === 'short' ? null : fmt })}
+                        className={`rounded-lg px-3 py-1.5 text-sm border transition-colors ${
+                          (field.level_format || 'short') === fmt
+                            ? 'bg-bright-sky text-white border-bright-sky'
+                            : 'bg-background text-muted-foreground border hover:bg-muted'
+                        }`}
+                      >
+                        {t(`levelFormat${fmt.charAt(0).toUpperCase()}${fmt.slice(1)}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="col-span-2">
-                <div className="rounded-lg border bg-muted/30 p-3">
+                <div
+                  className="rounded-lg border p-3"
+                  style={{ backgroundColor: getContrastBg(field.text_color) || 'rgb(0 0 0 / 0.03)' }}
+                >
                   <p className="text-xs text-muted-foreground mb-1">{t('preview')}</p>
                   <p
                     style={{
                       fontFamily: field.font_source === 'uploaded' && field.uploaded_font_key ? `UPLOADED_FONT_${field.uploaded_font_key}` : field.font_family,
                       fontSize: `${Math.min(field.font_size, 48)}px`,
                       lineHeight: 1.2,
+                      color: field.text_color || undefined,
                     }}
                   >
-                    {field.display_label || field.pdf_field_name}
+                    {field.source_type === 'database' && field.source_key === 'createdAt'
+                      ? getPreviewDate(field.date_format as any, locale)
+                      : field.source_type === 'database' && field.source_key === 'englishLevel'
+                        ? getPreviewLevel(field.level_format as any)
+                        : field.display_label || field.pdf_field_name}
                   </p>
                 </div>
               </div>

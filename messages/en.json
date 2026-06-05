@@ -391,7 +391,16 @@
     "fontStandard": "Standard",
     "saveFont": "Save Font",
     "savingFont": "Saving...",
-    "fontIncompatibleWarning": "This font may not render correctly in PDF certificates. It will be replaced with a default font."
+    "fontIncompatibleWarning": "This font may not render correctly in PDF certificates. It will be replaced with a default font.",
+    "textColor": "Text Color",
+    "dateFormat": "Date Format",
+    "dateFormatUsa": "USA",
+    "dateFormatGb": "GB",
+    "dateFormatLocale": "Locale",
+    "levelFormat": "Level Format",
+    "levelFormatShort": "Short",
+    "levelFormatText": "Text",
+    "levelFormatLong": "Long"
   },
   "claimActions": {
     "approve": "Approve",

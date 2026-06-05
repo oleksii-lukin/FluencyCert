@@ -263,17 +263,20 @@ export type Database = {
           created_at: string
           custom_default_value: string | null
           custom_overridable: boolean
+          date_format: string | null
           display_label: string
           font_family: string
           font_size: number
           font_source: string
           id: string
           is_enabled: boolean
+          level_format: string | null
           pdf_field_name: string
           sort_order: number
           source_key: string | null
           source_type: string
           template_id: string
+          text_color: string | null
           updated_at: string
           uploaded_font_key: string | null
         }
@@ -281,17 +284,20 @@ export type Database = {
           created_at?: string
           custom_default_value?: string | null
           custom_overridable?: boolean
+          date_format?: string | null
           display_label: string
           font_family?: string
           font_size?: number
           font_source?: string
           id?: string
           is_enabled?: boolean
+          level_format?: string | null
           pdf_field_name: string
           sort_order?: number
           source_key?: string | null
           source_type: string
           template_id: string
+          text_color?: string | null
           updated_at?: string
           uploaded_font_key?: string | null
         }
@@ -299,17 +305,20 @@ export type Database = {
           created_at?: string
           custom_default_value?: string | null
           custom_overridable?: boolean
+          date_format?: string | null
           display_label?: string
           font_family?: string
           font_size?: number
           font_source?: string
           id?: string
           is_enabled?: boolean
+          level_format?: string | null
           pdf_field_name?: string
           sort_order?: number
           source_key?: string | null
           source_type?: string
           template_id?: string
+          text_color?: string | null
           updated_at?: string
           uploaded_font_key?: string | null
         }

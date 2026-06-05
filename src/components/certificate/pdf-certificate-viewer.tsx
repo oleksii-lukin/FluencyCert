@@ -5,6 +5,7 @@ import { PDFDocument, StandardFonts } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import QrCodeWithLogo from 'qrcode-with-logos'
 import { testFontCompatibility, clearFontCompatibilityCache } from '@/lib/font-compat'
+import { formatDate, formatEnglishLevel } from '@/lib/pdf-formatting'
 
 interface FieldMapping {
   id: string
@@ -18,6 +19,9 @@ interface FieldMapping {
   font_source: string
   uploaded_font_key: string | null
   custom_default_value: string | null
+  date_format: string | null
+  level_format: string | null
+  text_color: string | null
   sort_order: number
 }
 
@@ -35,6 +39,7 @@ interface PdfCertificateViewerProps {
   }
   customValues: Record<string, string>
   certificateUrl: string
+  viewerLocale?: string
 }
 
 const CACHE_NAME = 'pdf-fonts'
@@ -45,6 +50,7 @@ export function PdfCertificateViewer({
   certificateData,
   customValues,
   certificateUrl,
+  viewerLocale,
 }: PdfCertificateViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -69,68 +75,71 @@ export function PdfCertificateViewer({
     async function generate() {
       const pdfjsLib = pdfjsRef.current!
 
-      // TODO: remove verbose [PDF] debug logs once font handling is stable
-      console.log('[PDF] Step 1: downloading template')
       const pdfRes = await fetch(templateFileUrl)
       if (!pdfRes.ok) throw new Error('Failed to download template PDF')
       if (cancelled) return
       const pdfBytes = await pdfRes.arrayBuffer()
-      console.log('[PDF] Step 1 done: got', pdfBytes.byteLength, 'bytes')
 
-      console.log('[PDF] Step 2: loading PDF with pdf-lib')
       const pdfDoc = await PDFDocument.load(pdfBytes)
       pdfDoc.registerFontkit(fontkit)
       const form = pdfDoc.getForm()
-      console.log('[PDF] Step 2 done: form loaded')
 
       const fieldFontCache: Record<string, Uint8Array> = {}
       const dataMap = certificateData as Record<string, unknown>
-
-      console.log('[PDF] Step 3: processing', fields.length, 'fields')
       for (const field of fields) {
-        if (!field.is_enabled) {
-          console.log('[PDF]   skipping disabled field', field.pdf_field_name)
-          continue
-        }
-        if (field.source_type === 'qr_code') {
-          console.log('[PDF]   deferring QR field', field.pdf_field_name)
-          continue
-        }
+        if (!field.is_enabled) continue
+        if (field.source_type === 'qr_code') continue
 
         try {
-          console.log('[PDF]   processing field', field.pdf_field_name)
           const pdfField = form.getTextField(field.pdf_field_name)
           if (cancelled) return
 
           let value = ''
           if (field.source_type === 'database' && field.source_key) {
             value = String(dataMap[field.source_key] ?? '')
+            if (field.source_key === 'createdAt') {
+              value = formatDate(value, field.date_format as any, viewerLocale)
+            } else if (field.source_key === 'englishLevel') {
+              value = formatEnglishLevel(value, field.level_format as any)
+            }
           } else if (field.source_type === 'custom') {
             value = customValues[field.id] ?? field.custom_default_value ?? ''
           }
 
           pdfField.setText(value)
 
+          if (field.text_color) {
+            const parsed = hexToRgb(field.text_color)
+            if (parsed) {
+              const colorStr = `${(parsed.r / 255).toFixed(3)} ${(parsed.g / 255).toFixed(3)} ${(parsed.b / 255).toFixed(3)} rg`
+              const existingDa = pdfField.acroField.getDefaultAppearance() ?? ''
+              const cleanedDa = existingDa.replace(/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+rg\s*/g, '')
+              pdfField.acroField.setDefaultAppearance(cleanedDa.trim() ? `${colorStr} ${cleanedDa.trim()}` : colorStr)
+              for (const fw of pdfField.acroField.getWidgets()) {
+                const widgetDa = fw.getDefaultAppearance()
+                if (widgetDa !== undefined) {
+                  const cleanedWDa = widgetDa.replace(/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+rg\s*/g, '')
+                  fw.setDefaultAppearance(cleanedWDa.trim() ? `${colorStr} ${cleanedWDa.trim()}` : colorStr)
+                }
+              }
+            }
+          }
+
           const fontKey = `${field.font_family}-${field.font_source}-${field.uploaded_font_key}`
           if (!fieldFontCache[fontKey]) {
             let fontBytes: ArrayBuffer
             if (field.font_source === 'google') {
-              console.log('[PDF]   loading google font:', field.font_family)
               fontBytes = await getGoogleFontBytes(field.font_family)
             } else if (field.uploaded_font_key) {
-              console.log('[PDF]   loading uploaded font')
               const fontRes = await fetch(`/api/fonts/uploaded?key=${field.uploaded_font_key}`)
               if (!fontRes.ok) throw new Error(`Font fetch returned ${fontRes.status}`)
               fontBytes = await fontRes.arrayBuffer()
             } else {
-              console.log('[PDF]   fallback to google font:', field.font_family)
               fontBytes = await getGoogleFontBytes(field.font_family)
             }
-            console.log('[PDF]   font bytes:', fontBytes.byteLength)
             fieldFontCache[fontKey] = new Uint8Array(fontBytes)
           }
 
-          console.log('[PDF]   embedding font')
           const fontBytes = fieldFontCache[fontKey]
           let font
 
@@ -138,13 +147,11 @@ export function PdfCertificateViewer({
           if (compatible) {
             font = await pdfDoc.embedFont(fontBytes)
           } else {
-            console.log('[PDF]   font incompatible, using Helvetica fallback')
             font = await pdfDoc.embedFont(StandardFonts.Helvetica)
           }
 
           pdfField.setFontSize(field.font_size)
           pdfField.defaultUpdateAppearances(font)
-          console.log('[PDF]   field done')
 
           const widgets = pdfField.acroField.getWidgets()
           for (const widget of widgets) {
@@ -154,30 +161,23 @@ export function PdfCertificateViewer({
             }
           }
         } catch (err) {
-          console.log('[PDF]   field error:', field.pdf_field_name, err)
+          console.log('[PDF]   field error:', err)
         }
       }
 
-      console.log('[PDF] Step 4: processing QR fields')
       for (const field of fields) {
         if (!field.is_enabled || field.source_type !== 'qr_code') continue
 
         try {
-          console.log('[PDF]   QR field', field.pdf_field_name)
           const qrField = form.getTextField(field.pdf_field_name)
           const qrWidgets = qrField.acroField.getWidgets()
-          if (qrWidgets.length === 0) {
-            console.log('[PDF]   no widgets, skipping')
-            continue
-          }
+          if (qrWidgets.length === 0) continue
 
           const ap = qrWidgets[0].getAppearanceCharacteristics()
           if (ap) ap.setBackgroundColor([])
 
           const rect = qrWidgets[0].getRectangle()
-          console.log('[PDF]   QR rect:', rect)
 
-          console.log('[PDF]   generating QR code')
           const qr = new QrCodeWithLogo({
             content: certificateUrl,
             width: 300,
@@ -204,16 +204,13 @@ export function PdfCertificateViewer({
             width: rect.width,
             height: rect.height,
           })
-          console.log('[PDF]   QR done')
         } catch (err) {
-          console.log('[PDF]   QR field error:', field.pdf_field_name, err)
+          console.log('[PDF]   QR field error:', err)
         }
       }
 
-      console.log('[PDF] Step 5: flattening and saving')
       form.flatten()
       const filledBytes = await pdfDoc.save()
-      console.log('[PDF] Step 5 done:', filledBytes.length, 'bytes')
 
       if (cancelled) return
 
@@ -221,12 +218,10 @@ export function PdfCertificateViewer({
       const blobUrl = URL.createObjectURL(blob)
       setDownloadUrl(blobUrl)
 
-      console.log('[PDF] Step 6: rendering first page with pdfjs')
       const canvas = canvasRef.current
       const container = containerRef.current
       if (canvas && container) {
         const pdf = await pdfjsLib.getDocument({ data: filledBytes }).promise
-        console.log('[PDF]   pdfjs doc loaded, pages:', pdf.numPages)
         const page = await pdf.getPage(1)
 
         const containerWidth = container.clientWidth
@@ -242,12 +237,9 @@ export function PdfCertificateViewer({
 
         const ctx = canvas.getContext('2d')
         if (ctx) {
-          console.log('[PDF]   rendering page to canvas')
           await page.render({ canvasContext: ctx, viewport, canvas }).promise
-          console.log('[PDF]   canvas render complete')
         }
       }
-      console.log('[PDF] All done successfully')
     }
 
     async function run() {
@@ -343,4 +335,13 @@ async function getGoogleFontBytes(fontName: string): Promise<ArrayBuffer> {
   const fontBytes = await response.arrayBuffer()
   await cache.put(apiUrl, new Response(fontBytes))
   return fontBytes
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const clean = hex.replace('#', '')
+  if (clean.length !== 6 && clean.length !== 3) return null
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean
+  const num = parseInt(full, 16)
+  if (isNaN(num)) return null
+  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 }
 }

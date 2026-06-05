@@ -170,6 +170,9 @@ export default async function CertificatePage({ params }: PageProps) {
     font_source: string
     uploaded_font_key: string | null
     custom_default_value: string | null
+    date_format: string | null
+    level_format: string | null
+    text_color: string | null
     sort_order: number
   }
 
@@ -259,6 +262,7 @@ export default async function CertificatePage({ params }: PageProps) {
                   }}
                   customValues={pdfTemplateData.customValues}
                   certificateUrl={`/${lang}/certificate/${claim.slug}`}
+                  viewerLocale={lang}
                 />
               </div>
             ) : (

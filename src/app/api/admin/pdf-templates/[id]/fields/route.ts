@@ -88,6 +88,9 @@ export async function PUT(
     uploaded_font_key?: string | null
     custom_default_value?: string | null
     custom_overridable: boolean
+    date_format?: string | null
+    level_format?: string | null
+    text_color?: string | null
     sort_order: number
   }, index: number) => ({
     id: field.id,
@@ -102,6 +105,9 @@ export async function PUT(
     uploaded_font_key: field.uploaded_font_key ?? null,
     custom_default_value: field.custom_default_value ?? null,
     custom_overridable: field.custom_overridable,
+    date_format: field.date_format ?? null,
+    level_format: field.level_format ?? null,
+    text_color: field.text_color ?? null,
     sort_order: field.sort_order ?? index,
     template_id: templateId,
   }))

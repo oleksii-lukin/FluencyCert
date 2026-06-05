@@ -392,7 +392,16 @@
     "fontStandard": "Стандартний",
     "saveFont": "Зберегти шрифт",
     "savingFont": "Збереження...",
-    "fontIncompatibleWarning": "Цей шрифт може відображатися некоректно в PDF-сертифікатах. Він буде замінений на шрифт за замовчуванням."
+    "fontIncompatibleWarning": "Цей шрифт може відображатися некоректно в PDF-сертифікатах. Він буде замінений на шрифт за замовчуванням.",
+    "textColor": "Колір тексту",
+    "dateFormat": "Формат дати",
+    "dateFormatUsa": "США",
+    "dateFormatGb": "Велика Британія",
+    "dateFormatLocale": "Локаль",
+    "levelFormat": "Формат рівня",
+    "levelFormatShort": "Короткий",
+    "levelFormatText": "Текст",
+    "levelFormatLong": "Повний"
   },
   "claimActions": {
     "approve": "Схвалити",
