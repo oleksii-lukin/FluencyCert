@@ -247,11 +247,8 @@ export function ClaimActions({
       )}
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setOpen(null); setError("") }}>
-          <div
-            className="w-full max-w-lg rounded-xl border bg-white p-6 shadow-xl dark:bg-graphite max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-lg rounded-xl border bg-white p-6 shadow-xl dark:bg-graphite max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-2">
               {isUpdate ? ca('updateTitle') : open === 'approve' ? ca('approveTitle') : ca('rejectTitle')}
             </h3>
