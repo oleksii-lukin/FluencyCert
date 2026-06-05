@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const PREDEFINED_COLORS = [
   { label: 'Black', value: '#000000' },
@@ -35,6 +35,14 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
   const [customInput, setCustomInput] = useState(value === '#000000' ? '' : value)
   const inputRef = useRef<HTMLInputElement>(null)
   const isPredefined = PREDEFINED_COLORS.some((c) => c.value.toLowerCase() === value.toLowerCase())
+
+  useEffect(() => {
+    if (value === '#000000') {
+      setCustomInput('')
+    } else if (customInput !== value) {
+      setCustomInput(value)
+    }
+  }, [value])
 
   function handleCustomInputChange(raw: string) {
     setCustomInput(raw)

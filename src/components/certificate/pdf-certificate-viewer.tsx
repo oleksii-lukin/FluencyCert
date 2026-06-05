@@ -175,6 +175,7 @@ export function PdfCertificateViewer({
 
         try {
           const qrField = form.getTextField(field.pdf_field_name)
+          qrField.setText('')
           const qrWidgets = qrField.acroField.getWidgets()
           if (qrWidgets.length === 0) continue
 
