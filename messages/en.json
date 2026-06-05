@@ -400,7 +400,13 @@
     "levelFormat": "Level Format",
     "levelFormatShort": "Short",
     "levelFormatText": "Text",
-    "levelFormatLong": "Long"
+    "levelFormatLong": "Long",
+    "qrDotsColor": "Dots Color",
+    "qrBgColor": "Background Color",
+    "qrDotsType": "Dots Style",
+    "qrCornersType": "Corners Style",
+    "qrCornersColor": "Corners Color",
+    "transparent": "Transparent"
   },
   "claimActions": {
     "approve": "Approve",

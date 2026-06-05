@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { FontPicker } from '@/components/ui/font-picker'
@@ -10,6 +10,10 @@ import { DATABASE_FIELD_MAP, type SourceType } from '@/lib/pdf-field-mapping'
 import type { PdfFontInfo } from '@/lib/pdf-fonts'
 import { testFontCompatibility } from '@/lib/font-compat'
 import { getPreviewDate, getPreviewLevel } from '@/lib/pdf-formatting'
+import QrCodeWithLogo from 'qrcode-with-logos'
+
+const QR_DOT_TYPES = ['square', 'dot', 'dot-small', 'tile', 'rounded', 'diamond', 'star', 'fluid', 'fluid-line', 'stripe', 'stripe-row', 'stripe-column'] as const
+const QR_CORNER_TYPES = ['square', 'rounded', 'circle', 'rounded-circle', 'circle-rounded', 'circle-star', 'circle-diamond'] as const
 
 type FieldMapping = {
   id: string
@@ -27,6 +31,11 @@ type FieldMapping = {
   date_format: string | null
   level_format: string | null
   text_color: string | null
+  qr_dots_color: string
+  qr_bg_color: string
+  qr_dots_type: string
+  qr_corners_type: string
+  qr_corners_color: string
   sort_order: number
 }
 
@@ -53,6 +62,58 @@ function getContrastBg(hex: string | null): string {
   const b = parseInt(full.substring(4, 6), 16) / 255
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
   return luminance > 0.5 ? '#1a1a2e' : '#f8f9fa'
+}
+
+function QrCodeLivePreview({ content, dotsColor, bgColor, dotsType, cornersType, cornersColor }: {
+  content: string
+  dotsColor: string
+  bgColor: string
+  dotsType: string
+  cornersType: string
+  cornersColor: string
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const qr = new QrCodeWithLogo({
+      content,
+      width: 300,
+      nodeQrCodeOptions: { color: { dark: dotsColor, light: bgColor === 'transparent' ? 'rgba(255,255,255,0)' : bgColor }, margin: 2 },
+      dotsOptions: { color: dotsColor, type: dotsType as any },
+      cornersOptions: { color: cornersColor, type: cornersType as any },
+    })
+
+    qr.getCanvas().then((c: HTMLCanvasElement) => {
+      if (cancelled) return
+      const ctx = canvasRef.current?.getContext('2d')
+      if (!ctx) return
+      const canvas = canvasRef.current!
+      canvas.width = c.width
+      canvas.height = c.height
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(c, 0, 0)
+    }).catch(() => {
+      if (cancelled) return
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      canvas.width = 140
+      canvas.height = 140
+      ctx.clearRect(0, 0, 140, 140)
+    })
+
+    return () => { cancelled = true }
+  }, [content, dotsColor, bgColor, dotsType, cornersType, cornersColor])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="rounded-lg border"
+      style={{ width: 140, height: 140 }}
+    />
+  )
 }
 
 export function TemplateFieldEditor({ templateId, lang }: { templateId: string; lang: string }) {
@@ -221,6 +282,11 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         date_format: null,
         level_format: null,
         text_color: null,
+        qr_dots_color: '#1a1a2e',
+        qr_bg_color: '#FFFFFF',
+        qr_dots_type: 'rounded',
+        qr_corners_type: 'square',
+        qr_corners_color: '#1a1a2e',
         sort_order: prev.length,
       },
     ])
@@ -515,15 +581,74 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
               )}
 
               {field.source_type === 'qr_code' && (
-                <div className="col-span-1">
-                  <p className="text-xs text-muted-foreground pt-6">
-                    {t('qrCodeDescription')}
-                  </p>
+                <div className="col-span-2 space-y-4">
+                  <p className="text-xs text-muted-foreground">{t('qrCodeDescription')}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-medium mb-2 text-muted-foreground">{t('qrDotsColor')}</label>
+                        <ColorPicker
+                          value={field.qr_dots_color}
+                          onChange={(color) => updateField(index, { qr_dots_color: color, qr_corners_color: color })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-2 text-muted-foreground">{t('qrBgColor')}</label>
+                        <div className="flex gap-2 items-center">
+                          <ColorPicker
+                            value={field.qr_bg_color === 'transparent' ? '#FFFFFF' : field.qr_bg_color}
+                            onChange={(color) => updateField(index, { qr_bg_color: color })}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateField(index, { qr_bg_color: field.qr_bg_color === 'transparent' ? '#FFFFFF' : 'transparent' })}
+                            className={`rounded-lg px-3 py-1.5 text-xs border transition-colors ${
+                              field.qr_bg_color === 'transparent'
+                                ? 'bg-bright-sky text-white border-bright-sky'
+                                : 'bg-background text-muted-foreground border hover:bg-muted'
+                            }`}
+                          >
+                            {t('transparent')}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1 text-muted-foreground">{t('qrDotsType')}</label>
+                        <select
+                          className="w-full rounded-lg border bg-background p-2 text-sm"
+                          value={field.qr_dots_type}
+                          onChange={(e) => updateField(index, { qr_dots_type: e.target.value })}
+                        >
+                          {QR_DOT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1 text-muted-foreground">{t('qrCornersType')}</label>
+                        <select
+                          className="w-full rounded-lg border bg-background p-2 text-sm"
+                          value={field.qr_corners_type}
+                          onChange={(e) => updateField(index, { qr_corners_type: e.target.value })}
+                        >
+                          {QR_CORNER_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex items-start justify-center pt-6">
+                      <QrCodeLivePreview
+                        content="https://example.com/certificate/TEST123"
+                        dotsColor={field.qr_dots_color}
+                        bgColor={field.qr_bg_color}
+                        dotsType={field.qr_dots_type}
+                        cornersType={field.qr_corners_type}
+                        cornersColor={field.qr_corners_color}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 border-t pt-4">
+            <div className="grid grid-cols-2 gap-4 border-t pt-4" style={{ display: field.source_type === 'qr_code' ? 'none' : 'grid' }}>
               <div className="col-span-2">
                 <label className="block text-xs font-medium mb-2 text-muted-foreground">
                   {t('fontSource')}
@@ -653,7 +778,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
               </div>
             </div>
 
-            <div className="border-t pt-4 space-y-4">
+            <div className="border-t pt-4 space-y-4" style={{ display: field.source_type === 'qr_code' ? 'none' : 'block' }}>
               <div>
                 <label className="block text-xs font-medium mb-2 text-muted-foreground">
                   {t('textColor')}

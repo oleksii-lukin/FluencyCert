@@ -401,7 +401,13 @@
     "levelFormat": "Формат рівня",
     "levelFormatShort": "Короткий",
     "levelFormatText": "Текст",
-    "levelFormatLong": "Повний"
+    "levelFormatLong": "Повний",
+    "qrDotsColor": "Колір крапок",
+    "qrBgColor": "Колір фону",
+    "qrDotsType": "Стиль крапок",
+    "qrCornersType": "Стиль кутів",
+    "qrCornersColor": "Колір кутів",
+    "transparent": "Прозорий"
   },
   "claimActions": {
     "approve": "Схвалити",

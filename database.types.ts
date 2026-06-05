@@ -272,6 +272,11 @@ export type Database = {
           is_enabled: boolean
           level_format: string | null
           pdf_field_name: string
+          qr_bg_color: string
+          qr_corners_color: string
+          qr_corners_type: string
+          qr_dots_color: string
+          qr_dots_type: string
           sort_order: number
           source_key: string | null
           source_type: string
@@ -293,6 +298,11 @@ export type Database = {
           is_enabled?: boolean
           level_format?: string | null
           pdf_field_name: string
+          qr_bg_color?: string
+          qr_corners_color?: string
+          qr_corners_type?: string
+          qr_dots_color?: string
+          qr_dots_type?: string
           sort_order?: number
           source_key?: string | null
           source_type: string
@@ -314,6 +324,11 @@ export type Database = {
           is_enabled?: boolean
           level_format?: string | null
           pdf_field_name?: string
+          qr_bg_color?: string
+          qr_corners_color?: string
+          qr_corners_type?: string
+          qr_dots_color?: string
+          qr_dots_type?: string
           sort_order?: number
           source_key?: string | null
           source_type?: string

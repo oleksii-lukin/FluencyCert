@@ -173,6 +173,11 @@ export default async function CertificatePage({ params }: PageProps) {
     date_format: string | null
     level_format: string | null
     text_color: string | null
+    qr_dots_color: string
+    qr_bg_color: string
+    qr_dots_type: string
+    qr_corners_type: string
+    qr_corners_color: string
     sort_order: number
   }
 

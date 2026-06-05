@@ -22,6 +22,11 @@ interface FieldMapping {
   date_format: string | null
   level_format: string | null
   text_color: string | null
+  qr_dots_color: string
+  qr_bg_color: string
+  qr_dots_type: string
+  qr_corners_type: string
+  qr_corners_color: string
   sort_order: number
 }
 
@@ -186,8 +191,18 @@ export function PdfCertificateViewer({
               logoRadius: 6,
             },
             dotsOptions: {
-              color: '#1a1a2e',
-              type: 'rounded',
+              color: field.qr_dots_color,
+              type: field.qr_dots_type as any,
+            },
+            cornersOptions: {
+              color: field.qr_corners_color,
+              type: field.qr_corners_type as any,
+            },
+            nodeQrCodeOptions: {
+              color: {
+                dark: field.qr_dots_color,
+                light: field.qr_bg_color === 'transparent' ? 'rgba(255,255,255,0)' : field.qr_bg_color,
+              },
             },
           })
 

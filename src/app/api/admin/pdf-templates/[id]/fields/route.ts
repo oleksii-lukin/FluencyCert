@@ -91,6 +91,11 @@ export async function PUT(
     date_format?: string | null
     level_format?: string | null
     text_color?: string | null
+    qr_dots_color?: string
+    qr_bg_color?: string
+    qr_dots_type?: string
+    qr_corners_type?: string
+    qr_corners_color?: string
     sort_order: number
   }, index: number) => ({
     id: field.id,
@@ -108,6 +113,11 @@ export async function PUT(
     date_format: field.date_format ?? null,
     level_format: field.level_format ?? null,
     text_color: field.text_color ?? null,
+    qr_dots_color: field.qr_dots_color ?? '#1a1a2e',
+    qr_bg_color: field.qr_bg_color ?? '#FFFFFF',
+    qr_dots_type: field.qr_dots_type ?? 'rounded',
+    qr_corners_type: field.qr_corners_type ?? 'square',
+    qr_corners_color: field.qr_corners_color ?? '#1a1a2e',
     sort_order: field.sort_order ?? index,
     template_id: templateId,
   }))
