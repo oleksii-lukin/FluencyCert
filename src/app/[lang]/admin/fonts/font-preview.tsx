@@ -3,6 +3,14 @@
 import { useEffect, useState, useId } from 'react'
 import { useLocale } from 'next-intl'
 
+// These pangrams demonstrate how a font renders every letter of the alphabet.
+// A pangram is a sentence that uses every letter of the alphabet at least once.
+// When adding a new language, provide a PROPER PANGRAM for that language —
+// NOT a literal translation of the English text. A literal translation likely won't
+// contain all the target language's letters, making it useless for font preview.
+// Example: "Швидкий коричневий лис стрибає через ледачого собаку" is NOT a valid
+// Ukrainian pangram — it's missing Ґ, Ї, Ж, І, Ц, Щ, Ь, Ю, Я, Ф, П, Х, М.
+// Research the canonical pangram(s) for your language before writing one.
 const previewEn = 'The quick brown fox jumps over the lazy dog'
 const previewUk = 'Чуєш їх, доцю, га? Кумедна ж ти, прощайся без ґольфів!'
 
@@ -62,7 +70,7 @@ export function FontPreview({ fontKey }: FontPreviewProps) {
       <span className="block text-lg leading-relaxed" style={{ fontFamily: loaded ? family : undefined }}>
         {previewUk}
       </span>
-      <span className="block text-sm leading-relaxed text-muted-foreground/60" style={{ fontFamily: loaded ? family : undefined }}>
+      <span className="block text-lg leading-relaxed text-muted-foreground/60" style={{ fontFamily: loaded ? family : undefined }}>
         {previewEn}
       </span>
     </div>
