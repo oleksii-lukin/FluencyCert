@@ -41,44 +41,66 @@ export async function GET(request: Request) {
   try {
     const zoom = createZoomClient(userId)
 
-    // Step 1: List all scheduled/upcoming meetings (NOT past/ended — that filter is invalid here)
     const listResult = await zoom.listMeetings({ pageSize: 10 })
     const scheduledMeetings = listResult.meetings
 
-    // Step 2: For each scheduled meeting, fetch past instances + their participants
-    const meetingsWithInstances = await Promise.all(
+    const meetingsWithData = await Promise.all(
       scheduledMeetings.map(async (meeting) => {
+        let pastInstances: unknown = null
+        let pastInstancesError: string | null = null
+        let directParticipants: unknown = null
+        let directParticipantsError: string | null = null
+
+        // Attempt 1: get past instances and their participants
         try {
-          const instances = await zoom.getPastMeetingInstances(meeting.id)
+          const result = await zoom.getPastMeetingInstances(meeting.id)
+          if (result.meetings.length > 0) {
+            const withParticipants = await Promise.all(
+              result.meetings.map(async (instance) => {
+                try {
+                  const p = await zoom.getPastMeetingParticipants(instance.uuid)
+                  return { ...instance, participants: p }
+                } catch (e) {
+                  return { ...instance, participants: null, participantsError: String(e) }
+                }
+              }),
+            )
+            pastInstances = withParticipants
+          } else {
+            pastInstances = []
+          }
+        } catch (e) {
+          pastInstancesError = String(e)
+        }
 
-          const instancesWithParticipants = await Promise.all(
-            instances.meetings.map(async (instance) => {
-              try {
-                const participants = await zoom.getPastMeetingParticipants(instance.uuid)
-                return { ...instance, participants }
-              } catch {
-                return { ...instance, participants: null, participantsError: 'Failed to fetch' }
-              }
-            }),
-          )
+        // Attempt 2: try direct participant lookup by meeting UUID (fallback)
+        if (!pastInstances || (Array.isArray(pastInstances) && pastInstances.length === 0)) {
+          try {
+            const result = await zoom.getPastMeetingParticipants(meeting.uuid)
+            directParticipants = result
+          } catch (e) {
+            directParticipantsError = String(e)
+          }
+        }
 
-          return { ...meeting, instances: instancesWithParticipants }
-        } catch {
-          return { ...meeting, instances: null, instancesError: 'Failed to fetch instances' }
+        return {
+          id: meeting.id,
+          uuid: meeting.uuid,
+          topic: meeting.topic,
+          type: meeting.type,
+          start_time: meeting.start_time,
+          duration: meeting.duration,
+          pastInstances,
+          pastInstancesError,
+          directParticipants,
+          directParticipantsError,
         }
       }),
     )
 
     return NextResponse.json({
-      // The raw list result (to see what the endpoint actually returns)
-      rawListResult: {
-        total_records: listResult.total_records,
-        page_size: listResult.page_size,
-        next_page_token: listResult.next_page_token,
-        meetings: listResult.meetings,
-      },
-      // Meetings with nested instances and participants
-      meetingsWithData: meetingsWithInstances,
+      rawListResult: listResult,
+      meetingsWithData,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
