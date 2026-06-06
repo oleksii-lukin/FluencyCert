@@ -68,7 +68,7 @@ export function ZoomConnect({ initialZoomUserInfo, onConnected, onDisconnected }
     sessionStorage.setItem('zoom_oauth_state', state)
 
     const redirectUri = `${window.location.origin}/zoom/callback`
-    const scopes = 'meeting:read:list_meetings meeting:read:list_past_instances meeting:read:list_past_participants user:read:user'
+    const scopes = 'meeting:read:list_meetings meeting:read:list_past_instances meeting:read:list_past_participants user:read:user meeting:read:past_meeting'
     const authUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scopes)}&prompt=consent`
     window.open(authUrl, 'ZoomAuth', 'width=600,height=700,left=200,top=100')
   }

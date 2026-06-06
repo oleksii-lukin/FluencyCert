@@ -125,6 +125,26 @@ export async function POST(request: Request) {
   })
 }
 
+async function revokeZoomToken(token: string): Promise<boolean> {
+  const clientId = process.env.ZOOM_CLIENT_ID
+  const clientSecret = process.env.ZOOM_CLIENT_SECRET
+  if (!clientId || !clientSecret) return false
+
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+  try {
+    const res = await fetch(`https://zoom.us/oauth/revoke?token=${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${basicAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 export async function DELETE(request: Request) {
   const { userId } = await auth()
   if (!userId) {
@@ -140,6 +160,17 @@ export async function DELETE(request: Request) {
   }
 
   const supabase = createAdminClient()
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('zoom_access_token')
+    .eq('id', userId)
+    .single()
+
+  if (profile?.zoom_access_token) {
+    await revokeZoomToken(profile.zoom_access_token)
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update({
