@@ -404,6 +404,10 @@ export type Database = {
           telegram_username: string | null
           updated_at: string
           username: string | null
+          zoom_access_token: string | null
+          zoom_refresh_token: string | null
+          zoom_token_expires_at: string | null
+          zoom_user_info: Json | null
         }
         Insert: {
           avatar_url?: string | null
@@ -420,6 +424,10 @@ export type Database = {
           telegram_username?: string | null
           updated_at?: string
           username?: string | null
+          zoom_access_token?: string | null
+          zoom_refresh_token?: string | null
+          zoom_token_expires_at?: string | null
+          zoom_user_info?: Json | null
         }
         Update: {
           avatar_url?: string | null
@@ -436,6 +444,10 @@ export type Database = {
           telegram_username?: string | null
           updated_at?: string
           username?: string | null
+          zoom_access_token?: string | null
+          zoom_refresh_token?: string | null
+          zoom_token_expires_at?: string | null
+          zoom_user_info?: Json | null
         }
         Relationships: []
       }

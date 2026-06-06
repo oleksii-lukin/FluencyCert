@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from '@/i18n/routing'
 import { getAdminClubIds, isMasterAdmin } from '@/lib/clubs'
 import { Link } from '@/i18n/routing'
+import { ZoomAdmin } from "@/components/zoom/zoom-admin"
 
 export default async function AdminDashboard({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -82,11 +83,12 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
     )
   }
 
-  const [{ count: totalUsers }, { count: adminUsers }, { count: pendingClaims }, { count: clubsCount }] = await Promise.all([
+  const [{ count: totalUsers }, { count: adminUsers }, { count: pendingClaims }, { count: clubsCount }, { data: profile }] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_admin', true),
     supabase.from('certificate_claims').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('speaking_clubs').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('zoom_user_info').eq('id', userId!).single(),
   ])
 
   return (
@@ -113,6 +115,9 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
           <p className="text-sm text-muted-foreground">{t('signedInAs')}</p>
           <p className="text-sm font-mono mt-1 truncate">{userId}</p>
         </div>
+      </div>
+      <div className="mt-8">
+        <ZoomAdmin initialZoomUserInfo={profile?.zoom_user_info as { id: string; email: string; display_name: string } | null} />
       </div>
     </div>
   )
