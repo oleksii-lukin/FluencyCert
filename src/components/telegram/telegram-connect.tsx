@@ -36,11 +36,19 @@ export function TelegramConnect({ initialTelegramId, initialTelegramUsername }: 
   const [username, setUsername] = useState(initialTelegramUsername ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sdkReady, setSdkReady] = useState(false)
 
   useEffect(() => {
+    if (window.Telegram?.Login) {
+      setSdkReady(true)
+      return
+    }
+
     const script = document.createElement('script')
-    script.src = 'https://oauth.telegram.org/telegram-login.js'
+    script.src = 'https://oauth.telegram.org/js/telegram-login.js'
     script.async = true
+    script.onload = () => setSdkReady(true)
+    script.onerror = () => setError('Failed to load Telegram SDK')
     document.head.appendChild(script)
   }, [])
 
@@ -52,10 +60,15 @@ export function TelegramConnect({ initialTelegramId, initialTelegramUsername }: 
       return
     }
 
-    window.Telegram?.Login.auth(
+    if (!window.Telegram?.Login) {
+      setError('Telegram SDK not loaded yet')
+      return
+    }
+
+    window.Telegram.Login.auth(
       {
         client_id: clientId,
-        request_access: ['write'],
+        request_access: ['profile', 'write'],
       },
       async (data) => {
         if (data.id_token) {
