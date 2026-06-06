@@ -40,10 +40,14 @@ export async function GET(request: Request) {
 
   try {
     const zoom = createZoomClient(userId)
-    const meetings = await zoom.listMeetings({ pageSize: 5, type: 'ended' })
 
+    // Step 1: List all scheduled/upcoming meetings (NOT past/ended — that filter is invalid here)
+    const listResult = await zoom.listMeetings({ pageSize: 10 })
+    const scheduledMeetings = listResult.meetings
+
+    // Step 2: For each scheduled meeting, fetch past instances + their participants
     const meetingsWithInstances = await Promise.all(
-      meetings.meetings.map(async (meeting) => {
+      scheduledMeetings.map(async (meeting) => {
         try {
           const instances = await zoom.getPastMeetingInstances(meeting.id)
 
@@ -66,7 +70,15 @@ export async function GET(request: Request) {
     )
 
     return NextResponse.json({
-      meetings: meetingsWithInstances,
+      // The raw list result (to see what the endpoint actually returns)
+      rawListResult: {
+        total_records: listResult.total_records,
+        page_size: listResult.page_size,
+        next_page_token: listResult.next_page_token,
+        meetings: listResult.meetings,
+      },
+      // Meetings with nested instances and participants
+      meetingsWithData: meetingsWithInstances,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

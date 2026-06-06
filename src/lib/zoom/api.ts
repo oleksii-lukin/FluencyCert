@@ -196,13 +196,12 @@ export function createZoomClient(userId: string) {
       return res.json()
     },
 
-    async listAllPastMeetings(): Promise<ZoomMeeting[]> {
+    async listAllScheduledMeetings(): Promise<ZoomMeeting[]> {
       const meetings: ZoomMeeting[] = []
       let nextPageToken = ''
 
       do {
         const params = new URLSearchParams({
-          type: 'ended',
           page_size: '300',
         })
         if (nextPageToken) params.set('next_page_token', nextPageToken)
