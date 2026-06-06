@@ -8,7 +8,7 @@ const intlMiddleware = createIntlMiddleware(routing);
 export default clerkMiddleware((auth, req: NextRequest) => {
   const { pathname } = req.nextUrl;
 
-  if (pathname.startsWith('/api/') || pathname.startsWith('/__clerk/') || pathname.startsWith('/_next/') || pathname.startsWith('/trpc/')) {
+  if (pathname.startsWith('/api/') || pathname.startsWith('/__clerk/') || pathname.startsWith('/_next/') || pathname.startsWith('/trpc/') || pathname.startsWith('/zoom/callback') || pathname.startsWith('/linkedin/callback')) {
     return NextResponse.next();
   }
 
