@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { ContactButton } from "@/components/ui/contact-button"
 
 export function ClubMembersList({
   members,
@@ -16,6 +17,9 @@ export function ClubMembersList({
     first_name: string | null
     last_name: string | null
     avatar_url: string | null
+    telegram_id: string | null
+    telegram_username: string | null
+    linkedin_url: string | null
     role: string
     joined_at: string
     claim: { slug: string; status: string } | null
@@ -52,7 +56,6 @@ export function ClubMembersList({
         <thead>
           <tr className="border-b bg-muted/50">
             <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t("user")}</th>
-            <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t("email")}</th>
             <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t("role")}</th>
             <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t("status")}</th>
             <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">{t("joined")}</th>
@@ -71,12 +74,18 @@ export function ClubMembersList({
                       {(member.first_name?.[0] ?? member.email[0]).toUpperCase()}
                     </div>
                   )}
-                  <span className="font-medium">
-                    {[member.first_name, member.last_name].filter(Boolean).join(" ") || "—"}
-                  </span>
+                  <div>
+                    <span className="font-medium">
+                      {[member.first_name, member.last_name].filter(Boolean).join(" ") || "—"}
+                    </span>
+                    <div className="flex items-center gap-0.5 mt-0.5">
+                      <ContactButton type="email" value={member.email} />
+                      <ContactButton type="telegram" value={member.telegram_username} />
+                      <ContactButton type="linkedin" value={member.linkedin_url} />
+                    </div>
+                  </div>
                 </div>
               </td>
-              <td className="px-4 py-3 text-sm text-muted-foreground">{member.email}</td>
               <td className="px-4 py-3">
                 <select
                   className="rounded border bg-background px-2 py-1 text-xs"
@@ -111,7 +120,7 @@ export function ClubMembersList({
           ))}
           {members.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+              <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                 {t("noMembersFound")}
               </td>
             </tr>

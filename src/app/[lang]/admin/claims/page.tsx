@@ -6,6 +6,7 @@ import { getAdminClubIds, isMasterAdmin } from '@/lib/clubs'
 import Image from 'next/image'
 import { ClaimActions } from './claim-actions'
 import { SlugDisplay } from './slug-display'
+import { ContactButton } from '@/components/ui/contact-button'
 
 export default async function AdminClaimsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -24,7 +25,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
 
   let query = supabase
     .from('certificate_claims')
-    .select('*, profiles!inner(id, email, first_name, last_name, avatar_url)')
+    .select('*, profiles!inner(id, email, first_name, last_name, avatar_url, telegram_id, telegram_username, linkedin_url)')
     .order('created_at', { ascending: false })
 
   if (!isMaster && adminClubIds.length > 0) {
@@ -63,7 +64,7 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
           <tbody>
             {claims?.map((claim) => (
               <tr key={claim.id} className="border-b last:border-b-0 hover:bg-muted/30">
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 min-w-[180px]">
                   <div className="flex items-center gap-3">
                     {claim.profiles.avatar_url ? (
                       <Image src={claim.profiles.avatar_url} alt="" width={32} height={32} className="rounded-full size-8" />
@@ -76,7 +77,11 @@ export default async function AdminClaimsPage({ params }: { params: Promise<{ la
                       <span className="font-medium">
                         {[claim.profiles.first_name, claim.profiles.last_name].filter(Boolean).join(' ') || '—'}
                       </span>
-                      <p className="text-xs text-muted-foreground">{claim.profiles.email}</p>
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        <ContactButton type="email" value={claim.profiles.email} />
+                        <ContactButton type="telegram" value={claim.profiles.telegram_username} />
+                        <ContactButton type="linkedin" value={claim.profiles.linkedin_url} />
+                      </div>
                     </div>
                   </div>
                 </td>

@@ -31,7 +31,7 @@ export default async function AdminClubMembersPage({
 
   const { data: members } = await supabase
     .from('club_memberships')
-    .select('user_id, role, created_at, profiles!inner(id, email, first_name, last_name, avatar_url)')
+    .select('user_id, role, created_at, profiles!inner(id, email, first_name, last_name, avatar_url, telegram_id, telegram_username, linkedin_url)')
     .eq('club_id', club.id)
     .order('created_at', { ascending: false })
 
@@ -64,6 +64,9 @@ export default async function AdminClubMembersPage({
           first_name: m.profiles.first_name,
           last_name: m.profiles.last_name,
           avatar_url: m.profiles.avatar_url,
+          telegram_id: m.profiles.telegram_id,
+          telegram_username: m.profiles.telegram_username,
+          linkedin_url: m.profiles.linkedin_url,
           role: m.role,
           joined_at: m.created_at,
           claim: latestClaimByUserId.get(m.user_id) ?? null,
