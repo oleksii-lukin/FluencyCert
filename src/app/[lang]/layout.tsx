@@ -1,7 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { siteConfig } from '@/lib/site';
 
-const baseUrl = 'https://fluencycert.com'
+const baseUrl = siteConfig.baseUrl
 
 const localeToOgLocale: Record<string, string> = {
   en: 'en_US',

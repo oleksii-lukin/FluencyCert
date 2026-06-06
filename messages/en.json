@@ -26,6 +26,7 @@
     "testimonials": "Testimonials",
     "getStarted": "Get Started",
     "admin": "Admin",
+    "profile": "Profile",
     "myCertificate": "My Certificate",
     "fluencyCert": "FluencyCert",
     "clubs": "Clubs"
@@ -137,6 +138,25 @@
     "reason": "Reason",
     "contactSupport": "If you have questions, please reach out to support.",
     "backToHome": "Back to home"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your profile and connected accounts.",
+    "profileInfo": "Profile Information",
+    "name": "Name",
+    "email": "Email",
+    "connectedAccounts": "Connected Accounts",
+    "connectTelegram": "Connect Telegram",
+    "telegramConnected": "Connected as @{username}",
+    "telegramNotConnected": "Link your Telegram account so admins can contact you.",
+    "disconnectTelegram": "Disconnect",
+    "connecting": "Connecting...",
+    "error": "Failed to connect Telegram.",
+    "myCertificates": "My Certificates",
+    "noCertificates": "No certificates yet.",
+    "certificate": "Certificate",
+    "view": "View",
+    "control": "Control"
   },
   "certificateControl": {
     "title": "Certificate Control Panel",

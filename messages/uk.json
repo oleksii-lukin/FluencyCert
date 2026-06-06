@@ -26,6 +26,7 @@
     "testimonials": "Відгуки",
     "getStarted": "Почати",
     "admin": "Адмін",
+    "profile": "Профіль",
     "myCertificate": "Мій сертифікат",
     "fluencyCert": "FluencyCert",
     "clubs": "Клуби"
@@ -137,6 +138,25 @@
     "reason": "Причина",
     "contactSupport": "Якщо у вас є питання, зверніться до служби підтримки.",
     "backToHome": "На головну"
+  },
+  "profile": {
+    "title": "Профіль",
+    "subtitle": "Керуйте своїм профілем та підключеними акаунтами.",
+    "profileInfo": "Інформація профілю",
+    "name": "Ім'я",
+    "email": "Електронна пошта",
+    "connectedAccounts": "Підключені акаунти",
+    "connectTelegram": "Підключити Telegram",
+    "telegramConnected": "Підключено як @{username}",
+    "telegramNotConnected": "Підключіть Telegram, щоб адміністратори могли зв'язатися з вами.",
+    "disconnectTelegram": "Відключити",
+    "connecting": "Підключення...",
+    "error": "Не вдалося підключити Telegram.",
+    "myCertificates": "Мої сертифікати",
+    "noCertificates": "Ще немає сертифікатів.",
+    "certificate": "Сертифікат",
+    "view": "Переглянути",
+    "control": "Керувати"
   },
   "certificateControl": {
     "title": "Панель керування сертифікатом",

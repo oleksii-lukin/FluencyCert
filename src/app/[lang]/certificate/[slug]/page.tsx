@@ -11,12 +11,13 @@ import { FeedbackForm } from '@/components/certificate/feedback-form'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft02Icon } from '@hugeicons/core-free-icons'
 import '@/components/certificate/guilloche-pattern.css'
+import { siteConfig } from '@/lib/site'
 
 interface PageProps {
   params: Promise<{ lang: string; slug: string }>
 }
 
-const baseUrl = 'https://fluencycert.com'
+const baseUrl = siteConfig.baseUrl
 
 export async function generateMetadata({ params }: PageProps) {
   const { lang, slug } = await params

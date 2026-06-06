@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Certificate02Icon } from "@hugeicons/core-free-icons"
+import { Certificate02Icon, UserIcon } from "@hugeicons/core-free-icons"
 
 export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   const t = useTranslations('nav')
@@ -49,6 +49,11 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
             )}
             <UserButton>
               <UserButton.MenuItems>
+                <UserButton.Link
+                  label={t('profile')}
+                  href="/profile"
+                  labelIcon={<HugeiconsIcon icon={UserIcon} className="size-4" />}
+                />
                 <UserButton.Link
                   label={t('myCertificate')}
                   href="/my-certificate"

@@ -3,6 +3,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/lib/site";
 import { PostHogIdentify } from "@/components/posthog-identify";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -23,7 +24,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const baseUrl = 'https://fluencycert.com'
+const baseUrl = siteConfig.baseUrl
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

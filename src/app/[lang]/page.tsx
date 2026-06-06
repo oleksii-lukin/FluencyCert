@@ -7,8 +7,9 @@ import { FeaturesSection } from "@/components/landing/features-section"
 import { TestimonialsSection } from "@/components/landing/testimonials-section"
 import { StatsSection } from "@/components/landing/stats-section"
 import { CTASection } from "@/components/landing/cta-section"
+import { siteConfig } from '@/lib/site'
 
-const baseUrl = 'https://fluencycert.com'
+const baseUrl = siteConfig.baseUrl
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params

@@ -47,6 +47,9 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
       jspdf:
         specifier: ^2.5.2
         version: 2.5.2

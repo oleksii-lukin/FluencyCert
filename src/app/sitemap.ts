@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { siteConfig } from '@/lib/site'
 
-const baseUrl = 'https://fluencycert.com'
+const baseUrl = siteConfig.baseUrl
 const locales = ['en', 'uk'] as const
 
 export default async function sitemap() {

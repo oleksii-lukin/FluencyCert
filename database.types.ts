@@ -399,6 +399,8 @@ export type Database = {
           last_name: string | null
           linkedin_url: string | null
           phone_number: string | null
+          telegram_id: string | null
+          telegram_username: string | null
           updated_at: string
           username: string | null
         }
@@ -412,6 +414,8 @@ export type Database = {
           last_name?: string | null
           linkedin_url?: string | null
           phone_number?: string | null
+          telegram_id?: string | null
+          telegram_username?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -425,6 +429,8 @@ export type Database = {
           last_name?: string | null
           linkedin_url?: string | null
           phone_number?: string | null
+          telegram_id?: string | null
+          telegram_username?: string | null
           updated_at?: string
           username?: string | null
         }

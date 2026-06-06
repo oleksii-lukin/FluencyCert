@@ -6,8 +6,9 @@ import { PublicPageLayout } from "@/components/layout/public-page-layout"
 import { ClubJoinButton } from './club-join-button'
 import { ClubClaimButton } from './club-claim-button'
 import { CertificateHolders } from './certificate-holders'
+import { siteConfig } from '@/lib/site'
 
-const baseUrl = 'https://fluencycert.com'
+const baseUrl = siteConfig.baseUrl
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string; slug: string }> }) {
   const { lang, slug } = await params

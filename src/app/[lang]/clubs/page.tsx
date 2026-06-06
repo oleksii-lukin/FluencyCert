@@ -2,8 +2,9 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PublicPageLayout } from "@/components/layout/public-page-layout"
+import { siteConfig } from '@/lib/site'
 
-const baseUrl = 'https://fluencycert.com'
+const baseUrl = siteConfig.baseUrl
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
