@@ -24,21 +24,22 @@ export function ZoomConnect({ initialZoomUserInfo, onConnected, onDisconnected }
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.data?.type === 'zoom-auth' && event.data?.code) {
-        handleAuthorizationCode(event.data.code, event.origin)
+        const redirectUri = `${window.location.origin}/zoom/callback`
+        handleAuthorizationCode(event.data.code, redirectUri)
       }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
   }, [])
 
-  const handleAuthorizationCode = async (code: string, origin: string) => {
+  const handleAuthorizationCode = async (code: string, redirectUri: string) => {
     setLoading(true)
     setError(null)
     try {
       const res = await fetch('/api/zoom/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authorizationCode: code, redirectUri: origin }),
+        body: JSON.stringify({ authorizationCode: code, redirectUri }),
       })
       const result = await res.json()
       if (res.ok) {
