@@ -157,6 +157,21 @@ export interface ZoomMeetingsResponse {
 
 export function createZoomClient(userId: string) {
   return {
+    async getUser(): Promise<{ id: string; email: string; display_name: string; type: number }> {
+      const res = await zoomFetch(userId, '/users/me')
+      if (!res.ok) {
+        const body = await res.text()
+        throw new Error(`Zoom API error ${res.status}: ${body}`)
+      }
+      const data = await res.json()
+      return {
+        id: data.id,
+        email: data.email,
+        display_name: data.display_name,
+        type: data.type,
+      }
+    },
+
     async listMeetings(opts: { pageSize?: number; type?: string } = {}): Promise<ZoomMeetingsResponse> {
       const params = new URLSearchParams()
       if (opts.pageSize) params.set('page_size', String(opts.pageSize))

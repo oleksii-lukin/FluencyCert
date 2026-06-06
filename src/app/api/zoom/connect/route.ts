@@ -50,6 +50,7 @@ async function fetchZoomUserInfo(accessToken: string): Promise<{
   id: string
   email: string
   display_name: string
+  type: number
 } | null> {
   try {
     const res = await fetch(`${ZOOM_API_BASE}/users/me`, {
@@ -61,6 +62,7 @@ async function fetchZoomUserInfo(accessToken: string): Promise<{
       id: data.id,
       email: data.email,
       display_name: data.display_name,
+      type: data.type,
     }
   } catch {
     return null

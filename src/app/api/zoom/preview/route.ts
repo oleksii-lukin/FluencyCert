@@ -41,6 +41,13 @@ export async function GET(request: Request) {
   try {
     const zoom = createZoomClient(userId)
 
+    const userInfo = await zoom.getUser()
+    const supabase2 = createAdminClient()
+    await supabase2
+      .from('profiles')
+      .update({ zoom_user_info: userInfo })
+      .eq('id', userId)
+
     const listResult = await zoom.listMeetings({ pageSize: 10 })
     const scheduledMeetings = listResult.meetings
 
@@ -99,6 +106,7 @@ export async function GET(request: Request) {
     )
 
     return NextResponse.json({
+      zoomUserInfo: userInfo,
       rawListResult: listResult,
       meetingsWithData,
     })

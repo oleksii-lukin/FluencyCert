@@ -8,6 +8,32 @@ interface ZoomUserInfo {
   id: string
   email: string
   display_name: string
+  type?: number
+}
+
+const ZOOM_FREE_TIER_LIMITATIONS = [
+  'Participant attendance data (names, emails, join/leave times) is only available on Zoom Pro or higher plans.',
+  'Instant meetings (ad-hoc, type 1) cannot be discovered via the API for any plan tier.',
+]
+
+function ZoomPremiumWarning() {
+  return (
+    <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+      <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+        Free Zoom Account Detected
+      </p>
+      <ul className="mt-1.5 list-inside list-disc space-y-1">
+        {ZOOM_FREE_TIER_LIMITATIONS.map((msg) => (
+          <li key={msg} className="text-xs text-amber-700 dark:text-amber-400">
+            {msg}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-500">
+        Upgrade your Zoom account to a paid plan (Pro or higher) and reconnect to access participant data.
+      </p>
+    </div>
+  )
 }
 
 interface ZoomAdminProps {
@@ -40,6 +66,9 @@ export function ZoomAdmin({ initialZoomUserInfo }: ZoomAdminProps) {
       const res = await fetch('/api/zoom/preview')
       const data = await res.json()
       if (res.ok) {
+        if (data.zoomUserInfo) {
+          setZoomUserInfo(data.zoomUserInfo)
+        }
         setPreviewData(data)
       } else {
         setPreviewError(data.error ?? 'Failed to fetch preview')
@@ -60,15 +89,26 @@ export function ZoomAdmin({ initialZoomUserInfo }: ZoomAdminProps) {
         onConnected={handleZoomConnected}
         onDisconnected={handleZoomDisconnected}
       />
+      {!zoomUserInfo && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Participant attendance data (names, emails, join/leave times) is only available on Zoom Pro or higher plans.
+            You will be able to verify your account tier after connecting.
+          </p>
+        </div>
+      )}
       {zoomUserInfo && (
         <div className="mt-4">
-          <Button
-            size="sm"
-            onClick={handleFetchPreview}
-            disabled={previewLoading}
-          >
-            {previewLoading ? 'Fetching...' : 'Fetch & Preview Data'}
-          </Button>
+          {zoomUserInfo.type === 1 && <ZoomPremiumWarning />}
+          <div className={zoomUserInfo.type === 1 ? 'mt-4' : undefined}>
+            <Button
+              size="sm"
+              onClick={handleFetchPreview}
+              disabled={previewLoading}
+            >
+              {previewLoading ? 'Fetching...' : 'Fetch & Preview Data'}
+            </Button>
+          </div>
           {previewError && (
             <p className="mt-2 text-xs text-red-500">{previewError}</p>
           )}
