@@ -397,6 +397,7 @@ export type Database = {
           id: string
           is_admin: boolean
           last_name: string | null
+          linkedin_profile_data: Json | null
           linkedin_url: string | null
           phone_number: string | null
           telegram_id: string | null
@@ -412,6 +413,7 @@ export type Database = {
           id: string
           is_admin?: boolean
           last_name?: string | null
+          linkedin_profile_data?: Json | null
           linkedin_url?: string | null
           phone_number?: string | null
           telegram_id?: string | null
@@ -427,6 +429,7 @@ export type Database = {
           id?: string
           is_admin?: boolean
           last_name?: string | null
+          linkedin_profile_data?: Json | null
           linkedin_url?: string | null
           phone_number?: string | null
           telegram_id?: string | null

@@ -6,6 +6,9 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Certificate02Icon, Settings02Icon, Share01Icon, Clock01Icon, CheckmarkCircle02Icon, Cancel01Icon, ClubIcon } from "@hugeicons/core-free-icons"
 import { PublicPageLayout } from "@/components/layout/public-page-layout"
 import { TelegramConnect } from "@/components/telegram/telegram-connect"
+import { LinkedInConnect } from "@/components/linkedin/linkedin-connect"
+
+const FLAG_LINKEDIN_CONNECT = process.env.FLAG_LINKEDIN_CONNECT === 'true'
 
 export default async function ProfilePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -63,6 +66,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
             initialTelegramId={profile?.telegram_id ?? null}
             initialTelegramUsername={profile?.telegram_username ?? null}
           />
+          <div className="mt-3">
+            <LinkedInConnect
+              initialLinkedInUrl={profile?.linkedin_url ?? null}
+              initialLinkedInProfileData={profile?.linkedin_profile_data as { name?: string; email?: string; picture?: string; profileUrl?: string } | null ?? null}
+              oauthEnabled={FLAG_LINKEDIN_CONNECT}
+            />
+          </div>
         </div>
 
         <div className="rounded-xl border bg-white/50 p-6 shadow-lg dark:bg-graphite/50">
