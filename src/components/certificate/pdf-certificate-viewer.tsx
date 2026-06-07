@@ -17,6 +17,7 @@ interface FieldMapping {
   font_family: string
   font_size: number
   font_source: string
+  font_variant: string
   uploaded_font_key: string | null
   custom_default_value: string | null
   date_format: string | null
@@ -130,17 +131,17 @@ export function PdfCertificateViewer({
             }
           }
 
-          const fontKey = `${field.font_family}-${field.font_source}-${field.uploaded_font_key}`
+          const fontKey = `${field.font_family}-${field.font_variant || 'regular'}-${field.font_source}-${field.uploaded_font_key}`
           if (!fieldFontCache[fontKey]) {
             let fontBytes: ArrayBuffer
             if (field.font_source === 'google') {
-              fontBytes = await getGoogleFontBytes(field.font_family)
+              fontBytes = await getGoogleFontBytes(field.font_family, field.font_variant)
             } else if (field.uploaded_font_key) {
               const fontRes = await fetch(`/api/fonts/uploaded?key=${field.uploaded_font_key}`)
               if (!fontRes.ok) throw new Error(`Font fetch returned ${fontRes.status}`)
               fontBytes = await fontRes.arrayBuffer()
             } else {
-              fontBytes = await getGoogleFontBytes(field.font_family)
+              fontBytes = await getGoogleFontBytes(field.font_family, field.font_variant)
             }
             fieldFontCache[fontKey] = new Uint8Array(fontBytes)
           }
@@ -334,8 +335,8 @@ export function PdfCertificateViewer({
   )
 }
 
-async function getGoogleFontBytes(fontName: string): Promise<ArrayBuffer> {
-  const apiUrl = `/api/fonts?family=${encodeURIComponent(fontName)}`
+async function getGoogleFontBytes(fontName: string, variant = 'regular'): Promise<ArrayBuffer> {
+  const apiUrl = `/api/fonts?family=${encodeURIComponent(fontName)}&variant=${variant}`
 
   const cache = await caches.open(CACHE_NAME)
   const cached = await cache.match(apiUrl)

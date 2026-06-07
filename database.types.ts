@@ -268,6 +268,7 @@ export type Database = {
           font_family: string
           font_size: number
           font_source: string
+          font_variant: string
           id: string
           is_enabled: boolean
           level_format: string | null
@@ -294,6 +295,7 @@ export type Database = {
           font_family?: string
           font_size?: number
           font_source?: string
+          font_variant?: string
           id?: string
           is_enabled?: boolean
           level_format?: string | null
@@ -320,6 +322,7 @@ export type Database = {
           font_family?: string
           font_size?: number
           font_source?: string
+          font_variant?: string
           id?: string
           is_enabled?: boolean
           level_format?: string | null

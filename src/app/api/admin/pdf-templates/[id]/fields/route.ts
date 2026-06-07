@@ -85,6 +85,7 @@ export async function PUT(
     font_family: string
     font_size: number
     font_source: string
+    font_variant?: string
     uploaded_font_key?: string | null
     custom_default_value?: string | null
     custom_overridable: boolean
@@ -107,6 +108,7 @@ export async function PUT(
     font_family: field.font_family,
     font_size: field.font_size,
     font_source: field.font_source,
+    font_variant: field.font_variant ?? 'regular',
     uploaded_font_key: field.uploaded_font_key ?? null,
     custom_default_value: field.custom_default_value ?? null,
     custom_overridable: field.custom_overridable,

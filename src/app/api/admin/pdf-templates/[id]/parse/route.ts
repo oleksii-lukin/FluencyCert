@@ -97,6 +97,7 @@ export async function POST(
         font_family: 'Inter',
         font_size: 12,
         font_source: 'google',
+        font_variant: 'regular',
         uploaded_font_key: null,
         custom_default_value: null,
         custom_overridable: false,

@@ -400,6 +400,7 @@
     "overridableOnApproval": "Allow admin to override value on claim approval",
     "qrCodeDescription": "QR code will be generated from the certificate URL.",
     "fontFamily": "Font Family",
+    "fontVariant": "Font Variant",
     "fontSize": "Font Size (pt)",
     "preview": "Preview",
     "addCustomField": "Add Custom Field",
@@ -410,6 +411,9 @@
     "fontSourceUploaded": "Uploaded Font",
     "uploadedFont": "Uploaded Font",
     "selectUploadedFont": "Select an uploaded font...",
+    "noUploadedFonts": "No uploaded fonts yet. Upload a font below.",
+    "uploadLabel": "Upload New Font",
+    "uploadNamingHint": "Name your font files as FontFamily-700.ttf, FontFamily-italic.ttf, etc. to auto-detect variants.",
     "upload": "Upload",
     "uploading": "Uploading...",
     "certificateType": "Certificate Type",
@@ -514,6 +518,7 @@
   "adminFonts": {
     "title": "Uploaded Fonts",
     "uploadFont": "Upload Font (.ttf)",
+    "uploadNamingHint": "Name files as FontFamily-700.ttf, FontFamily-italic.ttf for auto variant detection.",
     "uploading": "Uploading...",
     "ttfOnly": "Only .ttf files are supported",
     "maxSize": "Font file must be under 4MB",
@@ -534,7 +539,10 @@
     "downloadAndSave": "Download & Save",
     "saving": "Saving...",
     "downloadFailed": "Failed to download font",
-    "googleFontSaved": "Font saved successfully"
+    "googleFontSaved": "Font saved successfully",
+    "variants": "Variants",
+    "deleteAll": "Delete All",
+    "deleteAllConfirm": "Delete all variants of {family}?"
   },
   "locale": {
     "en": "English",

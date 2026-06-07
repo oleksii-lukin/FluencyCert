@@ -65,13 +65,14 @@ async function downloadFont(url: string): Promise<Uint8Array | null> {
 
 export async function GET(request: NextRequest) {
   const family = request.nextUrl.searchParams.get('family')
+  const variant = request.nextUrl.searchParams.get('variant') || 'regular'
 
   if (!family) {
     return NextResponse.json({ error: 'Missing family parameter' }, { status: 400 })
   }
 
   try {
-    const fileUrl = await findFontFile(family, '400')
+    const fileUrl = await findFontFile(family, variant)
     let bytes: Uint8Array | null = null
 
     if (fileUrl) {
@@ -93,7 +94,8 @@ export async function GET(request: NextRequest) {
     }
 
     const familyParam = family.replace(/\s+/g, '+')
-    const cssUrl = `https://fonts.googleapis.com/css?family=${familyParam}`
+    const variantParam = variant !== 'regular' ? `:${variant}` : ''
+    const cssUrl = `https://fonts.googleapis.com/css?family=${familyParam}${variantParam}`
     console.log('[Fonts API] trying CSS v1 API:', cssUrl)
     const cssRes = await fetch(cssUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 5.1; rv:11.0) Gecko/20100101 Firefox/11.0' },

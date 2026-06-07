@@ -1,12 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { uploadFiles } from '@/lib/uploadthing'
 import { testFontCompatibility } from '@/lib/font-compat'
 import { FontPicker } from '@/components/ui/font-picker'
-import { loadFont } from '@/lib/fonts'
+import { loadFont, fetchGoogleFonts } from '@/lib/fonts'
+import type { GoogleFont } from '@/lib/fonts'
 import { FontPreview } from './font-preview'
+import { HugeiconsIcon } from "@hugeicons/react"
+import { InformationCircleIcon } from "@hugeicons/core-free-icons"
+import { groupUploadedFonts, groupVariants } from '@/lib/font-variants'
 
 interface UploadedFont {
   key: string
@@ -25,11 +29,15 @@ export function FontList() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [incompatibleKeys, setIncompatibleKeys] = useState<Set<string>>(new Set())
   const [selectedGoogleFont, setSelectedGoogleFont] = useState<string>('')
+  const [selectedVariant, setSelectedVariant] = useState<string>('')
   const [savingFromGoogle, setSavingFromGoogle] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [googleFonts, setGoogleFonts] = useState<GoogleFont[]>([])
+  const [previewVariants, setPreviewVariants] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchFonts()
+    fetchGoogleFonts().then(setGoogleFonts).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -101,51 +109,92 @@ export function FontList() {
     }
   }
 
-  async function handleDelete(key: string) {
-    if (!confirm(t('deleteConfirm'))) return
-    setDeleting(key)
+  const fontGroups = useMemo(() => groupUploadedFonts(fonts), [fonts])
 
-    try {
-      const res = await fetch(`/api/admin/fonts/uploaded/${encodeURIComponent(key)}`, {
-        method: 'DELETE',
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Delete failed')
+  async function handleDeleteGroup(family: string) {
+    const group = fontGroups.find((g) => g.family === family)
+    if (!group) return
+    if (!confirm(t('deleteAllConfirm', { family }))) return
+
+    setDeleting(family)
+
+    for (const variant of group.variants) {
+      try {
+        await fetch(`/api/admin/fonts/uploaded/${encodeURIComponent(variant.key)}`, {
+          method: 'DELETE',
+        })
+      } catch {
+        // continue trying other variants
       }
-      setFonts((prev) => prev.filter((f) => f.key !== key))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Delete failed')
-    } finally {
-      setDeleting(null)
+    }
+
+    setFonts((prev) => prev.filter((f) => !group.variants.some((v) => v.key === f.key)))
+    setDeleting(null)
+  }
+
+  const selectedFontData = useMemo(() => {
+    if (!selectedGoogleFont) return null
+    return googleFonts.find((f) => f.family === selectedGoogleFont) ?? null
+  }, [selectedGoogleFont, googleFonts])
+
+  function handleFontPickerChange(family: string) {
+    setSelectedGoogleFont(family)
+    setSelectedVariant(family ? 'regular' : '')
+    if (family) {
+      loadFont(family).catch(() => {})
     }
   }
 
   useEffect(() => {
-    if (selectedGoogleFont) {
-      loadFont(selectedGoogleFont).catch(() => {})
-    }
-  }, [selectedGoogleFont])
+    if (!selectedGoogleFont || !selectedVariant || !selectedFontData?.files) return
+
+    const fileUrl = selectedFontData.files[selectedVariant]
+    if (!fileUrl) return
+
+    const prevId = 'gfont-variant-preview'
+    const prev = document.getElementById(prevId)
+    if (prev) prev.remove()
+
+    const numericWeight = selectedVariant === 'regular' ? '400' : selectedVariant === 'italic' ? '400' : selectedVariant.replace('italic', '')
+    const fontStyle = selectedVariant === 'italic' || selectedVariant.endsWith('italic') ? 'italic' : 'normal'
+    const fontFamilyKey = `${selectedGoogleFont}-preview`
+
+    const style = document.createElement('style')
+    style.id = prevId
+    style.textContent = `
+      @font-face {
+        font-family: "${fontFamilyKey}";
+        src: url("${fileUrl}") format("truetype");
+        font-weight: ${numericWeight};
+        font-style: ${fontStyle};
+      }
+    `
+    document.head.appendChild(style)
+  }, [selectedGoogleFont, selectedVariant, selectedFontData])
 
   async function handleSaveFromGoogle() {
     if (!selectedGoogleFont) return
+
+    const variant = selectedVariant || 'regular'
 
     setSavingFromGoogle(true)
     setError('')
     setSuccessMessage('')
 
     try {
-      const res = await fetch(`/api/fonts?family=${encodeURIComponent(selectedGoogleFont)}`)
+      const res = await fetch(`/api/fonts?family=${encodeURIComponent(selectedGoogleFont)}&variant=${variant}`)
       if (!res.ok) throw new Error(t('downloadFailed'))
       const blob = await res.blob()
 
-      const fileName = `${selectedGoogleFont}.ttf`
+      const variantSuffix = variant !== 'regular' ? `-${variant}` : ''
+      const fileName = `${selectedGoogleFont}${variantSuffix}.ttf`
       const file = new File([blob], fileName, { type: 'font/ttf' })
 
       await uploadFiles('fontFileUpload', { files: [file] })
 
       await fetchFonts()
       setSelectedGoogleFont('')
+      setSelectedVariant('')
       setSuccessMessage(t('googleFontSaved'))
     } catch (err) {
       setError(err instanceof Error ? err.message : t('downloadFailed'))
@@ -171,7 +220,7 @@ export function FontList() {
         <p className="text-sm text-muted-foreground">{t('selectGoogleFont')}</p>
         <div className="flex flex-wrap items-end gap-4">
           <FontPicker
-            onChange={setSelectedGoogleFont}
+            onChange={handleFontPickerChange}
             value={selectedGoogleFont}
             width={320}
             height={350}
@@ -179,15 +228,56 @@ export function FontList() {
           />
           <button
             onClick={handleSaveFromGoogle}
-            disabled={!selectedGoogleFont || savingFromGoogle}
+            disabled={!selectedGoogleFont || !selectedVariant || savingFromGoogle}
             className="inline-flex items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
           >
             {savingFromGoogle ? t('saving') : t('downloadAndSave')}
           </button>
         </div>
+        {selectedGoogleFont && selectedFontData && selectedFontData.variants.length > 0 && (
+          <div className="mt-2">
+            <label className="block text-xs font-medium mb-1 text-muted-foreground">
+              {t('variants')}
+            </label>
+            <select
+              className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+              value={selectedVariant}
+              onChange={(e) => setSelectedVariant(e.target.value)}
+            >
+              {(() => {
+                const { normal, italic } = groupVariants(selectedFontData.variants)
+                return (
+                  <>
+                    {normal.length > 0 && (
+                      <optgroup label="Normal">
+                        {normal.map((v) => (
+                          <option key={v.key} value={v.key}>{v.label}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {italic.length > 0 && (
+                      <optgroup label="Italic">
+                        {italic.map((v) => (
+                          <option key={v.key} value={v.key}>{v.label}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </>
+                )
+              })()}
+            </select>
+          </div>
+        )}
         {selectedGoogleFont && (
           <div className="mt-2">
-            <span className="block text-lg leading-relaxed" style={{ fontFamily: selectedGoogleFont }}>
+            <span
+              className="block text-lg leading-relaxed"
+              style={{
+                fontFamily: selectedVariant && selectedVariant !== 'regular'
+                  ? `"${selectedGoogleFont}-preview", ${selectedGoogleFont}`
+                  : selectedGoogleFont,
+              }}
+            >
               {t('pangram')}
             </span>
           </div>
@@ -208,6 +298,10 @@ export function FontList() {
           </label>
         </div>
       </div>
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700 flex items-start gap-2">
+        <HugeiconsIcon icon={InformationCircleIcon} className="mt-0.5 shrink-0" size={16} />
+        <span>{t('uploadNamingHint')}</span>
+      </div>
 
       {successMessage && (
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600">
@@ -221,7 +315,7 @@ export function FontList() {
         </div>
       )}
 
-      {fonts.length === 0 ? (
+      {fontGroups.length === 0 ? (
         <p className="text-muted-foreground">{t('noFonts')}</p>
       ) : (
         <div className="rounded-xl border">
@@ -232,10 +326,10 @@ export function FontList() {
                   {t('name')}
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('size')}
+                  {t('variants')}
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('uploadedAt')}
+                  {t('size')}
                 </th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">
                   {t('actions')}
@@ -243,36 +337,89 @@ export function FontList() {
               </tr>
             </thead>
             <tbody>
-              {fonts.map((font) => (
-                <tr key={font.key} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-medium">
-                    <div className="flex flex-col gap-0.5">
-                      <span>
-                        {font.name}
-                        {incompatibleKeys.has(font.key) && (
-                          <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-inset ring-amber-200">
-                            {t('fontIncompatibleWarning')}
-                          </span>
+              {fontGroups.map((group) => {
+                const { normal, italic } = groupVariants(group.variants.map((v) => v.variant))
+                const activeVariantKey = previewVariants[group.family]
+                const activeEntry = activeVariantKey ? group.variants.find((v) => v.key === activeVariantKey) : null
+                const previewKey = activeEntry?.key ?? group.variants.find((v) => v.variant === 'regular')?.key ?? group.variants[0]?.key
+                const anyIncompatible = group.variants.some((v) => incompatibleKeys.has(v.key))
+                return (
+                  <tr key={group.family} className="border-b last:border-0">
+                    <td className="px-4 py-3 font-medium">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="flex items-center gap-2">
+                          {group.family}
+                          {anyIncompatible && (
+                            <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-inset ring-amber-200">
+                              {t('fontIncompatibleWarning')}
+                            </span>
+                          )}
+                        </span>
+                        {previewKey && <FontPreview fontKey={previewKey} />}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {normal.map((v) => {
+                          const entry = group.variants.find((e) => e.variant === v.key)
+                          const isActive = entry?.key === previewKey
+                          return (
+                            <span
+                              key={v.key}
+                              onClick={() => {
+                                if (entry) setPreviewVariants((prev) => ({ ...prev, [group.family]: entry.key }))
+                              }}
+                              className={`inline-flex cursor-pointer items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors ${
+                                isActive
+                                  ? 'bg-bright-sky text-white ring-bright-sky'
+                                  : entry && incompatibleKeys.has(entry.key)
+                                    ? 'bg-amber-50 text-amber-600 ring-amber-200 hover:bg-amber-100'
+                                    : 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
+                              }`}
+                            >
+                              {v.label}
+                            </span>
+                          )
+                        })}
+                        {normal.length > 0 && italic.length > 0 && (
+                          <div className="w-px h-5 bg-border mx-0.5" />
                         )}
-                      </span>
-                      <FontPreview fontKey={font.key} />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{formatSize(font.size)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(font.uploadedAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDelete(font.key)}
-                      disabled={deleting === font.key}
-                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {deleting === font.key ? t('deleting') : t('delete')}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                        {italic.map((v) => {
+                          const entry = group.variants.find((e) => e.variant === v.key)
+                          const isActive = entry?.key === previewKey
+                          return (
+                            <span
+                              key={v.key}
+                              onClick={() => {
+                                if (entry) setPreviewVariants((prev) => ({ ...prev, [group.family]: entry.key }))
+                              }}
+                              className={`inline-flex cursor-pointer items-center rounded-md px-2 py-0.5 text-xs font-medium italic ring-1 ring-inset transition-colors ${
+                                isActive
+                                  ? 'bg-bright-sky text-white ring-bright-sky'
+                                  : entry && incompatibleKeys.has(entry.key)
+                                    ? 'bg-amber-50 text-amber-600 ring-amber-200 hover:bg-amber-100'
+                                    : 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
+                              }`}
+                            >
+                              {v.label}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{formatSize(group.totalSize)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleDeleteGroup(group.family)}
+                        disabled={deleting === group.family}
+                        className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {deleting === group.family ? t('deleting') : t('deleteAll')}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

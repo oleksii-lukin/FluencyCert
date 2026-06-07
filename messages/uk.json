@@ -401,6 +401,7 @@
     "overridableOnApproval": "Дозволити змінювати при підтвердженні заявки",
     "qrCodeDescription": "QR-код буде згенеровано з URL сертифіката.",
     "fontFamily": "Шрифт",
+    "fontVariant": "Варіант шрифту",
     "fontSize": "Розмір шрифту (pt)",
     "preview": "Попередній перегляд",
     "addCustomField": "Додати користувацьке поле",
@@ -411,6 +412,9 @@
     "fontSourceUploaded": "Завантажений шрифт",
     "uploadedFont": "Завантажений шрифт",
     "selectUploadedFont": "Виберіть завантажений шрифт...",
+    "noUploadedFonts": "Ще немає завантажених шрифтів. Завантажте шрифт нижче.",
+    "uploadLabel": "Завантажити новий шрифт",
+    "uploadNamingHint": "Називайте файли шрифтів як FontFamily-700.ttf, FontFamily-italic.ttf тощо для автоматичного визначення варіантів.",
     "upload": "Завантажити",
     "uploading": "Завантаження...",
     "certificateType": "Тип сертифікату",
@@ -515,6 +519,7 @@
   "adminFonts": {
     "title": "Завантажені шрифти",
     "uploadFont": "Завантажити шрифт (.ttf)",
+    "uploadNamingHint": "Називайте файли як FontFamily-700.ttf, FontFamily-italic.ttf для авто-визначення варіантів.",
     "uploading": "Завантаження...",
     "ttfOnly": "Підтримуються лише файли .ttf",
     "maxSize": "Файл шрифту має бути менше 4MB",
@@ -535,7 +540,10 @@
     "downloadAndSave": "Завантажити та зберегти",
     "saving": "Збереження...",
     "downloadFailed": "Не вдалося завантажити шрифт",
-    "googleFontSaved": "Шрифт успішно збережено"
+    "googleFontSaved": "Шрифт успішно збережено",
+    "variants": "Варіанти",
+    "deleteAll": "Видалити всі",
+    "deleteAllConfirm": "Видалити всі варіанти шрифту {family}?"
   },
   "locale": {
     "en": "English",

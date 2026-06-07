@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { FontPicker } from '@/components/ui/font-picker'
@@ -10,6 +10,9 @@ import { DATABASE_FIELD_MAP, type SourceType } from '@/lib/pdf-field-mapping'
 import type { PdfFontInfo } from '@/lib/pdf-fonts'
 import { testFontCompatibility } from '@/lib/font-compat'
 import { getPreviewDate, getPreviewLevel } from '@/lib/pdf-formatting'
+import type { GoogleFont } from '@/lib/fonts'
+import { fetchGoogleFonts } from '@/lib/fonts'
+import { groupVariants, groupUploadedFonts, parseFontFilename } from '@/lib/font-variants'
 import QrCodeWithLogo from 'qrcode-with-logos'
 
 const QR_DOT_TYPES = ['square', 'dot', 'dot-small', 'tile', 'rounded', 'diamond', 'star', 'fluid', 'fluid-line', 'stripe', 'stripe-row', 'stripe-column'] as const
@@ -25,6 +28,7 @@ type FieldMapping = {
   font_family: string
   font_size: number
   font_source: string
+  font_variant: string
   uploaded_font_key: string | null
   custom_default_value: string | null
   custom_overridable: boolean
@@ -136,7 +140,29 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const [showPdfFonts, setShowPdfFonts] = useState(false)
   const [incompatibleFontKeys, setIncompatibleFontKeys] = useState<Set<string>>(new Set())
   const [incompatibleGoogleFonts, setIncompatibleGoogleFonts] = useState<Set<string>>(new Set())
+  const fontVariantStyleId = useRef<string | null>(null)
+
+  const [googleFonts, setGoogleFonts] = useState<GoogleFont[]>([])
   const [selectedFieldIndex, setSelectedFieldIndex] = useState(0)
+
+  const selectedFont = useMemo(() => {
+    const field = fields[selectedFieldIndex]
+    if (!field || field.font_source !== 'google' || !field.font_family) return null
+    return googleFonts.find((f) => f.family === field.font_family) ?? null
+  }, [fields, selectedFieldIndex, googleFonts])
+
+  const uploadedFontGroups = useMemo(() => groupUploadedFonts(uploadedFonts), [uploadedFonts])
+
+  const currentUploadedFont = useMemo(() => {
+    const field = fields[selectedFieldIndex]
+    if (field?.font_source !== 'uploaded' || !field.uploaded_font_key) return null
+    return uploadedFonts.find((uf) => uf.key === field.uploaded_font_key) ?? null
+  }, [fields, selectedFieldIndex, uploadedFonts])
+
+  const currentUploadedParsed = useMemo(() => {
+    if (!currentUploadedFont) return null
+    return parseFontFilename(currentUploadedFont.name)
+  }, [currentUploadedFont])
 
   useEffect(() => {
     fetch(`/api/admin/pdf-templates/${templateId}`)
@@ -153,6 +179,9 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     fetch('/api/admin/fonts/uploaded')
       .then((r) => r.json())
       .then((data) => setUploadedFonts(data.fonts ?? []))
+      .catch(() => {})
+    fetchGoogleFonts()
+      .then(setGoogleFonts)
       .catch(() => {})
   }, [])
 
@@ -260,6 +289,48 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     return () => { cancelled = true }
   }, [fields])
 
+  useEffect(() => {
+    const prev = fontVariantStyleId.current
+    if (prev) {
+      const el = document.getElementById(prev)
+      if (el) el.remove()
+      fontVariantStyleId.current = null
+    }
+
+    const field = fields[selectedFieldIndex]
+    if (!field || field.font_source !== 'google' || !field.font_family) return
+
+    const font = googleFonts.find((f) => f.family === field.font_family)
+    if (!font?.files) return
+
+    const variant = field.font_variant || 'regular'
+    const fileUrl = font.files[variant]
+    if (!fileUrl) return
+
+    const numericWeight = variant === 'regular' ? '400' : variant === 'italic' ? '400' : variant.replace('italic', '')
+    const fontStyle = variant === 'italic' || variant.endsWith('italic') ? 'italic' : 'normal'
+    const fontFamilyKey = `${font.family}-${variant}`
+
+    const id = `gfont-variant-${fontFamilyKey.replace(/[^a-zA-Z0-9-]/g, '')}`
+    const existing = document.getElementById(id)
+    if (existing) {
+      existing.remove()
+    }
+
+    const style = document.createElement('style')
+    style.id = id
+    style.textContent = `
+      @font-face {
+        font-family: "${fontFamilyKey}";
+        src: url("${fileUrl}") format("truetype");
+        font-weight: ${numericWeight};
+        font-style: ${fontStyle};
+      }
+    `
+    document.head.appendChild(style)
+    fontVariantStyleId.current = id
+  }, [fields, selectedFieldIndex, googleFonts])
+
   const updateField = useCallback((index: number, updates: Partial<FieldMapping>) => {
     setFields((prev) => prev.map((f, i) => (i === index ? { ...f, ...updates } : f)))
   }, [])
@@ -277,6 +348,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         font_family: 'Inter',
         font_size: 12,
         font_source: 'google',
+        font_variant: 'regular',
         uploaded_font_key: null,
         custom_default_value: '',
         custom_overridable: false,
@@ -360,11 +432,13 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     setSavingFont(true)
     setError('')
     try {
-      const res = await fetch(`/api/fonts?family=${encodeURIComponent(field.font_family)}`)
+      const variant = field.font_variant || 'regular'
+      const res = await fetch(`/api/fonts?family=${encodeURIComponent(field.font_family)}&variant=${variant}`)
       if (!res.ok) throw new Error('Failed to download font')
       const blob = await res.blob()
 
-      const fileName = `${field.font_family}.ttf`
+      const variantSuffix = variant !== 'regular' ? `-${variant}` : ''
+      const fileName = `${field.font_family}${variantSuffix}.ttf`
       const file = new File([blob], fileName, { type: 'font/ttf' })
 
       await uploadFiles('fontFileUpload', { files: [file] })
@@ -376,10 +450,12 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
 
       const uploaded = updatedFonts.find((uf: UploadedFont) => uf.name === fileName)
       if (uploaded) {
+        const { variant } = parseFontFilename(uploaded.name)
         updateField(index, {
           font_source: 'uploaded',
           uploaded_font_key: uploaded.key,
-          font_family: uploaded.name,
+          font_family: `UPLOADED_FONT_${uploaded.key}`,
+          font_variant: variant,
         })
       }
     } catch (err) {
@@ -714,39 +790,107 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                   </div>
 
                   {field.font_source === 'uploaded' ? (
-                    <div className="col-span-2">
-                      <label className="block text-xs font-medium mb-1 text-muted-foreground">
-                        {t('uploadedFont')}
-                      </label>
-                      <select
-                        className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                        value={field.uploaded_font_key ?? ''}
-                        onChange={(e) => updateField(index, { uploaded_font_key: e.target.value || null, font_family: `UPLOADED_FONT_${e.target.value}` })}
-                      >
-                        <option value="">{t('selectUploadedFont')}</option>
-                        {uploadedFonts.map((uf: any) => (
-                          <option key={uf.id} value={uf.font_key}>{uf.original_name}</option>
-                        ))}
-                      </select>
-                      <div className="flex items-center gap-2 mt-2">
-                        <input
-                          type="file"
-                          accept=".ttf,.otf,.woff,.woff2"
-                          className="text-xs"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0]
-                            if (!file) return
-                            setUploadingFont(true)
-                            try {
-                              const [res] = await uploadFiles('fontFileUpload', { files: [file] })
-                              const newFont: any = { id: crypto.randomUUID(), font_key: res.key, original_name: file.name }
-                              setUploadedFonts((prev) => [...prev, newFont])
-                              updateField(index, { font_source: 'uploaded', uploaded_font_key: res.key, font_family: `UPLOADED_FONT_${res.key}` })
-                            } catch { /* noop */ }
-                            setUploadingFont(false)
-                          }}
-                        />
-                        {uploadingFont && <span className="text-xs text-muted-foreground">{t('uploading')}</span>}
+                    <div className="col-span-2 space-y-3">
+                      {uploadedFontGroups.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">{t('noUploadedFonts')}</p>
+                      ) : (
+                        <>
+                          <div>
+                            <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                              {t('uploadedFont')}
+                            </label>
+                            <select
+                              className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                              value={currentUploadedParsed?.family ?? ''}
+                              onChange={(e) => {
+                                const family = e.target.value
+                                if (!family) return
+                                const group = uploadedFontGroups.find((g) => g.family === family)
+                                if (!group) return
+                                const entry = group.variants.find((v) => v.variant === 'regular') ?? group.variants[0]
+                                updateField(index, {
+                                  uploaded_font_key: entry.key,
+                                  font_family: `UPLOADED_FONT_${entry.key}`,
+                                  font_variant: entry.variant,
+                                })
+                              }}
+                            >
+                              <option value="">{t('selectUploadedFont')}</option>
+                              {uploadedFontGroups.map((g) => (
+                                <option key={g.family} value={g.family}>{g.family}</option>
+                              ))}
+                            </select>
+                          </div>
+                          {currentUploadedParsed && (() => {
+                            const group = uploadedFontGroups.find((g) => g.family === currentUploadedParsed!.family)
+                            if (!group || group.variants.length === 0) return null
+                            if (group.variants.length === 1) return null
+                            const { normal, italic } = groupVariants(group.variants.map((v) => v.variant))
+                            return (
+                              <div>
+                                <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                                  {t('fontVariant')}
+                                </label>
+                                <select
+                                  className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                                  value={currentUploadedParsed!.variant}
+                                  onChange={(e) => {
+                                    const entry = group.variants.find((v) => v.variant === e.target.value)
+                                    if (entry) {
+                                      updateField(index, {
+                                        uploaded_font_key: entry.key,
+                                        font_family: `UPLOADED_FONT_${entry.key}`,
+                                        font_variant: entry.variant,
+                                      })
+                                    }
+                                  }}
+                                >
+                                  {normal.length > 0 && (
+                                    <optgroup label="Normal">
+                                      {normal.map((v) => (
+                                        <option key={v.key} value={v.key}>{v.label}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                  {italic.length > 0 && (
+                                    <optgroup label="Italic">
+                                      {italic.map((v) => (
+                                        <option key={v.key} value={v.key}>{v.label}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                </select>
+                              </div>
+                            )
+                          })()}
+                        </>
+                      )}
+                      <div>
+                        <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                          {t('uploadLabel')}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept=".ttf,.otf,.woff,.woff2"
+                            className="text-xs"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              setUploadingFont(true)
+                              try {
+                                const [res] = await uploadFiles('fontFileUpload', { files: [file] })
+                                setUploadedFonts((prev) => [...prev, { key: res.key, name: file.name }])
+                                updateField(index, { font_source: 'uploaded', uploaded_font_key: res.key, font_family: `UPLOADED_FONT_${res.key}` })
+                              } catch { /* noop */ }
+                              setUploadingFont(false)
+                            }}
+                          />
+                          {uploadingFont && <span className="text-xs text-muted-foreground">{t('uploading')}</span>}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t('uploadNamingHint')}
+                        </p>
                       </div>
                       {field.uploaded_font_key && incompatibleFontKeys.has(field.uploaded_font_key) && (
                         <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
@@ -760,7 +904,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                         <FontPicker
                           value={field.font_family || ''}
                           localePangram={localePangram}
-                          onChange={(family) => updateField(index, { font_family: family })}
+                          onChange={(family) => updateField(index, { font_family: family, font_variant: 'regular' })}
                         />
                         <button
                           type="button"
@@ -771,6 +915,40 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                           {savingFont ? t('savingFont') : t('saveFont')}
                         </button>
                       </div>
+                      {field.font_family && selectedFont && selectedFont.variants.length > 0 && (
+                        <div className="mt-2">
+                          <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                            {t('fontVariant')}
+                          </label>
+                          <select
+                            className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                            value={field.font_variant}
+                            onChange={(e) => updateField(index, { font_variant: e.target.value })}
+                          >
+                            {(() => {
+                              const { normal, italic } = groupVariants(selectedFont.variants)
+                              return (
+                                <>
+                                  {normal.length > 0 && (
+                                    <optgroup label="Normal">
+                                      {normal.map((v) => (
+                                        <option key={v.key} value={v.key}>{v.label}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                  {italic.length > 0 && (
+                                    <optgroup label="Italic">
+                                      {italic.map((v) => (
+                                        <option key={v.key} value={v.key}>{v.label}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                </>
+                              )
+                            })()}
+                          </select>
+                        </div>
+                      )}
                       {field.font_family && incompatibleGoogleFonts.has(field.font_family) && (
                         <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
                           {t('fontIncompatibleWarning')}
@@ -861,7 +1039,11 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                       <p className="text-xs text-muted-foreground mb-1">{t('preview')}</p>
                       <p
                         style={{
-                          fontFamily: field.font_source === 'uploaded' && field.uploaded_font_key ? `UPLOADED_FONT_${field.uploaded_font_key}` : field.font_family,
+                          fontFamily: field.font_source === 'uploaded' && field.uploaded_font_key
+                            ? `UPLOADED_FONT_${field.uploaded_font_key}`
+                            : field.font_source === 'google' && field.font_variant && field.font_variant !== 'regular' && selectedFont?.files?.[field.font_variant]
+                              ? `${field.font_family}-${field.font_variant}`
+                              : field.font_family,
                           fontSize: `${Math.min(field.font_size, 48)}px`,
                           lineHeight: 1.2,
                           color: field.text_color || undefined,
