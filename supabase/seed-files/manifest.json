@@ -1,0 +1,47 @@
+{
+  "pdfTemplates": [
+    {
+      "name": "Standard Certificate",
+      "description": "Default certificate template with AcroForm fields",
+      "fileName": "pdfs/standard-certificate.pdf",
+      "fields": [
+        {
+          "pdfFieldName": "FullName",
+          "sourceType": "database",
+          "sourceKey": "first_name",
+          "displayLabel": "Full Name",
+          "fontFamily": "Inter",
+          "fontSize": 24,
+          "sortOrder": 0
+        },
+        {
+          "pdfFieldName": "EnglishLevel",
+          "sourceType": "database",
+          "sourceKey": "english_level",
+          "displayLabel": "English Level",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "sortOrder": 1
+        },
+        {
+          "pdfFieldName": "Date",
+          "sourceType": "database",
+          "sourceKey": "created_at",
+          "displayLabel": "Issue Date",
+          "fontFamily": "Inter",
+          "fontSize": 11,
+          "sortOrder": 2
+        },
+        {
+          "pdfFieldName": "QRCode",
+          "sourceType": "qr_code",
+          "displayLabel": "Verification QR",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "fonts": []
+}

@@ -48,3 +48,9 @@ __pycache__/
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# seed file binaries (PDFs, fonts) — files go in cloud storage, not git
+/supabase/seed-files/pdfs/*
+/supabase/seed-files/fonts/*
+!/supabase/seed-files/pdfs/.gitkeep
+!/supabase/seed-files/fonts/.gitkeep
