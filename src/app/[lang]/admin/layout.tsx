@@ -12,16 +12,14 @@ export default async function AdminLayout({
   children: React.ReactNode
   params: Promise<{ lang: string }>
 }) {
-  const { lang } = await params
-  const { userId } = await auth()
+  const [{ lang }, { userId }] = await Promise.all([params, auth()])
 
   if (!userId) {
     return redirect({ href: '/', locale: lang })
   }
 
   const supabase = createAdminClient()
-  const isMaster = await isMasterAdmin(userId)
-  const adminClubIds = await getAdminClubIds(userId)
+  const [isMaster, adminClubIds] = await Promise.all([isMasterAdmin(userId), getAdminClubIds(userId)])
 
   if (!isMaster && adminClubIds.length === 0) {
     redirect({ href: '/', locale: lang })

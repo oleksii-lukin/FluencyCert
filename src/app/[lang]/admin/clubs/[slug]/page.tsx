@@ -10,8 +10,7 @@ export default async function AdminClubDetailPage({
 }: {
   params: Promise<{ lang: string; slug: string }>
 }) {
-  const { lang, slug } = await params
-  const { userId } = await auth()
+  const [{ lang, slug }, { userId }] = await Promise.all([params, auth()])
   const supabase = createAdminClient()
 
   const { data: club } = await supabase
@@ -22,32 +21,33 @@ export default async function AdminClubDetailPage({
 
   if (!club) notFound()
 
-  const isMaster = await isMasterAdmin(userId!)
-  const isAdmin = await isClubAdmin(userId!, club.id)
+  const [isMaster, isAdmin] = await Promise.all([
+    isMasterAdmin(userId!),
+    isClubAdmin(userId!, club.id),
+  ])
   if (!isMaster && !isAdmin) redirect({ href: '/', locale: lang })
 
-  const { count: memberCount } = await supabase
-    .from('club_memberships')
-    .select('*', { count: 'exact', head: true })
-    .eq('club_id', club.id)
-
-  const { count: adminCount } = await supabase
-    .from('club_memberships')
-    .select('*', { count: 'exact', head: true })
-    .eq('club_id', club.id)
-    .eq('role', 'admin')
-
-  const { count: pendingClaims } = await supabase
-    .from('certificate_claims')
-    .select('*', { count: 'exact', head: true })
-    .eq('club_id', club.id)
-    .eq('status', 'pending')
-
-  const { count: approvedCerts } = await supabase
-    .from('certificate_claims')
-    .select('*', { count: 'exact', head: true })
-    .eq('club_id', club.id)
-    .eq('status', 'approved')
+  const [{ count: memberCount }, { count: adminCount }, { count: pendingClaims }, { count: approvedCerts }] = await Promise.all([
+    supabase
+      .from('club_memberships')
+      .select('*', { count: 'exact', head: true })
+      .eq('club_id', club.id),
+    supabase
+      .from('club_memberships')
+      .select('*', { count: 'exact', head: true })
+      .eq('club_id', club.id)
+      .eq('role', 'admin'),
+    supabase
+      .from('certificate_claims')
+      .select('*', { count: 'exact', head: true })
+      .eq('club_id', club.id)
+      .eq('status', 'pending'),
+    supabase
+      .from('certificate_claims')
+      .select('*', { count: 'exact', head: true })
+      .eq('club_id', club.id)
+      .eq('status', 'approved'),
+  ])
 
   return (
     <div>

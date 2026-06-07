@@ -11,24 +11,23 @@ import { LinkedInConnect } from "@/components/linkedin/linkedin-connect"
 const FLAG_LINKEDIN_CONNECT = process.env.FLAG_LINKEDIN_CONNECT === 'true'
 
 export default async function ProfilePage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
-  const { userId } = await auth()
+  const [{ lang }, { userId }, t] = await Promise.all([params, auth(), getTranslations('profile')])
   if (!userId) redirect({ href: '/', locale: lang })
 
   const supabase = createAdminClient()
-  const t = await getTranslations('profile')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId!)
-    .single()
-
-  const { data: claims } = await supabase
-    .from('certificate_claims')
-    .select('*, speaking_clubs(name)')
-    .eq('user_id', userId!)
-    .order('created_at', { ascending: false })
+  const [{ data: profile }, { data: claims }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId!)
+      .single(),
+    supabase
+      .from('certificate_claims')
+      .select('*, speaking_clubs(name)')
+      .eq('user_id', userId!)
+      .order('created_at', { ascending: false }),
+  ])
 
   return (
     <PublicPageLayout>

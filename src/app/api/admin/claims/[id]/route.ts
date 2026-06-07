@@ -43,8 +43,7 @@ export async function PATCH(
     }
   }
 
-  const { id } = await params
-  const body = await request.json()
+  const [{ id }, body] = await Promise.all([params, request.json()])
   const { slug: newSlug, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, pdf_template_id, custom_values } = body
 
   if (newSlug !== undefined) {

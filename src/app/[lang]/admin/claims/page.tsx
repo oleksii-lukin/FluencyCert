@@ -9,15 +9,12 @@ import { SlugDisplay } from './slug-display'
 import { ContactButton } from '@/components/ui/contact-button'
 
 export default async function AdminClaimsPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
-  const { userId } = await auth()
+  const [{ lang }, { userId }, t] = await Promise.all([params, auth(), getTranslations('admin')])
   if (!userId) return redirect({ href: '/', locale: lang })
 
-  const t = await getTranslations('admin')
   const supabase = createAdminClient()
 
-  const isMaster = await isMasterAdmin(userId)
-  const adminClubIds = await getAdminClubIds(userId)
+  const [isMaster, adminClubIds] = await Promise.all([isMasterAdmin(userId), getAdminClubIds(userId)])
 
   if (!isMaster && adminClubIds.length === 0) {
     redirect({ href: '/', locale: lang })

@@ -31,9 +31,7 @@ export async function POST(
   }
 
   const supabase = createAdminClient()
-  const { id } = await params
-
-  const isMaster = await isMasterAdmin(userId)
+  const [isMaster, { id }] = await Promise.all([isMasterAdmin(userId), params])
   if (!isMaster) {
     const { data: tpl } = await supabase
       .from('pdf_templates')

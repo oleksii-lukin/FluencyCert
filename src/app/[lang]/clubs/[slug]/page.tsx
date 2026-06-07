@@ -50,12 +50,15 @@ export default async function ClubDetailPage({
   params: Promise<{ lang: string; slug: string }>
   searchParams: Promise<{ page?: string }>
 }) {
-  const { lang, slug } = await params
-  const sp = await searchParams
+  const [{ lang, slug }, sp, t, { userId }] = await Promise.all([
+    params,
+    searchParams,
+    getTranslations('clubs'),
+    auth(),
+  ])
+
   const page = parseInt(sp.page ?? '1', 10)
   const perPage = 20
-
-  const t = await getTranslations('clubs')
   const supabase = createAdminClient()
 
   const { data: club } = await supabase
@@ -66,16 +69,17 @@ export default async function ClubDetailPage({
 
   if (!club) notFound()
 
-  const { count: memberCount } = await supabase
-    .from('club_memberships')
-    .select('*', { count: 'exact', head: true })
-    .eq('club_id', club.id)
-
-  const { count: totalCerts } = await supabase
-    .from('certificate_claims')
-    .select('*', { count: 'exact', head: true })
-    .eq('club_id', club.id)
-    .eq('status', 'approved')
+  const [{ count: memberCount }, { count: totalCerts }] = await Promise.all([
+    supabase
+      .from('club_memberships')
+      .select('*', { count: 'exact', head: true })
+      .eq('club_id', club.id),
+    supabase
+      .from('certificate_claims')
+      .select('*', { count: 'exact', head: true })
+      .eq('club_id', club.id)
+      .eq('status', 'approved'),
+  ])
 
   const from = (page - 1) * perPage
   const to = from + perPage - 1
@@ -88,8 +92,6 @@ export default async function ClubDetailPage({
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
     .range(from, to)
-
-  const { userId } = await auth()
   let isMember = false
   let isClubAdmin = false
 

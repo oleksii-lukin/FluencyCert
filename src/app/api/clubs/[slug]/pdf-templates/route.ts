@@ -43,8 +43,7 @@ export async function GET(
     return NextResponse.json({ error: 'Club not found' }, { status: 404 })
   }
 
-  const hasAdmin = await isClubAdmin(userId, club.id)
-  const hasMaster = await isMasterAdmin(userId)
+  const [hasAdmin, hasMaster] = await Promise.all([isClubAdmin(userId, club.id), isMasterAdmin(userId)])
   if (!hasAdmin && !hasMaster) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

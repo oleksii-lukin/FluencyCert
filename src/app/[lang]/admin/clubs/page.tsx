@@ -6,8 +6,7 @@ import { isMasterAdmin } from '@/lib/clubs'
 import { ClubList } from './club-list'
 
 export default async function AdminClubsPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
-  const { userId } = await auth()
+  const [{ lang }, { userId }] = await Promise.all([params, auth()])
 
   const isMaster = await isMasterAdmin(userId!)
   if (!isMaster) redirect({ href: '/', locale: lang })
@@ -22,16 +21,17 @@ export default async function AdminClubsPage({ params }: { params: Promise<{ lan
 
   const clubsWithCounts = await Promise.all(
     (clubs ?? []).map(async (club) => {
-      const { count: memberCount } = await supabase
-        .from('club_memberships')
-        .select('*', { count: 'exact', head: true })
-        .eq('club_id', club.id)
-
-      const { count: adminCount } = await supabase
-        .from('club_memberships')
-        .select('*', { count: 'exact', head: true })
-        .eq('club_id', club.id)
-        .eq('role', 'admin')
+      const [{ count: memberCount }, { count: adminCount }] = await Promise.all([
+        supabase
+          .from('club_memberships')
+          .select('*', { count: 'exact', head: true })
+          .eq('club_id', club.id),
+        supabase
+          .from('club_memberships')
+          .select('*', { count: 'exact', head: true })
+          .eq('club_id', club.id)
+          .eq('role', 'admin'),
+      ])
 
       return { ...club, member_count: memberCount ?? 0, admin_count: adminCount ?? 0 }
     }),

@@ -7,13 +7,10 @@ import { Link } from '@/i18n/routing'
 import { ZoomAdmin } from "@/components/zoom/zoom-admin"
 
 export default async function AdminDashboard({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
-  const { userId } = await auth()
+  const [{ lang }, { userId }, t] = await Promise.all([params, auth(), getTranslations('admin')])
   const supabase = createAdminClient()
-  const t = await getTranslations('admin')
 
-  const isMaster = await isMasterAdmin(userId!)
-  const adminClubIds = await getAdminClubIds(userId!)
+  const [isMaster, adminClubIds] = await Promise.all([isMasterAdmin(userId!), getAdminClubIds(userId!)])
 
   if (!isMaster) {
     if (adminClubIds.length === 1) {

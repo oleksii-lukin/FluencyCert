@@ -70,15 +70,17 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function CertificatePage({ params }: PageProps) {
   const { lang, slug } = await params
-  const { userId } = await auth()
   const supabase = createAdminClient()
-  const t = await getTranslations('certificatePage')
 
-  const { data: claim } = await supabase
-    .from('certificate_claims')
-    .select('*, profiles!inner(id, email, first_name, last_name, username, avatar_url)')
-    .eq('slug', slug.toUpperCase())
-    .single()
+  const [{ userId }, t, { data: claim }] = await Promise.all([
+    auth(),
+    getTranslations('certificatePage'),
+    supabase
+      .from('certificate_claims')
+      .select('*, profiles!inner(id, email, first_name, last_name, username, avatar_url)')
+      .eq('slug', slug.toUpperCase())
+      .single(),
+  ])
 
   if (!claim || claim.status !== 'approved') {
     notFound()

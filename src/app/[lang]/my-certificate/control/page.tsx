@@ -10,10 +10,8 @@ import { ArrowLeft02Icon, Share01Icon, Certificate02Icon, LayoutGridIcon } from 
 import { PublicPageLayout } from "@/components/layout/public-page-layout"
 
 export default async function CertificateControlPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
-  const { userId } = await auth()
+  const [{ lang }, { userId }, t] = await Promise.all([params, auth(), getTranslations('certificateControl')])
   if (!userId) redirect({ href: '/', locale: lang })
-  const t = await getTranslations('certificateControl')
 
   const supabase = createAdminClient()
 

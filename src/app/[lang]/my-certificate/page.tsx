@@ -7,12 +7,10 @@ import { Certificate02Icon, Clock01Icon, CheckmarkCircle02Icon, Cancel01Icon, Se
 import { PublicPageLayout } from "@/components/layout/public-page-layout"
 
 export default async function MyCertificatePage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
-  const { userId } = await auth()
+  const [{ lang }, { userId }, t] = await Promise.all([params, auth(), getTranslations('myCertificate')])
   if (!userId) redirect({ href: '/', locale: lang })
 
   const supabase = createAdminClient()
-  const t = await getTranslations('myCertificate')
 
   const { data: claims } = await supabase
     .from('certificate_claims')

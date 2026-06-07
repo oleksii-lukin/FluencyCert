@@ -25,8 +25,7 @@ export async function GET(request: Request) {
 
   const supabase = createAdminClient()
 
-  const isMaster = await isMasterAdmin(userId)
-  const adminClubIds = await getAdminClubIds(userId)
+  const [isMaster, adminClubIds] = await Promise.all([isMasterAdmin(userId), getAdminClubIds(userId)])
 
   if (!isMaster && adminClubIds.length === 0) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

@@ -12,37 +12,40 @@ export default async function AdminClubSettingsPage({
 }: {
   params: Promise<{ lang: string; slug: string }>
 }) {
-  const { lang, slug } = await params
-  const { userId } = await auth()
+  const [{ lang, slug }, { userId }] = await Promise.all([params, auth()])
   if (!userId) redirect(`/${lang}`)
 
   const supabase = createAdminClient()
-  const t = await getTranslations('admin')
-
-  const { data: club } = await supabase
-    .from('speaking_clubs')
-    .select('*')
-    .eq('slug', slug)
-    .single()
+  const [t, { data: club }] = await Promise.all([
+    getTranslations('admin'),
+    supabase
+      .from('speaking_clubs')
+      .select('*')
+      .eq('slug', slug)
+      .single(),
+  ])
 
   if (!club) notFound()
 
-  const isMaster = await isMasterAdmin(userId)
-  const isClubAdm = await isClubAdmin(userId, club.id)
+  const [isMaster, isClubAdm] = await Promise.all([
+    isMasterAdmin(userId),
+    isClubAdmin(userId, club.id),
+  ])
   if (!isMaster && !isClubAdm) redirect(`/${lang}/admin`)
 
-  const { data: admins } = await supabase
-    .from('club_memberships')
-    .select('user_id, created_at, profiles!inner(id, email, first_name, last_name, avatar_url)')
-    .eq('club_id', club.id)
-    .eq('role', 'admin')
-    .order('created_at', { ascending: true })
-
-  const { data: allMembers } = await supabase
-    .from('club_memberships')
-    .select('user_id, profiles!inner(id, email, first_name, last_name)')
-    .eq('club_id', club.id)
-    .eq('role', 'member')
+  const [{ data: admins }, { data: allMembers }] = await Promise.all([
+    supabase
+      .from('club_memberships')
+      .select('user_id, created_at, profiles!inner(id, email, first_name, last_name, avatar_url)')
+      .eq('club_id', club.id)
+      .eq('role', 'admin')
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('club_memberships')
+      .select('user_id, profiles!inner(id, email, first_name, last_name)')
+      .eq('club_id', club.id)
+      .eq('role', 'member'),
+  ])
 
   return (
     <div>

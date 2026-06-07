@@ -7,8 +7,7 @@ import Image from 'next/image'
 import { ContactButton } from '@/components/ui/contact-button'
 
 export default async function AdminUsersPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
-  const { userId } = await auth()
+  const [{ lang }, { userId }] = await Promise.all([params, auth()])
 
   const isMaster = await isMasterAdmin(userId!)
   if (!isMaster) redirect({ href: '/', locale: lang })

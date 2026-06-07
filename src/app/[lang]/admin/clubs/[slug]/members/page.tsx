@@ -10,23 +10,25 @@ export default async function AdminClubMembersPage({
 }: {
   params: Promise<{ lang: string; slug: string }>
 }) {
-  const { lang, slug } = await params
-  const { userId } = await auth()
+  const [{ lang, slug }, { userId }] = await Promise.all([params, auth()])
   if (!userId) redirect(`/${lang}`)
 
   const supabase = createAdminClient()
-  const t = await getTranslations('admin')
-
-  const { data: club } = await supabase
-    .from('speaking_clubs')
-    .select('id, name')
-    .eq('slug', slug)
-    .single()
+  const [t, { data: club }] = await Promise.all([
+    getTranslations('admin'),
+    supabase
+      .from('speaking_clubs')
+      .select('id, name')
+      .eq('slug', slug)
+      .single(),
+  ])
 
   if (!club) notFound()
 
-  const isMaster = await isMasterAdmin(userId)
-  const isClubAdm = await isClubAdmin(userId, club.id)
+  const [isMaster, isClubAdm] = await Promise.all([
+    isMasterAdmin(userId),
+    isClubAdmin(userId, club.id),
+  ])
   if (!isMaster && !isClubAdm) redirect(`/${lang}/admin`)
 
   const { data: members } = await supabase

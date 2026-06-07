@@ -38,18 +38,10 @@ export async function GET(
 
   const id = claim.id
 
-  const { count: upvoteCount } = await supabase
-    .from('certificate_upvotes')
-    .select('id', { count: 'exact', head: true })
-    .eq('certificate_id', id)
-
-  const { data: feedbacks } = await supabase
-    .from('certificate_feedback')
-    .select('*, profiles!inner(id, email, first_name, last_name, username, avatar_url)')
-    .eq('certificate_id', id)
-    .eq('is_visible', true)
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: false })
+  const [{ count: upvoteCount }, { data: feedbacks }] = await Promise.all([
+    supabase.from('certificate_upvotes').select('id', { count: 'exact', head: true }).eq('certificate_id', id),
+    supabase.from('certificate_feedback').select('*, profiles!inner(id, email, first_name, last_name, username, avatar_url)').eq('certificate_id', id).eq('is_visible', true).order('sort_order', { ascending: true }).order('created_at', { ascending: false }),
+  ])
 
   let feedbacksWithCertIds: Array<Record<string, unknown>> | null = null
   if (feedbacks && feedbacks.length > 0) {

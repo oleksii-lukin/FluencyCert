@@ -30,16 +30,10 @@ export async function GET(request: Request) {
 
   const clubsWithCounts = await Promise.all(
     (clubs ?? []).map(async (club) => {
-      const { count: memberCount } = await supabase
-        .from('club_memberships')
-        .select('*', { count: 'exact', head: true })
-        .eq('club_id', club.id)
-
-      const { count: certCount } = await supabase
-        .from('certificate_claims')
-        .select('*', { count: 'exact', head: true })
-        .eq('club_id', club.id)
-        .eq('status', 'approved')
+      const [{ count: memberCount }, { count: certCount }] = await Promise.all([
+        supabase.from('club_memberships').select('*', { count: 'exact', head: true }).eq('club_id', club.id),
+        supabase.from('certificate_claims').select('*', { count: 'exact', head: true }).eq('club_id', club.id).eq('status', 'approved'),
+      ])
 
       return { ...club, member_count: memberCount ?? 0, certificate_count: certCount ?? 0 }
     }),

@@ -2,8 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { TemplateFieldEditor } from './template-field-editor'
 
 export default async function TemplateFieldsPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
-  const { lang, id } = await params
-  const t = await getTranslations('adminPdfTemplates')
+  const [{ lang, id }, t] = await Promise.all([params, getTranslations('adminPdfTemplates')])
 
   return (
     <div>

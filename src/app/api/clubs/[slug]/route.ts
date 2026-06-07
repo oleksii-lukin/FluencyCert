@@ -42,18 +42,15 @@ export async function GET(
     return NextResponse.json({ error: 'Club not found' }, { status: 404 })
   }
 
-  const { count: memberCount } = await supabase
-    .from('club_memberships')
-    .select('*', { count: 'exact', head: true })
-    .eq('club_id', club.id)
-
-  const { userId } = await auth()
+  const [{ count: memberCount }, { userId }] = await Promise.all([
+    supabase.from('club_memberships').select('*', { count: 'exact', head: true }).eq('club_id', club.id),
+    auth(),
+  ])
   let is_member = false
   let is_club_admin = false
 
   if (userId) {
-    is_member = await isClubMember(userId, club.id)
-    is_club_admin = await isClubAdmin(userId, club.id)
+    [is_member, is_club_admin] = await Promise.all([isClubMember(userId, club.id), isClubAdmin(userId, club.id)])
   }
 
   return NextResponse.json({

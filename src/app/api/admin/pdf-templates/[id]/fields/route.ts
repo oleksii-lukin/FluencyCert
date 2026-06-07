@@ -50,8 +50,7 @@ export async function PUT(
   const accessError = await checkTemplateAccess(userId, (await params).id, supabase)
   if (accessError) return accessError
 
-  const { id: templateId } = await params
-  const body = await request.json()
+  const [{ id: templateId }, body] = await Promise.all([params, request.json()])
   const { fields } = body
 
   if (!Array.isArray(fields)) {
