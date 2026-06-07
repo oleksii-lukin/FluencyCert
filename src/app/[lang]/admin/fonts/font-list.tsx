@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { uploadFiles } from '@/lib/uploadthing'
 import { testFontCompatibility } from '@/lib/font-compat'
+import { FontPicker } from '@/components/ui/font-picker'
+import { loadFont } from '@/lib/fonts'
 import { FontPreview } from './font-preview'
 
 interface UploadedFont {
@@ -22,6 +24,9 @@ export function FontList() {
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [incompatibleKeys, setIncompatibleKeys] = useState<Set<string>>(new Set())
+  const [selectedGoogleFont, setSelectedGoogleFont] = useState<string>('')
+  const [savingFromGoogle, setSavingFromGoogle] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     fetchFonts()
@@ -116,6 +121,39 @@ export function FontList() {
     }
   }
 
+  useEffect(() => {
+    if (selectedGoogleFont) {
+      loadFont(selectedGoogleFont).catch(() => {})
+    }
+  }, [selectedGoogleFont])
+
+  async function handleSaveFromGoogle() {
+    if (!selectedGoogleFont) return
+
+    setSavingFromGoogle(true)
+    setError('')
+    setSuccessMessage('')
+
+    try {
+      const res = await fetch(`/api/fonts?family=${encodeURIComponent(selectedGoogleFont)}`)
+      if (!res.ok) throw new Error(t('downloadFailed'))
+      const blob = await res.blob()
+
+      const fileName = `${selectedGoogleFont}.ttf`
+      const file = new File([blob], fileName, { type: 'font/ttf' })
+
+      await uploadFiles('fontFileUpload', { files: [file] })
+
+      await fetchFonts()
+      setSelectedGoogleFont('')
+      setSuccessMessage(t('googleFontSaved'))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('downloadFailed'))
+    } finally {
+      setSavingFromGoogle(false)
+    }
+  }
+
   function formatSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -127,7 +165,35 @@ export function FontList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <div className="rounded-xl border p-5 space-y-4">
+        <h2 className="text-lg font-semibold">{t('browseGoogleFonts')}</h2>
+        <p className="text-sm text-muted-foreground">{t('selectGoogleFont')}</p>
+        <div className="flex flex-wrap items-end gap-4">
+          <FontPicker
+            onChange={setSelectedGoogleFont}
+            value={selectedGoogleFont}
+            width={320}
+            height={350}
+            localePangram={t('pangram')}
+          />
+          <button
+            onClick={handleSaveFromGoogle}
+            disabled={!selectedGoogleFont || savingFromGoogle}
+            className="inline-flex items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {savingFromGoogle ? t('saving') : t('downloadAndSave')}
+          </button>
+        </div>
+        {selectedGoogleFont && (
+          <div className="mt-2">
+            <span className="block text-lg leading-relaxed" style={{ fontFamily: selectedGoogleFont }}>
+              {t('pangram')}
+            </span>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center gap-4">
         <div className="relative">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50">
@@ -142,6 +208,12 @@ export function FontList() {
           </label>
         </div>
       </div>
+
+      {successMessage && (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600">
+          {successMessage}
+        </div>
+      )}
 
       {error && (
         <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-600">
