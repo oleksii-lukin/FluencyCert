@@ -108,10 +108,11 @@ export function ClubMembersList({
                 {new Date(member.joined_at).toLocaleDateString()}
               </td>
               <td className="px-4 py-3">
-                <button
-                  onClick={() => removeMember(member.user_id)}
-                  disabled={changing === member.user_id}
-                  className="text-xs text-red-600 hover:text-red-700 disabled:opacity-50"
+              <button
+                type="button"
+                onClick={() => removeMember(member.user_id)}
+                disabled={changing === member.user_id}
+                className="text-xs text-red-600 hover:text-red-700 disabled:opacity-50"
                 >
                   {t("remove")}
                 </button>

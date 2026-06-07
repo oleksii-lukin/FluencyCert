@@ -63,6 +63,7 @@ export function FeedbackForm({ slug, onSuccess }: FeedbackFormProps) {
       </h3>
 
       <textarea
+        aria-label="Feedback"
         className="w-full rounded-lg border bg-background p-3 text-sm min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-bright-sky"
         placeholder={t('placeholder')}
         value={feedbackText}
@@ -110,6 +111,7 @@ export function FeedbackForm({ slug, onSuccess }: FeedbackFormProps) {
           </label>
           <input
             type="url"
+            aria-label="LinkedIn URL"
             className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
             placeholder={t('linkedinPlaceholder')}
             value={linkedinUrl}

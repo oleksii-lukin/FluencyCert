@@ -312,6 +312,7 @@ export function PdfCertificateViewer({
       {downloadUrl && (
         <div className="flex justify-end">
           <button
+            type="button"
             onClick={handleDownload}
             className="rounded-lg bg-bright-sky px-4 py-2 text-white hover:opacity-90 text-sm"
           >

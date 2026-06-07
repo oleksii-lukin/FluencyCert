@@ -116,6 +116,7 @@ export function ClubPdfTemplateList() {
   return (
     <div>
       <button
+        type="button"
         onClick={() => setUploadOpen(true)}
         className="mb-6 rounded-lg bg-bright-sky px-4 py-2 text-white hover:opacity-90"
       >
@@ -135,6 +136,7 @@ export function ClubPdfTemplateList() {
                 <input
                   type="text"
                   required
+                  aria-label="Template name"
                   className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
@@ -143,6 +145,7 @@ export function ClubPdfTemplateList() {
               <div>
                 <label className="block text-sm font-medium mb-1">{t("description")}</label>
                 <textarea
+                  aria-label="Description"
                   className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
@@ -151,7 +154,7 @@ export function ClubPdfTemplateList() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t("pdfFile")}</label>
-                <input id="club-pdf-upload" type="file" accept=".pdf" required className="w-full text-sm" />
+                <input id="club-pdf-upload" type="file" accept=".pdf" required aria-label="Upload PDF file" className="w-full text-sm" />
               </div>
               {uploadError && <p className="text-sm text-red-500">{uploadError}</p>}
               <div className="flex justify-end gap-3">
@@ -204,6 +207,7 @@ export function ClubPdfTemplateList() {
                       {t("edit")}
                     </Link>
                     <button
+                      type="button"
                       onClick={() => handleDelete(template.id)}
                       disabled={deleting === template.id}
                       className="text-xs text-red-600 hover:text-red-700 disabled:opacity-50"

@@ -213,6 +213,7 @@ export function LinkedInConnect({ initialLinkedInUrl, initialLinkedInProfileData
       <div className="flex items-center gap-2">
         <input
           type="url"
+          aria-label="LinkedIn profile URL"
           placeholder={t('linkedinUrlPlaceholder')}
           value={manualUrl}
           onChange={(e) => setManualUrl(e.target.value)}

@@ -106,6 +106,7 @@ export function FeedbackManager({ slug, initialFeedbacks }: FeedbackManagerProps
             >
               <div className="flex flex-col gap-1 pt-1">
                 <button
+                  type="button"
                   onClick={() => moveFeedback(feedback.id, "up")}
                   disabled={idx === 0}
                   className="text-xs text-muted-foreground disabled:opacity-30 hover:text-bright-sky"
@@ -114,6 +115,7 @@ export function FeedbackManager({ slug, initialFeedbacks }: FeedbackManagerProps
                 </button>
                 <span className="text-center text-xs text-muted-foreground">{idx + 1}</span>
                 <button
+                  type="button"
                   onClick={() => moveFeedback(feedback.id, "down")}
                   disabled={idx === feedbacks.length - 1}
                   className="text-xs text-muted-foreground disabled:opacity-30 hover:text-bright-sky"

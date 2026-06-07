@@ -75,6 +75,7 @@ export function ClubList({
                 <input
                   type="text"
                   required
+                  aria-label="Club name"
                   className="w-full rounded-lg border bg-background p-2.5 text-sm"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -85,6 +86,7 @@ export function ClubList({
                 <input
                   type="text"
                   required
+                  aria-label="Club slug"
                   className="w-full rounded-lg border bg-background p-2.5 text-sm font-mono"
                   placeholder="my-speaking-club"
                   value={slug}
@@ -94,6 +96,7 @@ export function ClubList({
               <div>
                 <label className="block text-sm font-medium mb-1">{t("clubDescription")}</label>
                 <textarea
+                  aria-label="Club description"
                   className="w-full rounded-lg border bg-background p-2.5 text-sm"
                   rows={3}
                   value={description}

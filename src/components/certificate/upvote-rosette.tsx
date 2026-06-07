@@ -47,6 +47,7 @@ export function UpvoteRosette({
   return (
     <div className="flex flex-col items-center gap-3">
       <button
+        type="button"
         onClick={handleToggle}
         disabled={!canUpvote}
         className={`relative flex size-24 items-center justify-center transition-transform duration-300 ${

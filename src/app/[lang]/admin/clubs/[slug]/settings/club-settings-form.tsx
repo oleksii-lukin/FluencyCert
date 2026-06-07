@@ -76,6 +76,7 @@ export function ClubSettingsForm({
           <input
             type="text"
             required
+            aria-label="Club name"
             className="w-full rounded-lg border bg-background p-2.5 text-sm"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -85,6 +86,7 @@ export function ClubSettingsForm({
           <label className="block text-sm font-medium mb-1">{t("clubSlug")}</label>
           <input
             type="text"
+            aria-label="Club slug"
             className="w-full rounded-lg border bg-background p-2.5 text-sm font-mono text-muted-foreground"
             value={club.slug}
             disabled
@@ -94,6 +96,7 @@ export function ClubSettingsForm({
         <div>
           <label className="block text-sm font-medium mb-1">{t("clubDescription")}</label>
           <textarea
+            aria-label="Club description"
             className="w-full rounded-lg border bg-background p-2.5 text-sm"
             rows={3}
             value={description}
@@ -120,12 +123,14 @@ export function ClubSettingsForm({
                 <p className="text-xs font-semibold uppercase text-muted-foreground">{locale}</p>
                 <input
                   type="text"
+                  aria-label="Translated club name"
                   className="w-full rounded-lg border bg-background p-2 text-sm"
                   placeholder={t("clubName")}
                   value={translations[locale]?.name ?? ""}
                   onChange={(e) => updateTranslation(locale, "name", e.target.value)}
                 />
                 <textarea
+                  aria-label="Translated club description"
                   className="w-full rounded-lg border bg-background p-2 text-sm"
                   rows={2}
                   placeholder={t("clubDescription")}

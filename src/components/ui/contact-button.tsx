@@ -103,6 +103,7 @@ export function ContactButton({ type, value }: ContactButtonProps) {
         >
           <span className="text-xs max-w-40 truncate">{displayValue}</span>
           <button
+            type="button"
             onClick={handleCopy}
             className="shrink-0 transition-all"
             aria-label={copied ? "Copied" : "Copy"}

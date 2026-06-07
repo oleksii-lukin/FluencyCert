@@ -70,6 +70,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
             key={color.value}
             type="button"
             title={color.label}
+            aria-label={color.label}
             onClick={() => {
               onChange(color.value)
               setShowCustom(false)
@@ -111,6 +112,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
               />
               <input
                 type="color"
+                aria-label="Custom color picker"
                 value={value}
                 onChange={(e) => {
                   onChange(e.target.value)
@@ -122,6 +124,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
             <input
               ref={inputRef}
               type="text"
+              aria-label="Custom color hex value"
               value={customInput}
               onChange={(e) => handleCustomInputChange(e.target.value)}
               onBlur={handleCustomBlur}

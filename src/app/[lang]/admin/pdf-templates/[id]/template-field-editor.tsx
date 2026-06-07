@@ -486,12 +486,14 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => setShowPdfPreview(!showPdfPreview)}
             className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
           >
             {showPdfPreview ? t('hidePreview') : t('previewPdf')}
           </button>
           <button
+            type="button"
             onClick={handleRefreshFields}
             className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
           >
@@ -555,6 +557,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         <div className="w-56 shrink-0 space-y-1">
           {fields.map((field, index) => (
             <button
+              type="button"
               key={field.pdf_field_name + index}
               onClick={() => setSelectedFieldIndex(index)}
               className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
@@ -572,11 +575,13 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                 }}
                 className="rounded shrink-0"
                 onClick={(e) => e.stopPropagation()}
+                aria-label={field.pdf_field_name ? `Toggle field "${field.pdf_field_name}"` : 'Toggle field enabled'}
               />
               <span className="truncate">{field.pdf_field_name}</span>
             </button>
           ))}
           <button
+            type="button"
             onClick={addCustomField}
             className="w-full rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
           >
@@ -664,6 +669,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                           className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                           value={field.display_label}
                           onChange={(e) => updateField(index, { display_label: e.target.value })}
+                          aria-label="Display label for custom field"
                         />
                       </div>
                       <div>
@@ -675,6 +681,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                           className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                           value={field.custom_default_value ?? ''}
                           onChange={(e) => updateField(index, { custom_default_value: e.target.value })}
+                          aria-label="Default value for custom field"
                         />
                       </div>
                       <div className="col-span-2">
@@ -875,6 +882,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                             type="file"
                             accept=".ttf,.otf,.woff,.woff2"
                             className="text-xs"
+                            aria-label="Upload font file"
                             onChange={async (e) => {
                               const file = e.target.files?.[0]
                               if (!file) return
@@ -969,6 +977,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                       className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                       value={field.font_size}
                       onChange={(e) => updateField(index, { font_size: parseInt(e.target.value, 10) || 12 })}
+                      aria-label="Font size"
                     />
                   </div>
                 </div>
@@ -1067,12 +1076,14 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
 
       <div className="flex items-center justify-between gap-4 pt-4 border-t">
         <button
+          type="button"
           onClick={handleDeleteTemplate}
           className="rounded-lg border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
         >
           {t('deleteTemplate')}
         </button>
         <button
+          type="button"
           onClick={handleSave}
           disabled={saving || hasUnsavedIds}
           className="rounded-lg bg-bright-sky px-6 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"

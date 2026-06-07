@@ -120,6 +120,7 @@ export function AdminManagement({
               </div>
             </div>
             <button
+              type="button"
               onClick={() => handleRemove(admin.user_id)}
               className="text-xs text-red-600 hover:text-red-700"
             >

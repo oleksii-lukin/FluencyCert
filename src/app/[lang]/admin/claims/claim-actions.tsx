@@ -292,6 +292,7 @@ export function ClaimActions({
                           <label className="block text-sm font-medium mb-1">{field.display_label}</label>
                           <input
                             type="text"
+                            aria-label={field.display_label}
                             className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                             placeholder={field.display_label}
                             value={customFieldValues[field.id] ?? ''}
@@ -323,6 +324,7 @@ export function ClaimActions({
                     <input
                       type="number"
                       min="0"
+                      aria-label={ca('speakingClubsVisited')}
                       className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                       placeholder={ca('clubsPlaceholder')}
                       value={speakingClubsCount}
@@ -334,6 +336,7 @@ export function ClaimActions({
                     <input
                       type="number"
                       min="0"
+                      aria-label={ca('hoursParticipatedOptional')}
                       className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                       placeholder={ca('hoursPlaceholder')}
                       value={hoursParticipated}
@@ -364,6 +367,7 @@ export function ClaimActions({
                     </label>
                     <input
                       type="text"
+                      aria-label={ca('customSlug')}
                       className="w-full rounded-lg border bg-background p-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-bright-sky"
                       placeholder={ca('slugPlaceholder')}
                       value={slug}
@@ -377,6 +381,7 @@ export function ClaimActions({
               <div>
                 <label className="block text-sm font-medium mb-1">{t('feedback')}</label>
                 <textarea
+                  aria-label={t('feedback')}
                   className="w-full rounded-lg border bg-background p-3 text-sm min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-bright-sky"
                   placeholder={open === 'approve' ? ca('feedbackPlaceholderApprove') : ca('feedbackPlaceholderReject')}
                   value={feedback}

@@ -225,6 +225,7 @@ export function FontList() {
             localePangram={t('pangram')}
           />
           <button
+            type="button"
             onClick={handleSaveFromGoogle}
             disabled={!selectedGoogleFont || !selectedVariant || savingFromGoogle}
             className="inline-flex items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"

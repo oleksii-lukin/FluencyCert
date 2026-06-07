@@ -21,6 +21,7 @@ export function CopyShareLink({ slug, className }: { slug: string; className?: s
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
       className={cn(
         "inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors",

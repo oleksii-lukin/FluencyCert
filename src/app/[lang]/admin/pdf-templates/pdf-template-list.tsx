@@ -113,6 +113,7 @@ export function PdfTemplateList() {
   return (
     <div>
       <button
+        type="button"
         onClick={() => setUploadOpen(true)}
         className="mb-6 rounded-lg bg-bright-sky px-4 py-2 text-white hover:opacity-90"
       >
@@ -135,6 +136,7 @@ export function PdfTemplateList() {
                   className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
+                  aria-label="Template name"
                 />
               </div>
               <div>
@@ -144,6 +146,7 @@ export function PdfTemplateList() {
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   rows={2}
+                  aria-label="Description"
                 />
               </div>
               <div>
@@ -154,6 +157,7 @@ export function PdfTemplateList() {
                   accept=".pdf"
                   required
                   className="w-full text-sm"
+                  aria-label="Upload PDF file"
                 />
               </div>
               {uploadError && (
@@ -219,6 +223,7 @@ export function PdfTemplateList() {
                       {t('edit')}
                     </Link>
                     <button
+                      type="button"
                       onClick={() => handleDelete(template.id)}
                       disabled={deleting === template.id}
                       className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"

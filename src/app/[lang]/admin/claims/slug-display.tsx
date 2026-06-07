@@ -39,6 +39,7 @@ export function SlugDisplay({ slug: initialSlug, claimId }: { slug: string; clai
       <span className="inline-flex items-center gap-1.5">
         <code className="text-xs font-mono font-medium">{displaySlug}</code>
         <button
+          type="button"
           onClick={() => setEditing(true)}
           className="text-muted-foreground hover:text-bright-sky transition-colors"
           title="Edit slug"
@@ -53,6 +54,7 @@ export function SlugDisplay({ slug: initialSlug, claimId }: { slug: string; clai
     <span className="inline-flex items-center gap-1.5">
       <input
         type="text"
+        aria-label="Slug"
         className="w-28 rounded border px-1.5 py-0.5 text-xs font-mono uppercase"
         value={value}
         onChange={(e) => setValue(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
@@ -60,6 +62,7 @@ export function SlugDisplay({ slug: initialSlug, claimId }: { slug: string; clai
         autoFocus
       />
       <button
+        type="button"
         onClick={handleSave}
         disabled={saving || !value.trim()}
         className="text-xs text-green-600 hover:text-green-700 font-medium disabled:opacity-50"
@@ -67,6 +70,7 @@ export function SlugDisplay({ slug: initialSlug, claimId }: { slug: string; clai
         {saving ? '...' : 'Save'}
       </button>
       <button
+        type="button"
         onClick={() => { setEditing(false); setValue(displaySlug); setError('') }}
         className="text-xs text-muted-foreground hover:text-foreground"
       >
