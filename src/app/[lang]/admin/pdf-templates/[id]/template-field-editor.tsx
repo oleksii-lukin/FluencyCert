@@ -506,6 +506,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
             src={template.file_url}
             className="h-[500px] w-full"
             title="PDF Preview"
+            sandbox="allow-scripts"
           />
         </div>
       )}

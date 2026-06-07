@@ -9,7 +9,7 @@ const getAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 10, characteristics: ["userId"] }),
 )
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })

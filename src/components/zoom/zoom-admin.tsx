@@ -63,7 +63,7 @@ export function ZoomAdmin({ initialZoomUserInfo }: ZoomAdminProps) {
     setPreviewError(null)
     setPreviewData(null)
     try {
-      const res = await fetch('/api/zoom/preview')
+      const res = await fetch('/api/zoom/preview', { method: 'POST' })
       const data = await res.json()
       if (res.ok) {
         if (data.zoomUserInfo) {
