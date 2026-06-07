@@ -10,20 +10,6 @@ const WEIGHT_NAMES: Record<string, string> = {
   '900': 'Black',
 }
 
-export function getVariantLabel(variant: string): string {
-  if (variant === 'regular') return 'Regular'
-  if (variant === 'italic') return 'Regular Italic'
-
-  const match = variant.match(/^(\d{3})(italic)?$/)
-  if (!match) return variant
-
-  const weight = match[1]
-  const isItalic = match[2] === 'italic'
-  const name = WEIGHT_NAMES[weight]
-
-  return name ? `${name}${isItalic ? ' Italic' : ''}` : variant
-}
-
 interface VariantEntry {
   key: string
   label: string
@@ -123,7 +109,7 @@ export function groupUploadedFonts(fonts: { key: string; name: string; size?: nu
 
 function sortUploadedVariants(variants: FontVariantEntry[]): FontVariantEntry[] {
   const order = ['regular', '100', '200', '300', '400', '500', '600', '700', '800', '900', 'italic', '100italic', '200italic', '300italic', '400italic', '500italic', '600italic', '700italic', '800italic', '900italic']
-  return [...variants].sort((a, b) => {
+  return variants.toSorted((a, b) => {
     const ai = order.indexOf(a.variant)
     const bi = order.indexOf(b.variant)
     if (ai !== -1 && bi !== -1) return ai - bi

@@ -118,15 +118,13 @@ export function FontList() {
 
     setDeleting(family)
 
-    for (const variant of group.variants) {
-      try {
-        await fetch(`/api/admin/fonts/uploaded/${encodeURIComponent(variant.key)}`, {
+    await Promise.allSettled(
+      group.variants.map((variant) =>
+        fetch(`/api/admin/fonts/uploaded/${encodeURIComponent(variant.key)}`, {
           method: 'DELETE',
         })
-      } catch {
-        // continue trying other variants
-      }
-    }
+      )
+    )
 
     setFonts((prev) => prev.filter((f) => !group.variants.some((v) => v.key === f.key)))
     setDeleting(null)
@@ -364,7 +362,8 @@ export function FontList() {
                           const entry = group.variants.find((e) => e.variant === v.key)
                           const isActive = entry?.key === previewKey
                           return (
-                            <span
+                            <button
+                              type="button"
                               key={v.key}
                               onClick={() => {
                                 if (entry) setPreviewVariants((prev) => ({ ...prev, [group.family]: entry.key }))
@@ -378,7 +377,7 @@ export function FontList() {
                               }`}
                             >
                               {v.label}
-                            </span>
+                            </button>
                           )
                         })}
                         {normal.length > 0 && italic.length > 0 && (
@@ -388,7 +387,8 @@ export function FontList() {
                           const entry = group.variants.find((e) => e.variant === v.key)
                           const isActive = entry?.key === previewKey
                           return (
-                            <span
+                            <button
+                              type="button"
                               key={v.key}
                               onClick={() => {
                                 if (entry) setPreviewVariants((prev) => ({ ...prev, [group.family]: entry.key }))
@@ -402,7 +402,7 @@ export function FontList() {
                               }`}
                             >
                               {v.label}
-                            </span>
+                            </button>
                           )
                         })}
                       </div>
@@ -410,6 +410,7 @@ export function FontList() {
                     <td className="px-4 py-3 text-muted-foreground">{formatSize(group.totalSize)}</td>
                     <td className="px-4 py-3 text-right">
                       <button
+                        type="button"
                         onClick={() => handleDeleteGroup(group.family)}
                         disabled={deleting === group.family}
                         className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"

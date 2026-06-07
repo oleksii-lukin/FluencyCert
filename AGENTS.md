@@ -15,3 +15,14 @@ pnpm supabase migration new <descriptive_name>
 
 This generates a properly timestamped file in `supabase/migrations/`. Then write the SQL into that file. Never manually name migration files.
 <!-- END:supabase-rules -->
+
+<!-- BEGIN:verification-rules -->
+# Verification
+
+After completing a task, run both:
+
+```sh
+pnpm run lint
+pnpm run typecheck
+```
+<!-- END:verification-rules -->
