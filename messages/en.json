@@ -542,7 +542,9 @@
     "googleFontSaved": "Font saved successfully",
     "variants": "Variants",
     "deleteAll": "Delete All",
-    "deleteAllConfirm": "Delete all variants of {family}?"
+    "deleteAllConfirm": "Delete all variants of {family}?",
+    "downloadAll": "Download All",
+    "downloading": "Downloading..."
   },
   "locale": {
     "en": "English",

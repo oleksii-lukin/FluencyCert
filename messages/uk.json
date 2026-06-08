@@ -543,7 +543,9 @@
     "googleFontSaved": "Шрифт успішно збережено",
     "variants": "Варіанти",
     "deleteAll": "Видалити всі",
-    "deleteAllConfirm": "Видалити всі варіанти шрифту {family}?"
+    "deleteAllConfirm": "Видалити всі варіанти шрифту {family}?",
+    "downloadAll": "Завантажити все",
+    "downloading": "Завантаження..."
   },
   "locale": {
     "en": "English",

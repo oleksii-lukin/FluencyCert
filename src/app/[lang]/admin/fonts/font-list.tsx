@@ -11,6 +11,7 @@ import { FontPreview } from './font-preview'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { InformationCircleIcon } from "@hugeicons/core-free-icons"
 import { groupUploadedFonts, groupVariants } from '@/lib/font-variants'
+import JSZip from 'jszip'
 
 interface UploadedFont {
   key: string
@@ -27,6 +28,7 @@ export function FontList() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState<string | null>(null)
   const [incompatibleKeys, setIncompatibleKeys] = useState<Set<string>>(new Set())
   const [selectedGoogleFont, setSelectedGoogleFont] = useState<string>('')
   const [selectedVariant, setSelectedVariant] = useState<string>('')
@@ -128,6 +130,49 @@ export function FontList() {
 
     setFonts((prev) => prev.filter((f) => !group.variants.some((v) => v.key === f.key)))
     setDeleting(null)
+  }
+
+  async function handleDownloadGroup(family: string) {
+    const group = fontGroups.find((g) => g.family === family)
+    if (!group) return
+
+    setDownloading(family)
+
+    try {
+      const zip = new JSZip()
+
+      const responses = await Promise.allSettled(
+        group.variants.map(async (variant) => {
+          const res = await fetch(`/api/fonts/uploaded?key=${variant.key}`)
+          if (!res.ok) throw new Error(`Failed to fetch ${variant.name}`)
+          const blob = await res.blob()
+          zip.file(variant.name, blob)
+        }),
+      )
+
+      const failed = responses.filter((r) => r.status === 'rejected')
+      if (failed.length > 0) {
+        console.warn(`[DownloadGroup] ${failed.length} variant(s) failed to fetch`)
+      }
+
+      if (group.variants.length === failed.length) {
+        throw new Error('Failed to fetch any variants')
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(zipBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${family}.zip`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('[DownloadGroup] error:', err)
+    } finally {
+      setDownloading(null)
+    }
   }
 
   const selectedFontData = useMemo(() => {
@@ -410,14 +455,24 @@ export function FontList() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{formatSize(group.totalSize)}</td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteGroup(group.family)}
-                        disabled={deleting === group.family}
-                        className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
-                      >
-                        {deleting === group.family ? t('deleting') : t('deleteAll')}
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadGroup(group.family)}
+                          disabled={downloading === group.family}
+                          className="rounded-lg border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
+                        >
+                          {downloading === group.family ? t('downloading') : t('downloadAll')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGroup(group.family)}
+                          disabled={deleting === group.family}
+                          className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          {deleting === group.family ? t('deleting') : t('deleteAll')}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
