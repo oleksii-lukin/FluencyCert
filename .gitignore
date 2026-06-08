@@ -55,3 +55,6 @@ next-env.d.ts
 !/supabase/seed-files/pdfs/.gitkeep
 !/supabase/seed-files/fonts/.gitkeep
 posthog-setup-report.md
+
+# Auto-copied from pdfjs-dist on install
+/public/pdf.worker.min.mjs

@@ -21,6 +21,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "storybook-static/**",
     "next-env.d.ts",
+    // Third-party files imported into public/:
+    "public/pdf.worker.min.mjs",
   ]),
 ]);
 
