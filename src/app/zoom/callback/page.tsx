@@ -1,7 +1,12 @@
 "use client"
 
+import type { Metadata } from "next"
 import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+
+export const metadata: Metadata = {
+  title: "Zoom Authorization",
+}
 
 function CallbackContent() {
   const searchParams = useSearchParams()

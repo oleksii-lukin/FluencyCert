@@ -1,8 +1,13 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
 
+const messagesImport: Record<string, () => Promise<{ default: any }>> = {
+  en: () => import('../../messages/en.json'),
+  uk: () => import('../../messages/uk.json'),
+}
+
 async function loadMessages(locale: string) {
-  return (await import(`../../messages/${locale}.json`)).default
+  return (await (messagesImport[locale]?.() ?? messagesImport.en())).default
 }
 
 export default async function NotFound() {

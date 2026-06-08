@@ -27,6 +27,61 @@ import { Check, ChevronsUpDown, Filter } from "lucide-react";
 import * as React from "react";
 import { List, type RowComponentProps } from "react-window";
 
+interface FontPickerState {
+  selectedFont: GoogleFont | null;
+  search: string;
+  isOpen: boolean;
+  selectedCategory: string;
+  fonts: GoogleFont[];
+  isLoading: boolean;
+  error: Error | null;
+}
+
+const initialFontPickerState: FontPickerState = {
+  selectedFont: null,
+  search: "",
+  isOpen: false,
+  selectedCategory: "all",
+  fonts: [],
+  isLoading: true,
+  error: null,
+};
+
+type FontPickerAction =
+  | { type: "LOAD_SUCCESS"; fonts: GoogleFont[]; selectedValue?: string }
+  | { type: "LOAD_ERROR"; error: Error }
+  | { type: "SET_SEARCH"; value: string }
+  | { type: "SET_OPEN"; open: boolean }
+  | { type: "SET_CATEGORY"; category: string }
+  | { type: "SELECT_FONT"; font: GoogleFont };
+
+function fontPickerReducer(
+  state: FontPickerState,
+  action: FontPickerAction,
+): FontPickerState {
+  switch (action.type) {
+    case "LOAD_SUCCESS":
+      return {
+        ...state,
+        fonts: action.fonts,
+        selectedFont:
+          action.fonts.find((f) => f.family === action.selectedValue) ?? null,
+        error: null,
+        isLoading: false,
+      };
+    case "LOAD_ERROR":
+      return { ...state, error: action.error, isLoading: false };
+    case "SET_SEARCH":
+      return { ...state, search: action.value };
+    case "SET_OPEN":
+      return { ...state, isOpen: action.open };
+    case "SET_CATEGORY":
+      return { ...state, selectedCategory: action.category };
+    case "SELECT_FONT":
+      return { ...state, selectedFont: action.font };
+  }
+}
+
 const RowComponent = ({
   index,
   style,
@@ -136,10 +191,13 @@ interface FontPickerProps {
 
 async function fetchFonts() {
   try {
-    const fonts = await fetchGoogleFonts()
-    return { success: true as const, fonts }
+    const fonts = await fetchGoogleFonts();
+    return { success: true as const, fonts };
   } catch (err) {
-    return { success: false as const, error: err instanceof Error ? err : new Error("Failed to load fonts") }
+    return {
+      success: false as const,
+      error: err instanceof Error ? err : new Error("Failed to load fonts"),
+    };
   }
 }
 
@@ -152,74 +210,59 @@ export function FontPicker({
   showFilters = true,
   localePangram,
 }: FontPickerProps) {
-  const [selectedFont, setSelectedFont] = React.useState<GoogleFont | null>(
-    null,
+  const [state, dispatch] = React.useReducer(
+    fontPickerReducer,
+    initialFontPickerState,
   );
-  const [search, setSearch] = React.useState("");
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
-  const [fonts, setFonts] = React.useState<GoogleFont[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
-  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     let cancelled = false;
 
     fetchFonts().then((result) => {
       if (cancelled) return;
-      if (result.success) {
-        setFonts(result.fonts);
-        const font = result.fonts.find((f: GoogleFont) => f.family === value);
-        if (font) {
-          setSelectedFont(font);
-          loadFont(font.family, font).catch(() => {});
-        }
-        setError(null);
-      } else {
-        setError(result.error);
-      }
-      setIsLoading(false);
+      dispatch(
+        result.success
+          ? { type: "LOAD_SUCCESS", fonts: result.fonts, selectedValue: value }
+          : { type: "LOAD_ERROR", error: result.error },
+      );
     });
 
-    return () => { cancelled = true };
+    return () => {
+      cancelled = true;
+    };
   }, [value]);
 
-  const categories = (() => {
-    const uniqueCategories = new Set(fonts.map((font) => font.category));
-    return Array.from(uniqueCategories).sort();
-  })();
+  const uniqueCategories = new Set(state.fonts.map((font) => font.category));
+  const categories = Array.from(uniqueCategories).sort();
 
-  const filteredFonts = fonts.filter((font: GoogleFont) => {
+  const filteredFonts = state.fonts.filter((font: GoogleFont) => {
     const matchesSearch = font.family
       .toLowerCase()
-      .includes(search.toLowerCase());
+      .includes(state.search.toLowerCase());
     const matchesCategory =
       !showFilters ||
-      selectedCategory === "all" ||
-      font.category === selectedCategory;
+      state.selectedCategory === "all" ||
+      font.category === state.selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   const handleSelectFont = (font: GoogleFont) => {
-    setSelectedFont(font);
+    dispatch({ type: "SELECT_FONT", font });
     loadFont(font.family, font).catch(() => {});
     onChange?.(font.family);
-    setIsOpen(false);
-  };
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
+    dispatch({ type: "SET_OPEN", open: false });
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+    <Popover
+      open={state.isOpen}
+      onOpenChange={(open) => dispatch({ type: "SET_OPEN", open })}
+    >
       <PopoverTrigger asChild>
         <Button
-          ref={buttonRef}
           variant="outline"
           role="combobox"
-          aria-expanded={isOpen}
+          aria-expanded={state.isOpen}
           aria-haspopup="listbox"
           aria-controls="font-picker-listbox"
           aria-label="Select font"
@@ -227,9 +270,9 @@ export function FontPicker({
           style={{ width }}
         >
           <span className="truncate">
-            {selectedFont
+            {state.selectedFont
               ? filteredFonts.find(
-                  (font) => font.family === selectedFont.family,
+                  (font) => font.family === state.selectedFont!.family,
                 )?.family
               : "Select font..."}
           </span>
@@ -240,8 +283,10 @@ export function FontPicker({
         <Command id="font-picker-listbox">
           <CommandInput
             placeholder="Search fonts..."
-            value={search}
-            onValueChange={setSearch}
+            value={state.search}
+            onValueChange={(value) =>
+              dispatch({ type: "SET_SEARCH", value })
+            }
             className="border-none focus:ring-0"
           />
           <div className="flex items-center justify-between gap-2 border-b px-3 py-1">
@@ -255,17 +300,19 @@ export function FontPicker({
                   >
                     <Filter className="text-muted-foreground h-4 w-4" />
                     <span className="text-sm capitalize">
-                      {selectedCategory === "all"
+                      {state.selectedCategory === "all"
                         ? "All Categories"
-                        : selectedCategory}
+                        : state.selectedCategory}
                     </span>
                     <ChevronsUpDown className="ml-2 h-3 w-3 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-[200px]">
                   <DropdownMenuRadioGroup
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
+                    value={state.selectedCategory}
+                    onValueChange={(value) =>
+                      dispatch({ type: "SET_CATEGORY", category: value })
+                    }
                   >
                     <DropdownMenuRadioItem value="all">
                       All Categories
@@ -287,11 +334,11 @@ export function FontPicker({
               {filteredFonts.length} fonts
             </span>
           </div>
-          {isLoading ? (
+          {state.isLoading ? (
             <div className="flex items-center justify-center p-4">
               <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-900" />
             </div>
-          ) : error ? (
+          ) : state.error ? (
             <div className="flex items-center justify-center p-4 text-sm text-red-500">
               Failed to load fonts. Please try again later.
             </div>
@@ -306,7 +353,7 @@ export function FontPicker({
                     rowHeight={localePangram ? 75 : 55}
                     rowProps={{
                       fonts: filteredFonts,
-                      selectedFont,
+                      selectedFont: state.selectedFont,
                       onSelectFont: handleSelectFont,
                       localePangram,
                     }}

@@ -148,7 +148,7 @@ export function ClubSettingsForm({
             aria-label="Club slug"
             className="w-full rounded-lg border bg-background p-2.5 text-sm font-mono text-muted-foreground"
             value={slug}
-            disabled
+            readOnly
           />
           <p className="text-xs text-muted-foreground mt-1">{t("slugCannotChange")}</p>
         </div>

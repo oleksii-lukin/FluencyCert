@@ -222,6 +222,226 @@ function dataReducer(state: DataState, action: DataAction): DataState {
   }
 }
 
+function ClaimActionModal({
+  ui,
+  form,
+  data,
+  isUpdate,
+  onCertTypeChange,
+  onTemplateChange,
+  onSubmit,
+  dispatchForm,
+  dispatchData,
+  dispatchUi,
+  ca,
+  pt,
+  tn,
+  t,
+}: {
+  ui: UiState
+  form: FormState
+  data: DataState
+  isUpdate: boolean
+  onCertTypeChange: (value: 'react' | 'pdf') => void
+  onTemplateChange: (templateId: string) => void
+  onSubmit: (status: 'approved' | 'rejected') => void
+  dispatchForm: React.Dispatch<FormAction>
+  dispatchData: React.Dispatch<DataAction>
+  dispatchUi: React.Dispatch<UiAction>
+  ca: (key: string) => string
+  pt: (key: string) => string
+  tn: (key: string) => string
+  t: (key: string) => string
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-lg rounded-xl border bg-white p-6 shadow-xl dark:bg-graphite max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg font-semibold mb-2">
+          {isUpdate ? ca('updateTitle') : ui.open === 'approve' ? ca('approveTitle') : ca('rejectTitle')}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          {isUpdate ? ca('provideUpdateDetails') : ui.open === 'approve' ? ca('provideFeedbackDetails') : ca('provideRejectionReason')}
+        </p>
+
+        <div className="space-y-4">
+          {(ui.open === 'approve') && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">{pt('certificateType')}</label>
+                <select
+                  className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                  value={form.certType}
+                  onChange={(e) => onCertTypeChange(e.target.value as 'react' | 'pdf')}
+                >
+                  <option value="react">{pt('typeReact')}</option>
+                  <option value="pdf">{pt('typePdf')}</option>
+                </select>
+              </div>
+
+              {form.certType === 'pdf' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{pt('pdfTemplate')}</label>
+                    <select
+                      className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                      value={form.selectedPdfTemplate}
+                      onChange={(e) => onTemplateChange(e.target.value)}
+                    >
+                      <option value="">{pt('selectTemplate')}</option>
+                      {form.pdfTemplates.map((ptpl) => (
+                        <option key={ptpl.id} value={ptpl.id}>{ptpl.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {data.overridableFields.map((field) => (
+                    <div key={field.id}>
+                      <label className="block text-sm font-medium mb-1">{field.display_label}</label>
+                      <input
+                        type="text"
+                        aria-label={field.display_label}
+                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                        placeholder={field.display_label}
+                        value={data.customFieldValues[field.id] ?? ''}
+                        onChange={(e) => dispatchData({ type: 'SET_CUSTOM_FIELD_VALUE', fieldId: field.id, value: e.target.value })}
+                      />
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {(form.certType !== 'pdf' || data.templateDbKeys.includes('englishLevel')) && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">{ca('englishLevel')}</label>
+                  <select
+                    className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                    value={form.englishLevel}
+                    onChange={(e) => dispatchForm({ type: 'SET_ENGLISH_LEVEL', value: e.target.value })}
+                  >
+                    <option value="">{ca('selectLevel')}</option>
+                    <option value="A1 (Beginner)">{ca('levelA1')}</option>
+                    <option value="A2 (Elementary)">{ca('levelA2')}</option>
+                    <option value="B1 (Intermediate)">{ca('levelB1')}</option>
+                    <option value="B2 (Upper-Intermediate)">{ca('levelB2')}</option>
+                    <option value="C1 (Advanced)">{ca('levelC1')}</option>
+                    <option value="C2 (Proficient)">{ca('levelC2')}</option>
+                  </select>
+                </div>
+              )}
+              {(form.certType !== 'pdf' || data.templateDbKeys.includes('speakingClubsCount')) && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">{ca('speakingClubsVisited')}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    aria-label={ca('speakingClubsVisited')}
+                    className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                    placeholder={ca('clubsPlaceholder')}
+                    value={form.speakingClubsCount}
+                    onChange={(e) => dispatchForm({ type: 'SET_SPEAKING_CLUBS_COUNT', value: e.target.value })}
+                  />
+                </div>
+              )}
+              {(form.certType !== 'pdf' || data.templateDbKeys.includes('hoursParticipated')) && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">{ca('hoursParticipatedOptional')}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    aria-label={ca('hoursParticipatedOptional')}
+                    className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                    placeholder={ca('hoursPlaceholder')}
+                    value={form.hoursParticipated}
+                    onChange={(e) => dispatchForm({ type: 'SET_HOURS_PARTICIPATED', value: e.target.value })}
+                  />
+                </div>
+              )}
+              {form.certType !== 'pdf' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">{ca('backgroundTemplate')}</label>
+                  <select
+                    className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                    value={form.backgroundTemplate}
+                    onChange={(e) => dispatchForm({ type: 'SET_BACKGROUND_TEMPLATE', value: e.target.value })}
+                  >
+                    <option value="modern-glass">{tn('modernGlass')}</option>
+                    <option value="guilloche-security">{tn('guillocheSecurity')}</option>
+                    <option value="neubrutal">{tn('neubrutal')}</option>
+                    <option value="memphis-retro">{tn('memphisRetro')}</option>
+                    <option value="cyber-neon">{tn('cyberNeon')}</option>
+                    <option value="natural-green">{tn('naturalGreen')}</option>
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {ca('customSlug')}{' '}
+                  <span className="text-xs text-muted-foreground font-normal">{ca('customSlugHint')}</span>
+                </label>
+                <input
+                  type="text"
+                  aria-label={ca('customSlug')}
+                  className="w-full rounded-lg border bg-background p-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                  placeholder={ca('slugPlaceholder')}
+                  value={form.slug}
+                  onChange={(e) => dispatchForm({ type: 'SET_SLUG', value: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
+                  maxLength={20}
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium mb-1">{t('feedback')}</label>
+            <textarea
+              aria-label={t('feedback')}
+              className="w-full rounded-lg border bg-background p-3 text-sm min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-bright-sky"
+              placeholder={ui.open === 'approve' ? ca('feedbackPlaceholderApprove') : ca('feedbackPlaceholderReject')}
+              value={form.feedback}
+              onChange={(e) => dispatchForm({ type: 'SET_FEEDBACK', value: e.target.value })}
+            />
+          </div>
+        </div>
+
+        {ui.error && (
+          <p className="mt-2 text-sm text-red-500">{ui.error}</p>
+        )}
+
+        <div className="mt-4 flex justify-end gap-3">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => dispatchUi({ type: 'CLOSE' })}
+          >
+            {ca('cancel')}
+          </Button>
+          <Button
+            size="sm"
+            disabled={
+              !form.feedback.trim() ||
+              ui.submitting ||
+              (ui.open === 'approve' && (
+                (form.certType !== 'pdf' || data.templateDbKeys.includes('englishLevel')) && !form.englishLevel ||
+                (form.certType !== 'pdf' || data.templateDbKeys.includes('speakingClubsCount')) && !form.speakingClubsCount
+              )) ||
+              (ui.open === 'approve' && form.certType === 'pdf' && !form.selectedPdfTemplate)
+            }
+            onClick={() => onSubmit(isUpdate ? 'approved' : (ui.open === 'approve' ? 'approved' : 'rejected'))}
+            className={isUpdate
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : ui.open === 'approve'
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-red-600 text-white hover:bg-red-700'
+            }
+          >
+            {ui.submitting ? ca('processing') : isUpdate ? ca('update') : ui.open === 'approve' ? ca('approve') : ca('reject')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function ClaimActions({
   claimId,
   mode = 'approve',
@@ -387,191 +607,22 @@ export function ClaimActions({
       )}
 
       {ui.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-xl border bg-white p-6 shadow-xl dark:bg-graphite max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-2">
-              {isUpdate ? ca('updateTitle') : ui.open === 'approve' ? ca('approveTitle') : ca('rejectTitle')}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {isUpdate ? ca('provideUpdateDetails') : ui.open === 'approve' ? ca('provideFeedbackDetails') : ca('provideRejectionReason')}
-            </p>
-
-            <div className="space-y-4">
-              {(ui.open === 'approve') && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{pt('certificateType')}</label>
-                    <select
-                      className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                      value={form.certType}
-                      onChange={(e) => handleCertTypeChange(e.target.value as 'react' | 'pdf')}
-                    >
-                      <option value="react">{pt('typeReact')}</option>
-                      <option value="pdf">{pt('typePdf')}</option>
-                    </select>
-                  </div>
-
-                  {form.certType === 'pdf' && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">{pt('pdfTemplate')}</label>
-                        <select
-                          className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                          value={form.selectedPdfTemplate}
-                          onChange={(e) => handleTemplateChange(e.target.value)}
-                        >
-                          <option value="">{pt('selectTemplate')}</option>
-                          {form.pdfTemplates.map((ptpl) => (
-                            <option key={ptpl.id} value={ptpl.id}>{ptpl.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {data.overridableFields.map((field) => (
-                        <div key={field.id}>
-                          <label className="block text-sm font-medium mb-1">{field.display_label}</label>
-                          <input
-                            type="text"
-                            aria-label={field.display_label}
-                            className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                            placeholder={field.display_label}
-                            value={data.customFieldValues[field.id] ?? ''}
-                            onChange={(e) => dispatchData({ type: 'SET_CUSTOM_FIELD_VALUE', fieldId: field.id, value: e.target.value })}
-                          />
-                        </div>
-                      ))}
-                    </>
-                  )}
-
-                  {(form.certType !== 'pdf' || data.templateDbKeys.includes('englishLevel')) && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">{ca('englishLevel')}</label>
-                      <select
-                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                        value={form.englishLevel}
-                        onChange={(e) => dispatchForm({ type: 'SET_ENGLISH_LEVEL', value: e.target.value })}
-                      >
-                        <option value="">{ca('selectLevel')}</option>
-                        <option value="A1 (Beginner)">{ca('levelA1')}</option>
-                        <option value="A2 (Elementary)">{ca('levelA2')}</option>
-                        <option value="B1 (Intermediate)">{ca('levelB1')}</option>
-                        <option value="B2 (Upper-Intermediate)">{ca('levelB2')}</option>
-                        <option value="C1 (Advanced)">{ca('levelC1')}</option>
-                        <option value="C2 (Proficient)">{ca('levelC2')}</option>
-                      </select>
-                    </div>
-                  )}
-                  {(form.certType !== 'pdf' || data.templateDbKeys.includes('speakingClubsCount')) && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">{ca('speakingClubsVisited')}</label>
-                      <input
-                        type="number"
-                        min="0"
-                        aria-label={ca('speakingClubsVisited')}
-                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                        placeholder={ca('clubsPlaceholder')}
-                        value={form.speakingClubsCount}
-                        onChange={(e) => dispatchForm({ type: 'SET_SPEAKING_CLUBS_COUNT', value: e.target.value })}
-                      />
-                    </div>
-                  )}
-                  {(form.certType !== 'pdf' || data.templateDbKeys.includes('hoursParticipated')) && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">{ca('hoursParticipatedOptional')}</label>
-                      <input
-                        type="number"
-                        min="0"
-                        aria-label={ca('hoursParticipatedOptional')}
-                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                        placeholder={ca('hoursPlaceholder')}
-                        value={form.hoursParticipated}
-                        onChange={(e) => dispatchForm({ type: 'SET_HOURS_PARTICIPATED', value: e.target.value })}
-                      />
-                    </div>
-                  )}
-                  {form.certType !== 'pdf' && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">{ca('backgroundTemplate')}</label>
-                      <select
-                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                        value={form.backgroundTemplate}
-                        onChange={(e) => dispatchForm({ type: 'SET_BACKGROUND_TEMPLATE', value: e.target.value })}
-                      >
-                        <option value="modern-glass">{tn('modernGlass')}</option>
-                        <option value="guilloche-security">{tn('guillocheSecurity')}</option>
-                        <option value="neubrutal">{tn('neubrutal')}</option>
-                        <option value="memphis-retro">{tn('memphisRetro')}</option>
-                        <option value="cyber-neon">{tn('cyberNeon')}</option>
-                        <option value="natural-green">{tn('naturalGreen')}</option>
-                      </select>
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      {ca('customSlug')}{' '}
-                      <span className="text-xs text-muted-foreground font-normal">{ca('customSlugHint')}</span>
-                    </label>
-                    <input
-                      type="text"
-                      aria-label={ca('customSlug')}
-                      className="w-full rounded-lg border bg-background p-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                      placeholder={ca('slugPlaceholder')}
-                      value={form.slug}
-                      onChange={(e) => dispatchForm({ type: 'SET_SLUG', value: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
-                      maxLength={20}
-                    />
-                  </div>
-                </>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('feedback')}</label>
-                <textarea
-                  aria-label={t('feedback')}
-                  className="w-full rounded-lg border bg-background p-3 text-sm min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                  placeholder={ui.open === 'approve' ? ca('feedbackPlaceholderApprove') : ca('feedbackPlaceholderReject')}
-                  value={form.feedback}
-                  onChange={(e) => dispatchForm({ type: 'SET_FEEDBACK', value: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {ui.error && (
-              <p className="mt-2 text-sm text-red-500">{ui.error}</p>
-            )}
-
-            <div className="mt-4 flex justify-end gap-3">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => dispatchUi({ type: 'CLOSE' })}
-              >
-                {ca('cancel')}
-              </Button>
-              <Button
-                size="sm"
-                disabled={
-                  !form.feedback.trim() ||
-                  ui.submitting ||
-                  (ui.open === 'approve' && (
-                    (form.certType !== 'pdf' || data.templateDbKeys.includes('englishLevel')) && !form.englishLevel ||
-                    (form.certType !== 'pdf' || data.templateDbKeys.includes('speakingClubsCount')) && !form.speakingClubsCount
-                  )) ||
-                  (ui.open === 'approve' && form.certType === 'pdf' && !form.selectedPdfTemplate)
-                }
-                onClick={() => handleSubmit(isUpdate ? 'approved' : (ui.open === 'approve' ? 'approved' : 'rejected'))}
-                className={isUpdate
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : ui.open === 'approve'
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-red-600 text-white hover:bg-red-700'
-                }
-              >
-                {ui.submitting ? ca('processing') : isUpdate ? ca('update') : ui.open === 'approve' ? ca('approve') : ca('reject')}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ClaimActionModal
+          ui={ui}
+          form={form}
+          data={data}
+          isUpdate={isUpdate}
+          onCertTypeChange={handleCertTypeChange}
+          onTemplateChange={handleTemplateChange}
+          onSubmit={handleSubmit}
+          dispatchForm={dispatchForm}
+          dispatchData={dispatchData}
+          dispatchUi={dispatchUi}
+          ca={ca}
+          pt={pt}
+          tn={tn}
+          t={t}
+        />
       )}
     </div>
   )

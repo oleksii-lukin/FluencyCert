@@ -11,6 +11,16 @@ interface LinkedInProfileData {
   profileUrl?: string
 }
 
+async function exchangeLinkedInCode(authorizationCode: string, redirectUri: string) {
+  const res = await fetch('/api/linkedin/connect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ authorizationCode, redirectUri }),
+  })
+  const result = await res.json()
+  return { ok: res.ok, result }
+}
+
 interface LinkedInConnectProps {
   initialLinkedInUrl: string | null
   initialLinkedInProfileData: LinkedInProfileData | null
@@ -93,30 +103,28 @@ export function LinkedInConnect({ initialLinkedInUrl, initialLinkedInProfileData
   const [ui, dispatchUi] = useReducer(uiReducer, initialUiState)
 
   useEffect(() => {
+    let cancelled = false
     const handler = (event: MessageEvent) => {
       if (event.data?.type === "linkedin-auth" && event.data?.code) {
         const redirectUri = `${window.location.origin}/linkedin/callback`
         dispatchUi({ type: "START_LOADING" })
-        fetch("/api/linkedin/connect", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ authorizationCode: event.data.code, redirectUri }),
-        }).then(async (res) => {
-          const result = await res.json()
-          if (res.ok) {
-            dispatchConnection({ type: "CONNECT_SUCCESS", profileData: result.profileData ?? null, linkedinUrl: result.linkedinUrl ?? "" })
-          } else {
-            dispatchUi({ type: "SET_ERROR", error: result.error ?? t("linkedinError") })
-          }
-        }).catch(() => {
-          dispatchUi({ type: "SET_ERROR", error: t("linkedinError") })
-        }).finally(() => {
-          dispatchUi({ type: "STOP_LOADING" })
-        })
+        exchangeLinkedInCode(event.data.code, redirectUri)
+          .then(async ({ ok, result }) => {
+            if (cancelled) return
+            if (ok) {
+              dispatchConnection({ type: "CONNECT_SUCCESS", profileData: result.profileData ?? null, linkedinUrl: result.linkedinUrl ?? "" })
+            } else {
+              dispatchUi({ type: "SET_ERROR", error: result.error ?? t("linkedinError") })
+            }
+          }).catch(() => {
+            if (!cancelled) dispatchUi({ type: "SET_ERROR", error: t("linkedinError") })
+          }).finally(() => {
+            if (!cancelled) dispatchUi({ type: "STOP_LOADING" })
+          })
       }
     }
     window.addEventListener("message", handler)
-    return () => window.removeEventListener("message", handler)
+    return () => { cancelled = true; window.removeEventListener("message", handler) }
   }, [t])
 
   const handleConnect = () => {

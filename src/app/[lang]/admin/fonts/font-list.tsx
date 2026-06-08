@@ -10,7 +10,7 @@ import type { GoogleFont } from '@/lib/fonts'
 import { FontPreview } from './font-preview'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { InformationCircleIcon } from "@hugeicons/core-free-icons"
-import { groupUploadedFonts, groupVariants } from '@/lib/font-variants'
+import { groupUploadedFonts, groupVariants, type FontFamilyGroup } from '@/lib/font-variants'
 import JSZip from 'jszip'
 
 interface UploadedFont {
@@ -206,6 +206,237 @@ function uiReducer(state: UiState, action: UiAction): UiState {
   }
 }
 
+function GoogleFontsSection({
+  gfState,
+  selectedFontData,
+  onFontPickerChange,
+  onSaveFromGoogle,
+  onVariantChange,
+  t,
+}: {
+  gfState: GoogleFontsState
+  selectedFontData: GoogleFont | null
+  onFontPickerChange: (family: string) => void
+  onSaveFromGoogle: () => void
+  onVariantChange: (variant: string) => void
+  t: (key: string) => string
+}) {
+  return (
+    <div className="rounded-xl border p-5 space-y-4">
+      <h2 className="text-lg font-semibold">{t('browseGoogleFonts')}</h2>
+      <p className="text-sm text-muted-foreground">{t('selectGoogleFont')}</p>
+      <div className="flex flex-wrap items-end gap-4">
+        <FontPicker
+          onChange={onFontPickerChange}
+          value={gfState.selectedGoogleFont}
+          width={320}
+          height={350}
+          localePangram={t('pangram')}
+        />
+        <button
+          type="button"
+          onClick={onSaveFromGoogle}
+          disabled={!gfState.selectedGoogleFont || !gfState.selectedVariant || gfState.savingFromGoogle}
+          className="inline-flex items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {gfState.savingFromGoogle ? t('saving') : t('downloadAndSave')}
+        </button>
+      </div>
+      {gfState.selectedGoogleFont && selectedFontData && selectedFontData.variants.length > 0 && (
+        <div className="mt-2">
+          <label className="block text-xs font-medium mb-1 text-muted-foreground">
+            {t('variants')}
+          </label>
+          <select
+            className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+            value={gfState.selectedVariant}
+            onChange={(e) => onVariantChange(e.target.value)}
+          >
+            {(() => {
+              const { normal, italic } = groupVariants(selectedFontData.variants)
+              return (
+                <>
+                  {normal.length > 0 && (
+                    <optgroup label="Normal">
+                      {normal.map((v) => (
+                        <option key={v.key} value={v.key}>{v.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {italic.length > 0 && (
+                    <optgroup label="Italic">
+                      {italic.map((v) => (
+                        <option key={v.key} value={v.key}>{v.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </>
+              )
+            })()}
+          </select>
+        </div>
+      )}
+      {gfState.selectedGoogleFont && (
+        <div className="mt-2">
+          <span
+            className="block text-lg leading-relaxed"
+            style={{
+              fontFamily: gfState.selectedVariant && gfState.selectedVariant !== 'regular'
+                ? `"${gfState.selectedGoogleFont}-preview", ${gfState.selectedGoogleFont}`
+                : gfState.selectedGoogleFont,
+            }}
+          >
+            {t('pangram')}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function UploadedFontTable({
+  fontGroups,
+  ufState,
+  downloading,
+  deleting,
+  onVariantClick,
+  onDownloadGroup,
+  onDeleteGroup,
+  t,
+}: {
+  fontGroups: FontFamilyGroup[]
+  ufState: UploadedFontsState
+  downloading: string | null
+  deleting: string | null
+  onVariantClick: (family: string, key: string) => void
+  onDownloadGroup: (family: string) => void
+  onDeleteGroup: (family: string) => void
+  t: (key: string) => string
+}) {
+  return fontGroups.length === 0 ? (
+    <p className="text-muted-foreground">{t('noFonts')}</p>
+  ) : (
+    <div className="rounded-xl border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b bg-muted/50">
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+              {t('name')}
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+              {t('variants')}
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+              {t('size')}
+            </th>
+            <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+              {t('actions')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {fontGroups.map((group) => {
+            const { normal, italic } = groupVariants(group.variants.map((v) => v.variant))
+            const activeVariantKey = ufState.previewVariants[group.family]
+            const activeEntry = activeVariantKey ? group.variants.find((v) => v.key === activeVariantKey) : null
+            const previewKey = activeEntry?.key ?? group.variants.find((v) => v.variant === 'regular')?.key ?? group.variants[0]?.key
+            const anyIncompatible = group.variants.some((v) => ufState.incompatibleKeys.has(v.key))
+            return (
+              <tr key={group.family} className="border-b last:border-0">
+                <td className="px-4 py-3 font-medium">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="flex items-center gap-2">
+                      {group.family}
+                      {anyIncompatible && (
+                        <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-inset ring-amber-200">
+                          {t('fontIncompatibleWarning')}
+                        </span>
+                      )}
+                    </span>
+                    {previewKey && <FontPreview fontKey={previewKey} />}
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {normal.map((v) => {
+                      const entry = group.variants.find((e) => e.variant === v.key)
+                      const isActive = entry?.key === previewKey
+                      return (
+                        <button
+                          type="button"
+                          key={v.key}
+                          onClick={() => {
+                            if (entry) onVariantClick(group.family, entry.key)
+                          }}
+                          className={`inline-flex cursor-pointer items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors ${
+                            isActive
+                              ? 'bg-bright-sky text-white ring-bright-sky'
+                              : entry && ufState.incompatibleKeys.has(entry.key)
+                                ? 'bg-amber-50 text-amber-600 ring-amber-200 hover:bg-amber-100'
+                                : 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {v.label}
+                        </button>
+                      )
+                    })}
+                    {normal.length > 0 && italic.length > 0 && (
+                      <div className="w-px h-5 bg-border mx-0.5" />
+                    )}
+                    {italic.map((v) => {
+                      const entry = group.variants.find((e) => e.variant === v.key)
+                      const isActive = entry?.key === previewKey
+                      return (
+                        <button
+                          type="button"
+                          key={v.key}
+                          onClick={() => {
+                            if (entry) onVariantClick(group.family, entry.key)
+                          }}
+                          className={`inline-flex cursor-pointer items-center rounded-md px-2 py-0.5 text-xs font-medium italic ring-1 ring-inset transition-colors ${
+                            isActive
+                              ? 'bg-bright-sky text-white ring-bright-sky'
+                              : entry && ufState.incompatibleKeys.has(entry.key)
+                                ? 'bg-amber-50 text-amber-600 ring-amber-200 hover:bg-amber-100'
+                                : 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {v.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">{formatSize(group.totalSize)}</td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onDownloadGroup(group.family)}
+                      disabled={downloading === group.family}
+                      className="rounded-lg border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
+                    >
+                      {downloading === group.family ? t('downloading') : t('downloadAll')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteGroup(group.family)}
+                      disabled={deleting === group.family}
+                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {deleting === group.family ? t('deleting') : t('deleteAll')}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export function FontList() {
   const t = useTranslations('adminFonts')
   const [ufState, dispatchUf] = useReducer(uploadedFontsReducer, initialUploadedFontsState)
@@ -240,9 +471,8 @@ export function FontList() {
       await loadUploadedFonts(dispatchUf, dispatchUi)
     } catch (err) {
       dispatchUi({ type: 'SET_ERROR', error: err instanceof Error ? err.message : t('uploadFailed') })
-    } finally {
-      dispatchUi({ type: 'STOP_UPLOADING' })
     }
+    dispatchUi({ type: 'STOP_UPLOADING' })
   }
 
   const fontGroups = groupUploadedFonts(ufState.fonts)
@@ -289,24 +519,21 @@ export function FontList() {
         console.warn(`[DownloadGroup] ${failed.length} variant(s) failed to fetch`)
       }
 
-      if (group.variants.length === failed.length) {
-        throw new Error('Failed to fetch any variants')
+      if (group.variants.length !== failed.length) {
+        const zipBlob = await zip.generateAsync({ type: 'blob' })
+        const url = URL.createObjectURL(zipBlob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${family}.zip`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
       }
-
-      const zipBlob = await zip.generateAsync({ type: 'blob' })
-      const url = URL.createObjectURL(zipBlob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${family}.zip`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
     } catch (err) {
       console.error('[DownloadGroup] error:', err)
-    } finally {
-      dispatchUi({ type: 'STOP_DOWNLOADING' })
     }
+    dispatchUi({ type: 'STOP_DOWNLOADING' })
   }
 
   const selectedFontData = !gfState.selectedGoogleFont
@@ -356,17 +583,20 @@ export function FontList() {
     dispatchUi({ type: 'CLEAR_ERROR' })
     dispatchUi({ type: 'CLEAR_SUCCESS' })
 
+    const res = await fetch(`/api/fonts?family=${encodeURIComponent(gfState.selectedGoogleFont)}&variant=${variant}`)
+    if (!res.ok) {
+      dispatchUi({ type: 'SET_ERROR', error: t('downloadFailed') })
+      dispatchGf({ type: 'SAVE_ERROR' })
+      return
+    }
+    const blob = await res.blob()
+
+    const variantSuffix = variant !== 'regular' ? `-${variant}` : ''
+    const fileName = `${gfState.selectedGoogleFont}${variantSuffix}.ttf`
+    const file = new File([blob], fileName, { type: 'font/ttf' })
+
     try {
-      const res = await fetch(`/api/fonts?family=${encodeURIComponent(gfState.selectedGoogleFont)}&variant=${variant}`)
-      if (!res.ok) throw new Error(t('downloadFailed'))
-      const blob = await res.blob()
-
-      const variantSuffix = variant !== 'regular' ? `-${variant}` : ''
-      const fileName = `${gfState.selectedGoogleFont}${variantSuffix}.ttf`
-      const file = new File([blob], fileName, { type: 'font/ttf' })
-
       await uploadFiles('fontFileUpload', { files: [file] })
-
       await loadUploadedFonts(dispatchUf, dispatchUi)
       dispatchGf({ type: 'SAVE_SUCCESS' })
       dispatchUi({ type: 'SET_SUCCESS', message: t('googleFontSaved') })
@@ -382,75 +612,14 @@ export function FontList() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-xl border p-5 space-y-4">
-        <h2 className="text-lg font-semibold">{t('browseGoogleFonts')}</h2>
-        <p className="text-sm text-muted-foreground">{t('selectGoogleFont')}</p>
-        <div className="flex flex-wrap items-end gap-4">
-          <FontPicker
-            onChange={handleFontPickerChange}
-            value={gfState.selectedGoogleFont}
-            width={320}
-            height={350}
-            localePangram={t('pangram')}
-          />
-          <button
-            type="button"
-            onClick={handleSaveFromGoogle}
-            disabled={!gfState.selectedGoogleFont || !gfState.selectedVariant || gfState.savingFromGoogle}
-            className="inline-flex items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
-          >
-            {gfState.savingFromGoogle ? t('saving') : t('downloadAndSave')}
-          </button>
-        </div>
-        {gfState.selectedGoogleFont && selectedFontData && selectedFontData.variants.length > 0 && (
-          <div className="mt-2">
-            <label className="block text-xs font-medium mb-1 text-muted-foreground">
-              {t('variants')}
-            </label>
-            <select
-              className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-              value={gfState.selectedVariant}
-              onChange={(e) => dispatchGf({ type: 'SET_SELECTED_VARIANT', variant: e.target.value })}
-            >
-              {(() => {
-                const { normal, italic } = groupVariants(selectedFontData.variants)
-                return (
-                  <>
-                    {normal.length > 0 && (
-                      <optgroup label="Normal">
-                        {normal.map((v) => (
-                          <option key={v.key} value={v.key}>{v.label}</option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {italic.length > 0 && (
-                      <optgroup label="Italic">
-                        {italic.map((v) => (
-                          <option key={v.key} value={v.key}>{v.label}</option>
-                        ))}
-                      </optgroup>
-                    )}
-                  </>
-                )
-              })()}
-            </select>
-          </div>
-        )}
-        {gfState.selectedGoogleFont && (
-          <div className="mt-2">
-            <span
-              className="block text-lg leading-relaxed"
-              style={{
-                fontFamily: gfState.selectedVariant && gfState.selectedVariant !== 'regular'
-                  ? `"${gfState.selectedGoogleFont}-preview", ${gfState.selectedGoogleFont}`
-                  : gfState.selectedGoogleFont,
-              }}
-            >
-              {t('pangram')}
-            </span>
-          </div>
-        )}
-      </div>
+      <GoogleFontsSection
+        gfState={gfState}
+        selectedFontData={selectedFontData}
+        onFontPickerChange={handleFontPickerChange}
+        onSaveFromGoogle={handleSaveFromGoogle}
+        onVariantChange={(variant) => dispatchGf({ type: 'SET_SELECTED_VARIANT', variant })}
+        t={t}
+      />
 
       <div className="flex items-center gap-4">
         <div className="relative">
@@ -483,128 +652,16 @@ export function FontList() {
         </div>
       )}
 
-      {fontGroups.length === 0 ? (
-        <p className="text-muted-foreground">{t('noFonts')}</p>
-      ) : (
-        <div className="rounded-xl border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('name')}
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('variants')}
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('size')}
-                </th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                  {t('actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {fontGroups.map((group) => {
-                const { normal, italic } = groupVariants(group.variants.map((v) => v.variant))
-                const activeVariantKey = ufState.previewVariants[group.family]
-                const activeEntry = activeVariantKey ? group.variants.find((v) => v.key === activeVariantKey) : null
-                const previewKey = activeEntry?.key ?? group.variants.find((v) => v.variant === 'regular')?.key ?? group.variants[0]?.key
-                const anyIncompatible = group.variants.some((v) => ufState.incompatibleKeys.has(v.key))
-                return (
-                  <tr key={group.family} className="border-b last:border-0">
-                    <td className="px-4 py-3 font-medium">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="flex items-center gap-2">
-                          {group.family}
-                          {anyIncompatible && (
-                            <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-inset ring-amber-200">
-                              {t('fontIncompatibleWarning')}
-                            </span>
-                          )}
-                        </span>
-                        {previewKey && <FontPreview fontKey={previewKey} />}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {normal.map((v) => {
-                          const entry = group.variants.find((e) => e.variant === v.key)
-                          const isActive = entry?.key === previewKey
-                          return (
-                            <button
-                              type="button"
-                              key={v.key}
-                              onClick={() => {
-                                if (entry) dispatchUf({ type: 'SET_PREVIEW_VARIANT', family: group.family, key: entry.key })
-                              }}
-                              className={`inline-flex cursor-pointer items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors ${
-                                isActive
-                                  ? 'bg-bright-sky text-white ring-bright-sky'
-                                  : entry && ufState.incompatibleKeys.has(entry.key)
-                                    ? 'bg-amber-50 text-amber-600 ring-amber-200 hover:bg-amber-100'
-                                    : 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
-                              }`}
-                            >
-                              {v.label}
-                            </button>
-                          )
-                        })}
-                        {normal.length > 0 && italic.length > 0 && (
-                          <div className="w-px h-5 bg-border mx-0.5" />
-                        )}
-                        {italic.map((v) => {
-                          const entry = group.variants.find((e) => e.variant === v.key)
-                          const isActive = entry?.key === previewKey
-                          return (
-                            <button
-                              type="button"
-                              key={v.key}
-                              onClick={() => {
-                                if (entry) dispatchUf({ type: 'SET_PREVIEW_VARIANT', family: group.family, key: entry.key })
-                              }}
-                              className={`inline-flex cursor-pointer items-center rounded-md px-2 py-0.5 text-xs font-medium italic ring-1 ring-inset transition-colors ${
-                                isActive
-                                  ? 'bg-bright-sky text-white ring-bright-sky'
-                                  : entry && ufState.incompatibleKeys.has(entry.key)
-                                    ? 'bg-amber-50 text-amber-600 ring-amber-200 hover:bg-amber-100'
-                                    : 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
-                              }`}
-                            >
-                              {v.label}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatSize(group.totalSize)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadGroup(group.family)}
-                          disabled={ui.downloading === group.family}
-                          className="rounded-lg border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
-                        >
-                          {ui.downloading === group.family ? t('downloading') : t('downloadAll')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGroup(group.family)}
-                          disabled={ui.deleting === group.family}
-                          className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
-                        >
-                          {ui.deleting === group.family ? t('deleting') : t('deleteAll')}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <UploadedFontTable
+        fontGroups={fontGroups}
+        ufState={ufState}
+        downloading={ui.downloading}
+        deleting={ui.deleting}
+        onVariantClick={(family, key) => dispatchUf({ type: 'SET_PREVIEW_VARIANT', family, key })}
+        onDownloadGroup={handleDownloadGroup}
+        onDeleteGroup={handleDeleteGroup}
+        t={t}
+      />
     </div>
   )
 }

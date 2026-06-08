@@ -10,6 +10,16 @@ interface ZoomUserInfo {
   type?: number
 }
 
+async function exchangeZoomCode(authorizationCode: string, redirectUri: string) {
+  const res = await fetch('/api/zoom/connect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ authorizationCode, redirectUri }),
+  })
+  const result = await res.json()
+  return { ok: res.ok, result }
+}
+
 interface ZoomConnectProps {
   initialZoomUserInfo: ZoomUserInfo | null
   onConnected?: (info: ZoomUserInfo) => void
@@ -33,34 +43,32 @@ export function ZoomConnect({ initialZoomUserInfo, onConnected, onDisconnected }
   useEffect(() => { onDisconnectedRef.current = onDisconnected })
 
   useEffect(() => {
+    let cancelled = false
     const handler = (event: MessageEvent) => {
       if (event.data?.type === 'zoom-auth' && event.data?.code) {
         const redirectUri = `${window.location.origin}/zoom/callback`
         setLoading(true)
         setError(null)
-        fetch('/api/zoom/connect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ authorizationCode: event.data.code, redirectUri }),
-        }).then(async (res) => {
-          const result = await res.json()
-          if (res.ok) {
-            setConnected(true)
-            const info = result.zoomUserInfo ?? null
-            setUserInfo(info)
-            if (info && onConnectedRef.current) onConnectedRef.current(info)
-          } else {
-            setError(result.error ?? 'Failed to connect Zoom')
-          }
-        }).catch(() => {
-          setError('Failed to connect Zoom')
-        }).finally(() => {
-          setLoading(false)
-        })
+        exchangeZoomCode(event.data.code, redirectUri)
+          .then(async ({ ok, result }) => {
+            if (cancelled) return
+            if (ok) {
+              setConnected(true)
+              const info = result.zoomUserInfo ?? null
+              setUserInfo(info)
+              if (info && onConnectedRef.current) onConnectedRef.current(info)
+            } else {
+              setError(result.error ?? 'Failed to connect Zoom')
+            }
+          }).catch(() => {
+            if (!cancelled) setError('Failed to connect Zoom')
+          }).finally(() => {
+            if (!cancelled) setLoading(false)
+          })
       }
     }
     window.addEventListener('message', handler)
-    return () => window.removeEventListener('message', handler)
+    return () => { cancelled = true; window.removeEventListener('message', handler) }
   }, [])
 
   const handleConnect = () => {
