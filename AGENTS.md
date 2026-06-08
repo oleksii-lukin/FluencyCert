@@ -19,10 +19,11 @@ This generates a properly timestamped file in `supabase/migrations/`. Then write
 <!-- BEGIN:verification-rules -->
 # Verification
 
-After completing a task, run both:
+After completing a task, run all three:
 
 ```sh
 pnpm run lint
 pnpm run typecheck
+pnpm run doctor
 ```
 <!-- END:verification-rules -->
