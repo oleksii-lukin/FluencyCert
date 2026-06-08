@@ -4,12 +4,6 @@ import { useTranslations } from 'next-intl'
 import type { CertificateTemplateProps } from "../template"
 import "./memphis-retro.css"
 
-export const MemphisRetroTemplate = {
-  id: "memphis-retro",
-  name: "memphisRetro",
-  component: MemphisRetroCertificate,
-}
-
 export function MemphisRetroCertificate({
   fullName,
   englishLevel,

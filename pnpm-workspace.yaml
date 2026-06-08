@@ -18,6 +18,4 @@ onlyBuiltDependencies:
   - '@clerk/shared'
   - msgpackr-extract
 
-pnpm:
-  minimumReleaseAge: 10080
-  trustPolicy: no-downgrade
+minimumReleaseAge: 1440

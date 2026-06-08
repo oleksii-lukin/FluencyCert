@@ -1,13 +1,15 @@
 "use client"
 
+async function deleteClub(clubSlug: string) {
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const supabase = createAdminClient()
+  await supabase.from('speaking_clubs').delete().eq('slug', clubSlug)
+}
+
 export function DeleteClubButton({ clubSlug, label }: { clubSlug: string; label: string }) {
   return (
     <form
-      action={async () => {
-        const { createAdminClient } = await import('@/lib/supabase/admin')
-        const supabase = createAdminClient()
-        await supabase.from('speaking_clubs').delete().eq('slug', clubSlug)
-      }}
+      action={async () => deleteClub(clubSlug)}
     >
       <button
         type="submit"

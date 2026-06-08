@@ -81,27 +81,43 @@ export async function POST(
 
   const existingNames = new Set(existingFields?.map((f) => f.pdf_field_name) ?? [])
 
-  const newFieldsData = detectedFields
-    .filter((f) => !existingNames.has(f.pdf_field_name))
-    .map((detected, index) => {
-      const mapping = inferFieldMapping(detected.pdf_field_name)
-      return {
-        template_id: id,
-        pdf_field_name: detected.pdf_field_name,
-        source_type: mapping.source_type,
-        source_key: mapping.source_key,
-        display_label: detected.pdf_field_name,
-        is_enabled: true,
-        font_family: 'Inter',
-        font_size: 12,
-        font_source: 'google',
-        font_variant: 'regular',
-        uploaded_font_key: null,
-        custom_default_value: null,
-        custom_overridable: mapping.source_type === 'custom',
-        sort_order: (existingFields?.length ?? 0) + index,
-      }
+  const newFieldsData: {
+    template_id: string
+    pdf_field_name: string
+    source_type: string
+    source_key: string | null
+    display_label: string
+    is_enabled: boolean
+    font_family: string
+    font_size: number
+    font_source: string
+    font_variant: string
+    uploaded_font_key: null
+    custom_default_value: null
+    custom_overridable: boolean
+    sort_order: number
+  }[] = []
+  for (let i = 0; i < detectedFields.length; i++) {
+    const detected = detectedFields[i]
+    if (existingNames.has(detected.pdf_field_name)) continue
+    const mapping = inferFieldMapping(detected.pdf_field_name)
+    newFieldsData.push({
+      template_id: id,
+      pdf_field_name: detected.pdf_field_name,
+      source_type: mapping.source_type,
+      source_key: mapping.source_key,
+      display_label: detected.pdf_field_name,
+      is_enabled: true,
+      font_family: 'Inter',
+      font_size: 12,
+      font_source: 'google',
+      font_variant: 'regular',
+      uploaded_font_key: null,
+      custom_default_value: null,
+      custom_overridable: mapping.source_type === 'custom',
+      sort_order: (existingFields?.length ?? 0) + i,
     })
+  }
 
   if (newFieldsData.length > 0) {
     const { error: insertError } = await supabase

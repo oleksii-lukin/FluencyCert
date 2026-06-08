@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link, redirect } from '@/i18n/routing'
 import { auth } from '@clerk/nextjs/server'
@@ -8,6 +9,11 @@ import { TemplateSelector } from '@/components/certificate/template-selector'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft02Icon, Share01Icon, Certificate02Icon, LayoutGridIcon } from '@hugeicons/core-free-icons'
 import { PublicPageLayout } from "@/components/layout/public-page-layout"
+
+export const metadata: Metadata = {
+  title: 'Certificate Control Panel | FluencyCert',
+  description: 'Manage your certificate template, feedback, and sharing options',
+}
 
 export default async function CertificateControlPage({ params }: { params: Promise<{ lang: string }> }) {
   const [{ lang }, { userId }, t] = await Promise.all([params, auth(), getTranslations('certificateControl')])

@@ -4,12 +4,6 @@ import { useTranslations } from 'next-intl'
 import type { CertificateTemplateProps } from "../template"
 import "./neubrutal.css"
 
-export const NeubrutalTemplate = {
-  id: "neubrutal",
-  name: "neubrutal",
-  component: NeubrutalCertificate,
-}
-
 export function NeubrutalCertificate({
   fullName,
   englishLevel,

@@ -155,6 +155,33 @@ export interface ZoomMeetingsResponse {
   meetings: ZoomMeeting[]
 }
 
+async function paginateZoom<T>(
+  userId: string,
+  buildPath: (params: URLSearchParams) => string,
+  extract: (data: any) => { items: T[]; nextToken: string },
+): Promise<T[]> {
+  const items: T[] = []
+  let nextPageToken = ''
+
+  do {
+    const params = new URLSearchParams({ page_size: '300' })
+    if (nextPageToken) params.set('next_page_token', nextPageToken)
+
+    const res = await zoomFetch(userId, buildPath(params))
+    if (!res.ok) {
+      const body = await res.text()
+      throw new Error(`Zoom API error ${res.status}: ${body}`)
+    }
+
+    const data = await res.json()
+    const result = extract(data)
+    items.push(...result.items)
+    nextPageToken = result.nextToken
+  } while (nextPageToken)
+
+  return items
+}
+
 export function createZoomClient(userId: string) {
   return {
     async getUser(): Promise<{ id: string; email: string; display_name: string; type: number }> {
@@ -212,50 +239,20 @@ export function createZoomClient(userId: string) {
     },
 
     async listAllScheduledMeetings(): Promise<ZoomMeeting[]> {
-      const meetings: ZoomMeeting[] = []
-      let nextPageToken = ''
-
-      do {
-        const params = new URLSearchParams({
-          page_size: '300',
-        })
-        if (nextPageToken) params.set('next_page_token', nextPageToken)
-
-        const res = await zoomFetch(userId, `/users/me/meetings?${params.toString()}`)
-        if (!res.ok) {
-          const body = await res.text()
-          throw new Error(`Zoom API error ${res.status}: ${body}`)
-        }
-
-        const data: ZoomMeetingsResponse = await res.json()
-        meetings.push(...data.meetings)
-        nextPageToken = data.next_page_token
-      } while (nextPageToken)
-
-      return meetings
+      return paginateZoom<ZoomMeeting>(
+        userId,
+        (params) => `/users/me/meetings?${params.toString()}`,
+        (data: ZoomMeetingsResponse) => ({ items: data.meetings, nextToken: data.next_page_token }),
+      )
     },
 
     async getAllPastMeetingParticipants(meetingUuid: string): Promise<ZoomParticipant[]> {
-      const participants: ZoomParticipant[] = []
-      let nextPageToken = ''
-
-      do {
-        const params = new URLSearchParams({ page_size: '300' })
-        if (nextPageToken) params.set('next_page_token', nextPageToken)
-
-        const encodedUuid = encodeURIComponent(meetingUuid)
-        const res = await zoomFetch(userId, `/past_meetings/${encodedUuid}/participants?${params.toString()}`)
-        if (!res.ok) {
-          const body = await res.text()
-          throw new Error(`Zoom API error ${res.status}: ${body}`)
-        }
-
-        const data: ZoomParticipantsResponse = await res.json()
-        participants.push(...data.participants)
-        nextPageToken = data.next_page_token
-      } while (nextPageToken)
-
-      return participants
+      const encodedUuid = encodeURIComponent(meetingUuid)
+      return paginateZoom<ZoomParticipant>(
+        userId,
+        (params) => `/past_meetings/${encodedUuid}/participants?${params.toString()}`,
+        (data: ZoomParticipantsResponse) => ({ items: data.participants, nextToken: data.next_page_token }),
+      )
     },
   }
 }

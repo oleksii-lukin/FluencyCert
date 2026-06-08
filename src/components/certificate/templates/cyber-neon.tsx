@@ -4,12 +4,6 @@ import { useTranslations } from 'next-intl'
 import type { CertificateTemplateProps } from "../template"
 import "./cyber-neon.css"
 
-export const CyberNeonTemplate = {
-  id: "cyber-neon",
-  name: "cyberNeon",
-  component: CyberNeonCertificate,
-}
-
 export function CyberNeonCertificate({
   fullName,
   englishLevel,

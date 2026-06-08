@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useReducer } from 'react'
 import { useTranslations } from 'next-intl'
 import { uploadFiles } from '@/lib/uploadthing'
 import { testFontCompatibility } from '@/lib/font-compat'
@@ -21,104 +21,238 @@ interface UploadedFont {
   status: string
 }
 
+interface UploadedFontsState {
+  fonts: UploadedFont[]
+  incompatibleKeys: Set<string>
+  previewVariants: Record<string, string>
+}
+
+interface GoogleFontsState {
+  googleFonts: GoogleFont[]
+  selectedGoogleFont: string
+  selectedVariant: string
+  savingFromGoogle: boolean
+}
+
+interface UiState {
+  loading: boolean
+  uploading: boolean
+  error: string
+  deleting: string | null
+  downloading: string | null
+  successMessage: string
+}
+
+type UploadedFontsAction =
+  | { type: 'SET_FONTS'; fonts: UploadedFont[] }
+  | { type: 'SET_INCOMPATIBLE_KEYS'; keys: Set<string> }
+  | { type: 'SET_PREVIEW_VARIANT'; family: string; key: string }
+  | { type: 'REMOVE_FONTS'; keys: string[] }
+
+type GoogleFontsAction =
+  | { type: 'SET_GOOGLE_FONTS'; googleFonts: GoogleFont[] }
+  | { type: 'SET_SELECTED_FONT'; family: string }
+  | { type: 'SET_SELECTED_VARIANT'; variant: string }
+  | { type: 'START_SAVING' }
+  | { type: 'SAVE_SUCCESS' }
+  | { type: 'SAVE_ERROR' }
+
+type UiAction =
+  | { type: 'SET_LOADING'; loading: boolean }
+  | { type: 'START_UPLOADING' }
+  | { type: 'STOP_UPLOADING' }
+  | { type: 'SET_ERROR'; error: string }
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'START_DELETING'; family: string }
+  | { type: 'STOP_DELETING' }
+  | { type: 'START_DOWNLOADING'; family: string }
+  | { type: 'STOP_DOWNLOADING' }
+  | { type: 'SET_SUCCESS'; message: string }
+  | { type: 'CLEAR_SUCCESS' }
+
+async function loadUploadedFonts(dispatchUf: React.Dispatch<UploadedFontsAction>, dispatchUi: React.Dispatch<UiAction>) {
+  try {
+    const res = await fetch('/api/admin/fonts/uploaded')
+    if (!res.ok) throw new Error('Failed to fetch fonts')
+    const data = await res.json()
+    const fonts: UploadedFont[] = data.fonts ?? []
+    dispatchUf({ type: 'SET_FONTS', fonts })
+    return fonts
+  } catch (err) {
+    dispatchUi({ type: 'SET_ERROR', error: err instanceof Error ? err.message : 'Failed to load fonts' })
+    return []
+  } finally {
+    dispatchUi({ type: 'SET_LOADING', loading: false })
+  }
+}
+
+async function loadGoogleFonts(dispatchGf: React.Dispatch<GoogleFontsAction>) {
+  try {
+    const fonts = await fetchGoogleFonts()
+    dispatchGf({ type: 'SET_GOOGLE_FONTS', googleFonts: fonts })
+  } catch {}
+}
+
+async function checkFontsCompatibility(fonts: UploadedFont[], dispatchUf: React.Dispatch<UploadedFontsAction>) {
+  if (fonts.length === 0) return
+  const newIncKeys = new Set<string>()
+  await Promise.all(
+    fonts.map(async (font) => {
+      try {
+        const res = await fetch(`/api/fonts/uploaded?key=${font.key}`)
+        if (!res.ok) {
+          console.warn('[FontCheck] fetch failed for font', font.key, res.status)
+          return
+        }
+        const buf = await res.arrayBuffer()
+        const compatible = await testFontCompatibility(new Uint8Array(buf), `uploaded:${font.key}`)
+        if (!compatible) newIncKeys.add(font.key)
+      } catch (err) {
+        console.warn('[FontCheck] error checking font', font.key, err)
+      }
+    }),
+  )
+  dispatchUf({ type: 'SET_INCOMPATIBLE_KEYS', keys: newIncKeys })
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const initialUploadedFontsState: UploadedFontsState = {
+  fonts: [],
+  incompatibleKeys: new Set(),
+  previewVariants: {},
+}
+
+const initialGoogleFontsState: GoogleFontsState = {
+  googleFonts: [],
+  selectedGoogleFont: '',
+  selectedVariant: '',
+  savingFromGoogle: false,
+}
+
+const initialUiState: UiState = {
+  loading: true,
+  uploading: false,
+  error: '',
+  deleting: null,
+  downloading: null,
+  successMessage: '',
+}
+
+function uploadedFontsReducer(state: UploadedFontsState, action: UploadedFontsAction): UploadedFontsState {
+  switch (action.type) {
+    case 'SET_FONTS':
+      return { ...state, fonts: action.fonts }
+    case 'SET_INCOMPATIBLE_KEYS':
+      return { ...state, incompatibleKeys: action.keys }
+    case 'SET_PREVIEW_VARIANT':
+      return { ...state, previewVariants: { ...state.previewVariants, [action.family]: action.key } }
+    case 'REMOVE_FONTS':
+      return { ...state, fonts: state.fonts.filter((f) => !action.keys.includes(f.key)) }
+    default:
+      return state
+  }
+}
+
+function googleFontsReducer(state: GoogleFontsState, action: GoogleFontsAction): GoogleFontsState {
+  switch (action.type) {
+    case 'SET_GOOGLE_FONTS':
+      return { ...state, googleFonts: action.googleFonts }
+    case 'SET_SELECTED_FONT':
+      return { ...state, selectedGoogleFont: action.family, selectedVariant: action.family ? 'regular' : '' }
+    case 'SET_SELECTED_VARIANT':
+      return { ...state, selectedVariant: action.variant }
+    case 'START_SAVING':
+      return { ...state, savingFromGoogle: true }
+    case 'SAVE_SUCCESS':
+      return { ...state, savingFromGoogle: false, selectedGoogleFont: '', selectedVariant: '' }
+    case 'SAVE_ERROR':
+      return { ...state, savingFromGoogle: false }
+    default:
+      return state
+  }
+}
+
+function uiReducer(state: UiState, action: UiAction): UiState {
+  switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, loading: action.loading }
+    case 'START_UPLOADING':
+      return { ...state, uploading: true, error: '' }
+    case 'STOP_UPLOADING':
+      return { ...state, uploading: false }
+    case 'SET_ERROR':
+      return { ...state, error: action.error }
+    case 'CLEAR_ERROR':
+      return { ...state, error: '' }
+    case 'START_DELETING':
+      return { ...state, deleting: action.family }
+    case 'STOP_DELETING':
+      return { ...state, deleting: null }
+    case 'START_DOWNLOADING':
+      return { ...state, downloading: action.family }
+    case 'STOP_DOWNLOADING':
+      return { ...state, downloading: null }
+    case 'SET_SUCCESS':
+      return { ...state, successMessage: action.message }
+    case 'CLEAR_SUCCESS':
+      return { ...state, successMessage: '' }
+    default:
+      return state
+  }
+}
+
 export function FontList() {
   const t = useTranslations('adminFonts')
-  const [fonts, setFonts] = useState<UploadedFont[]>([])
-  const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState('')
-  const [deleting, setDeleting] = useState<string | null>(null)
-  const [downloading, setDownloading] = useState<string | null>(null)
-  const [incompatibleKeys, setIncompatibleKeys] = useState<Set<string>>(new Set())
-  const [selectedGoogleFont, setSelectedGoogleFont] = useState<string>('')
-  const [selectedVariant, setSelectedVariant] = useState<string>('')
-  const [savingFromGoogle, setSavingFromGoogle] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
-  const [googleFonts, setGoogleFonts] = useState<GoogleFont[]>([])
-  const [previewVariants, setPreviewVariants] = useState<Record<string, string>>({})
+  const [ufState, dispatchUf] = useReducer(uploadedFontsReducer, initialUploadedFontsState)
+  const [gfState, dispatchGf] = useReducer(googleFontsReducer, initialGoogleFontsState)
+  const [ui, dispatchUi] = useReducer(uiReducer, initialUiState)
 
   useEffect(() => {
-    fetchFonts()
-    fetchGoogleFonts().then(setGoogleFonts).catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (fonts.length === 0) return
-    let cancelled = false
-    const newIncKeys = new Set<string>()
-
-    Promise.all(
-      fonts.map(async (font) => {
-        try {
-          const res = await fetch(`/api/fonts/uploaded?key=${font.key}`)
-          if (!res.ok) {
-            console.warn('[FontCheck] fetch failed for font', font.key, res.status)
-            return
-          }
-          const buf = await res.arrayBuffer()
-          const compatible = await testFontCompatibility(new Uint8Array(buf), `uploaded:${font.key}`)
-          if (!compatible) {
-            newIncKeys.add(font.key)
-          }
-        } catch (err) {
-          console.warn('[FontCheck] error checking font', font.key, err)
-        }
-      }),
-    ).then(() => {
-      if (!cancelled) setIncompatibleKeys(newIncKeys)
+    loadUploadedFonts(dispatchUf, dispatchUi).then((fonts) => {
+      checkFontsCompatibility(fonts, dispatchUf)
     })
-
-    return () => { cancelled = true }
-  }, [fonts])
-
-  async function fetchFonts() {
-    try {
-      const res = await fetch('/api/admin/fonts/uploaded')
-      if (!res.ok) throw new Error('Failed to fetch fonts')
-      const data = await res.json()
-      setFonts(data.fonts ?? [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load fonts')
-    } finally {
-      setLoading(false)
-    }
-  }
+    loadGoogleFonts(dispatchGf)
+  }, [])
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
     if (!file.name.endsWith('.ttf')) {
-      setError(t('ttfOnly'))
+      dispatchUi({ type: 'SET_ERROR', error: t('ttfOnly') })
       return
     }
 
     if (file.size > 4 * 1024 * 1024) {
-      setError(t('maxSize'))
+      dispatchUi({ type: 'SET_ERROR', error: t('maxSize') })
       return
     }
 
-    setUploading(true)
-    setError('')
+    dispatchUi({ type: 'START_UPLOADING' })
 
     try {
       await uploadFiles('fontFileUpload', { files: [file] })
-      await fetchFonts()
+      await loadUploadedFonts(dispatchUf, dispatchUi)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('uploadFailed'))
+      dispatchUi({ type: 'SET_ERROR', error: err instanceof Error ? err.message : t('uploadFailed') })
     } finally {
-      setUploading(false)
+      dispatchUi({ type: 'STOP_UPLOADING' })
     }
   }
 
-  const fontGroups = useMemo(() => groupUploadedFonts(fonts), [fonts])
+  const fontGroups = groupUploadedFonts(ufState.fonts)
 
   async function handleDeleteGroup(family: string) {
     const group = fontGroups.find((g) => g.family === family)
     if (!group) return
     if (!confirm(t('deleteAllConfirm', { family }))) return
 
-    setDeleting(family)
+    dispatchUi({ type: 'START_DELETING', family })
 
     await Promise.allSettled(
       group.variants.map((variant) =>
@@ -128,15 +262,15 @@ export function FontList() {
       )
     )
 
-    setFonts((prev) => prev.filter((f) => !group.variants.some((v) => v.key === f.key)))
-    setDeleting(null)
+    dispatchUf({ type: 'REMOVE_FONTS', keys: group.variants.map((v) => v.key) })
+    dispatchUi({ type: 'STOP_DELETING' })
   }
 
   async function handleDownloadGroup(family: string) {
     const group = fontGroups.find((g) => g.family === family)
     if (!group) return
 
-    setDownloading(family)
+    dispatchUi({ type: 'START_DOWNLOADING', family })
 
     try {
       const zip = new JSZip()
@@ -171,36 +305,34 @@ export function FontList() {
     } catch (err) {
       console.error('[DownloadGroup] error:', err)
     } finally {
-      setDownloading(null)
+      dispatchUi({ type: 'STOP_DOWNLOADING' })
     }
   }
 
-  const selectedFontData = useMemo(() => {
-    if (!selectedGoogleFont) return null
-    return googleFonts.find((f) => f.family === selectedGoogleFont) ?? null
-  }, [selectedGoogleFont, googleFonts])
+  const selectedFontData = !gfState.selectedGoogleFont
+    ? null
+    : gfState.googleFonts.find((f) => f.family === gfState.selectedGoogleFont) ?? null
 
   function handleFontPickerChange(family: string) {
-    setSelectedGoogleFont(family)
-    setSelectedVariant(family ? 'regular' : '')
+    dispatchGf({ type: 'SET_SELECTED_FONT', family })
     if (family) {
       loadFont(family).catch(() => {})
     }
   }
 
   useEffect(() => {
-    if (!selectedGoogleFont || !selectedVariant || !selectedFontData?.files) return
+    if (!gfState.selectedGoogleFont || !gfState.selectedVariant || !selectedFontData?.files) return
 
-    const fileUrl = selectedFontData.files[selectedVariant]
+    const fileUrl = selectedFontData.files[gfState.selectedVariant]
     if (!fileUrl) return
 
     const prevId = 'gfont-variant-preview'
     const prev = document.getElementById(prevId)
     if (prev) prev.remove()
 
-    const numericWeight = selectedVariant === 'regular' ? '400' : selectedVariant === 'italic' ? '400' : selectedVariant.replace('italic', '')
-    const fontStyle = selectedVariant === 'italic' || selectedVariant.endsWith('italic') ? 'italic' : 'normal'
-    const fontFamilyKey = `${selectedGoogleFont}-preview`
+    const numericWeight = gfState.selectedVariant === 'regular' ? '400' : gfState.selectedVariant === 'italic' ? '400' : gfState.selectedVariant.replace('italic', '')
+    const fontStyle = gfState.selectedVariant === 'italic' || gfState.selectedVariant.endsWith('italic') ? 'italic' : 'normal'
+    const fontFamilyKey = `${gfState.selectedGoogleFont}-preview`
 
     const style = document.createElement('style')
     style.id = prevId
@@ -213,46 +345,38 @@ export function FontList() {
       }
     `
     document.head.appendChild(style)
-  }, [selectedGoogleFont, selectedVariant, selectedFontData])
+  }, [gfState.selectedGoogleFont, gfState.selectedVariant, selectedFontData])
 
   async function handleSaveFromGoogle() {
-    if (!selectedGoogleFont) return
+    if (!gfState.selectedGoogleFont) return
 
-    const variant = selectedVariant || 'regular'
+    const variant = gfState.selectedVariant || 'regular'
 
-    setSavingFromGoogle(true)
-    setError('')
-    setSuccessMessage('')
+    dispatchGf({ type: 'START_SAVING' })
+    dispatchUi({ type: 'CLEAR_ERROR' })
+    dispatchUi({ type: 'CLEAR_SUCCESS' })
 
     try {
-      const res = await fetch(`/api/fonts?family=${encodeURIComponent(selectedGoogleFont)}&variant=${variant}`)
+      const res = await fetch(`/api/fonts?family=${encodeURIComponent(gfState.selectedGoogleFont)}&variant=${variant}`)
       if (!res.ok) throw new Error(t('downloadFailed'))
       const blob = await res.blob()
 
       const variantSuffix = variant !== 'regular' ? `-${variant}` : ''
-      const fileName = `${selectedGoogleFont}${variantSuffix}.ttf`
+      const fileName = `${gfState.selectedGoogleFont}${variantSuffix}.ttf`
       const file = new File([blob], fileName, { type: 'font/ttf' })
 
       await uploadFiles('fontFileUpload', { files: [file] })
 
-      await fetchFonts()
-      setSelectedGoogleFont('')
-      setSelectedVariant('')
-      setSuccessMessage(t('googleFontSaved'))
+      await loadUploadedFonts(dispatchUf, dispatchUi)
+      dispatchGf({ type: 'SAVE_SUCCESS' })
+      dispatchUi({ type: 'SET_SUCCESS', message: t('googleFontSaved') })
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('downloadFailed'))
-    } finally {
-      setSavingFromGoogle(false)
+      dispatchUi({ type: 'SET_ERROR', error: err instanceof Error ? err.message : t('downloadFailed') })
+      dispatchGf({ type: 'SAVE_ERROR' })
     }
   }
 
-  function formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
-
-  if (loading) {
+  if (ui.loading) {
     return <div className="text-muted-foreground">{t('loading')}</div>
   }
 
@@ -264,7 +388,7 @@ export function FontList() {
         <div className="flex flex-wrap items-end gap-4">
           <FontPicker
             onChange={handleFontPickerChange}
-            value={selectedGoogleFont}
+            value={gfState.selectedGoogleFont}
             width={320}
             height={350}
             localePangram={t('pangram')}
@@ -272,21 +396,21 @@ export function FontList() {
           <button
             type="button"
             onClick={handleSaveFromGoogle}
-            disabled={!selectedGoogleFont || !selectedVariant || savingFromGoogle}
+            disabled={!gfState.selectedGoogleFont || !gfState.selectedVariant || gfState.savingFromGoogle}
             className="inline-flex items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
           >
-            {savingFromGoogle ? t('saving') : t('downloadAndSave')}
+            {gfState.savingFromGoogle ? t('saving') : t('downloadAndSave')}
           </button>
         </div>
-        {selectedGoogleFont && selectedFontData && selectedFontData.variants.length > 0 && (
+        {gfState.selectedGoogleFont && selectedFontData && selectedFontData.variants.length > 0 && (
           <div className="mt-2">
             <label className="block text-xs font-medium mb-1 text-muted-foreground">
               {t('variants')}
             </label>
             <select
               className="w-full rounded-lg border bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-              value={selectedVariant}
-              onChange={(e) => setSelectedVariant(e.target.value)}
+              value={gfState.selectedVariant}
+              onChange={(e) => dispatchGf({ type: 'SET_SELECTED_VARIANT', variant: e.target.value })}
             >
               {(() => {
                 const { normal, italic } = groupVariants(selectedFontData.variants)
@@ -312,14 +436,14 @@ export function FontList() {
             </select>
           </div>
         )}
-        {selectedGoogleFont && (
+        {gfState.selectedGoogleFont && (
           <div className="mt-2">
             <span
               className="block text-lg leading-relaxed"
               style={{
-                fontFamily: selectedVariant && selectedVariant !== 'regular'
-                  ? `"${selectedGoogleFont}-preview", ${selectedGoogleFont}`
-                  : selectedGoogleFont,
+                fontFamily: gfState.selectedVariant && gfState.selectedVariant !== 'regular'
+                  ? `"${gfState.selectedGoogleFont}-preview", ${gfState.selectedGoogleFont}`
+                  : gfState.selectedGoogleFont,
               }}
             >
               {t('pangram')}
@@ -331,13 +455,13 @@ export function FontList() {
       <div className="flex items-center gap-4">
         <div className="relative">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-bright-sky px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50">
-            {uploading ? t('uploading') : t('uploadFont')}
+            {ui.uploading ? t('uploading') : t('uploadFont')}
             <input
               type="file"
               accept=".ttf"
               className="hidden"
               onChange={handleUpload}
-              disabled={uploading}
+              disabled={ui.uploading}
             />
           </label>
         </div>
@@ -347,15 +471,15 @@ export function FontList() {
         <span>{t('uploadNamingHint')}</span>
       </div>
 
-      {successMessage && (
+      {ui.successMessage && (
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600">
-          {successMessage}
+          {ui.successMessage}
         </div>
       )}
 
-      {error && (
+      {ui.error && (
         <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-600">
-          {error}
+          {ui.error}
         </div>
       )}
 
@@ -383,10 +507,10 @@ export function FontList() {
             <tbody>
               {fontGroups.map((group) => {
                 const { normal, italic } = groupVariants(group.variants.map((v) => v.variant))
-                const activeVariantKey = previewVariants[group.family]
+                const activeVariantKey = ufState.previewVariants[group.family]
                 const activeEntry = activeVariantKey ? group.variants.find((v) => v.key === activeVariantKey) : null
                 const previewKey = activeEntry?.key ?? group.variants.find((v) => v.variant === 'regular')?.key ?? group.variants[0]?.key
-                const anyIncompatible = group.variants.some((v) => incompatibleKeys.has(v.key))
+                const anyIncompatible = group.variants.some((v) => ufState.incompatibleKeys.has(v.key))
                 return (
                   <tr key={group.family} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">
@@ -412,12 +536,12 @@ export function FontList() {
                               type="button"
                               key={v.key}
                               onClick={() => {
-                                if (entry) setPreviewVariants((prev) => ({ ...prev, [group.family]: entry.key }))
+                                if (entry) dispatchUf({ type: 'SET_PREVIEW_VARIANT', family: group.family, key: entry.key })
                               }}
                               className={`inline-flex cursor-pointer items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors ${
                                 isActive
                                   ? 'bg-bright-sky text-white ring-bright-sky'
-                                  : entry && incompatibleKeys.has(entry.key)
+                                  : entry && ufState.incompatibleKeys.has(entry.key)
                                     ? 'bg-amber-50 text-amber-600 ring-amber-200 hover:bg-amber-100'
                                     : 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
                               }`}
@@ -437,12 +561,12 @@ export function FontList() {
                               type="button"
                               key={v.key}
                               onClick={() => {
-                                if (entry) setPreviewVariants((prev) => ({ ...prev, [group.family]: entry.key }))
+                                if (entry) dispatchUf({ type: 'SET_PREVIEW_VARIANT', family: group.family, key: entry.key })
                               }}
                               className={`inline-flex cursor-pointer items-center rounded-md px-2 py-0.5 text-xs font-medium italic ring-1 ring-inset transition-colors ${
                                 isActive
                                   ? 'bg-bright-sky text-white ring-bright-sky'
-                                  : entry && incompatibleKeys.has(entry.key)
+                                  : entry && ufState.incompatibleKeys.has(entry.key)
                                     ? 'bg-amber-50 text-amber-600 ring-amber-200 hover:bg-amber-100'
                                     : 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
                               }`}
@@ -459,18 +583,18 @@ export function FontList() {
                         <button
                           type="button"
                           onClick={() => handleDownloadGroup(group.family)}
-                          disabled={downloading === group.family}
+                          disabled={ui.downloading === group.family}
                           className="rounded-lg border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
                         >
-                          {downloading === group.family ? t('downloading') : t('downloadAll')}
+                          {ui.downloading === group.family ? t('downloading') : t('downloadAll')}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteGroup(group.family)}
-                          disabled={deleting === group.family}
+                          disabled={ui.deleting === group.family}
                           className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
                         >
-                          {deleting === group.family ? t('deleting') : t('deleteAll')}
+                          {ui.deleting === group.family ? t('deleting') : t('deleteAll')}
                         </button>
                       </div>
                     </td>

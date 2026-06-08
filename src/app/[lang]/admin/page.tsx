@@ -25,21 +25,11 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       }
     }
 
-    const { data: clubs } = await supabase
-      .from('speaking_clubs')
-      .select('id, name, slug')
-      .in('id', adminClubIds)
-
-    const { count: clubCount } = await supabase
-      .from('speaking_clubs')
-      .select('*', { count: 'exact', head: true })
-      .in('id', adminClubIds)
-
-    const { count: pendingClaims } = await supabase
-      .from('certificate_claims')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending')
-      .in('club_id', adminClubIds)
+    const [{ data: clubs }, { count: clubCount }, { count: pendingClaims }] = await Promise.all([
+      supabase.from('speaking_clubs').select('id, name, slug').in('id', adminClubIds),
+      supabase.from('speaking_clubs').select('*', { count: 'exact', head: true }).in('id', adminClubIds),
+      supabase.from('certificate_claims').select('*', { count: 'exact', head: true }).eq('status', 'pending').in('club_id', adminClubIds),
+    ])
 
     return (
       <div>

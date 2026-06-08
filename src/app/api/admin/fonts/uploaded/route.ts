@@ -37,16 +37,25 @@ export async function GET(request: Request) {
   const utapi = new UTApi()
   const result = await utapi.listFiles()
 
-  const ttfFonts = result.files
-    .filter((f) => f.name.endsWith('.ttf') || f.name.endsWith('.woff') || f.name.endsWith('.woff2'))
-    .map((f) => ({
-      key: f.key,
-      name: f.name,
-      size: f.size,
-      uploadedAt: f.uploadedAt,
-      status: f.status,
-    }))
-    .sort((a, b) => b.uploadedAt - a.uploadedAt)
+  const ttfFonts: {
+    key: string
+    name: string
+    size: number
+    uploadedAt: number
+    status: string
+  }[] = []
+  for (const f of result.files) {
+    if (f.name.endsWith('.ttf') || f.name.endsWith('.woff') || f.name.endsWith('.woff2')) {
+      ttfFonts.push({
+        key: f.key,
+        name: f.name,
+        size: f.size,
+        uploadedAt: f.uploadedAt,
+        status: f.status,
+      })
+    }
+  }
+  ttfFonts.sort((a, b) => b.uploadedAt - a.uploadedAt)
 
   return NextResponse.json({ fonts: ttfFonts })
 }

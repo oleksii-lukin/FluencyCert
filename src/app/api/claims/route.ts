@@ -103,22 +103,16 @@ export async function POST(request: Request) {
     }
   }
 
-  let claim
-  let error
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const slug = generateSlug()
-    const insertData = { user_id: userId, status: 'pending' as const, slug, ...(clubId ? { club_id: clubId } : {}) }
-    const result = await supabase
-      .from('certificate_claims')
-      .insert(insertData)
-      .select()
-      .maybeSingle()
-    claim = result.data
-    error = result.error
-    if (!error) break
-    if (error.code === '23505') continue
-    break
-  }
+  const slugs = Array.from({ length: 5 }, () => generateSlug())
+  const results = await Promise.all(
+    slugs.map((slug) => {
+      const insertData = { user_id: userId, status: 'pending' as const, slug, ...(clubId ? { club_id: clubId } : {}) }
+      return supabase.from('certificate_claims').insert(insertData).select().maybeSingle()
+    })
+  )
+  const success = results.find((r) => !r.error)
+  const claim = success?.data ?? null
+  const error = success ? null : results[results.length - 1].error
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link, redirect } from '@/i18n/routing'
 import { auth } from '@clerk/nextjs/server'
@@ -9,6 +10,11 @@ import { TelegramConnect } from "@/components/telegram/telegram-connect"
 import { LinkedInConnect } from "@/components/linkedin/linkedin-connect"
 
 const FLAG_LINKEDIN_CONNECT = process.env.FLAG_LINKEDIN_CONNECT === 'true'
+
+export const metadata: Metadata = {
+  title: 'Profile | FluencyCert',
+  description: 'Manage your profile and view your certificates',
+}
 
 export default async function ProfilePage({ params }: { params: Promise<{ lang: string }> }) {
   const [{ lang }, { userId }, t] = await Promise.all([params, auth(), getTranslations('profile')])

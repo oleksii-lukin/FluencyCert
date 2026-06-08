@@ -118,6 +118,11 @@ export const DATABASE_FIELD_MAP: DatabaseFieldDefinition[] = [
 
 export const QR_CODE_ALIASES = ['qrcode', 'qr']
 
+const ALIAS_TO_KEY = new Map(
+  DATABASE_FIELD_MAP.flatMap(fd => fd.aliases.map(alias => [alias, fd.key]))
+)
+const SORTED_ALIASES = Array.from(ALIAS_TO_KEY.keys()).toSorted((a, b) => b.length - a.length)
+
 export function inferFieldMapping(
   pdfFieldName: string,
 ): { source_type: SourceType; source_key: string | null } {
@@ -129,27 +134,15 @@ export function inferFieldMapping(
     }
   }
 
-  for (const fieldDef of DATABASE_FIELD_MAP) {
-    for (const alias of fieldDef.aliases) {
-      if (normalized === alias) {
-        return { source_type: 'database', source_key: fieldDef.key }
-      }
+  for (const alias of SORTED_ALIASES) {
+    if (normalized === alias) {
+      return { source_type: 'database', source_key: ALIAS_TO_KEY.get(alias)! }
     }
-  }
-
-  for (const fieldDef of DATABASE_FIELD_MAP) {
-    for (const alias of fieldDef.aliases) {
-      if (normalized.startsWith(alias) || normalized.endsWith(alias)) {
-        return { source_type: 'database', source_key: fieldDef.key }
-      }
+    if (normalized.startsWith(alias) || normalized.endsWith(alias)) {
+      return { source_type: 'database', source_key: ALIAS_TO_KEY.get(alias)! }
     }
-  }
-
-  for (const fieldDef of DATABASE_FIELD_MAP) {
-    for (const alias of fieldDef.aliases) {
-      if (normalized.includes(alias)) {
-        return { source_type: 'database', source_key: fieldDef.key }
-      }
+    if (normalized.includes(alias)) {
+      return { source_type: 'database', source_key: ALIAS_TO_KEY.get(alias)! }
     }
   }
 

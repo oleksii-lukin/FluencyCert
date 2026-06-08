@@ -242,8 +242,9 @@ export default async function CertificatePage({ params }: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(certJsonLd) }}
-      />
+      >
+        {JSON.stringify(certJsonLd)}
+      </script>
       <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <div className="mx-auto max-w-6xl px-4 py-6">
         <Link

@@ -24,7 +24,7 @@ export function TemplateSelector({ currentTemplateId, claimId }: TemplateSelecto
   const t = useTranslations('templateDescriptions')
   const tn = useTranslations('templateNames')
   const ct = useTranslations('certificateControl')
-  const [selected, setSelected] = useState(currentTemplateId)
+  const selected = currentTemplateId
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState("")
@@ -51,7 +51,6 @@ export function TemplateSelector({ currentTemplateId, claimId }: TemplateSelecto
       return
     }
 
-    setSelected(templateId)
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)

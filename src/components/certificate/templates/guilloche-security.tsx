@@ -4,12 +4,6 @@ import { useTranslations } from 'next-intl'
 import type { CertificateTemplateProps } from "../template"
 import "../guilloche-pattern.css"
 
-export const GuillocheSecurityTemplate = {
-  id: "guilloche-security",
-  name: "guillocheSecurity",
-  component: GuillocheSecurityCertificate,
-}
-
 export function GuillocheSecurityCertificate({
   fullName,
   englishLevel,

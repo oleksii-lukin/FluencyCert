@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslations } from 'next-intl'
 import { Link } from "@/i18n/routing"
 import { useUser } from "@clerk/nextjs"
@@ -10,6 +10,31 @@ import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowRight02Icon, Clock01Icon } from "@hugeicons/core-free-icons"
 import posthog from "posthog-js"
+
+async function fetchExistingClaim() {
+  const res = await fetch("/api/claims")
+  const data = await res.json()
+  return data.claim ?? null
+}
+
+async function submitClaimRequest() {
+  const res = await fetch("/api/claims", { method: "POST" })
+  const data = await res.json()
+  return { ok: res.ok, claim: data.claim }
+}
+
+async function claimCertificate() {
+  try {
+    const result = await submitClaimRequest()
+    if (result.ok) {
+      return { success: true as const, claim: result.claim }
+    }
+    return { success: false as const }
+  } catch (err) {
+    posthog.captureException(err)
+    return { success: false as const }
+  }
+}
 
 type ClaimButtonProps = {
   label: string
@@ -25,27 +50,18 @@ export function ClaimCertificateButton({ label, icon, className }: ClaimButtonPr
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return
-    fetch("/api/claims")
-      .then((res) => res.json())
-      .then((data) => data.claim ? setClaim(data.claim) : setClaim(null))
-      .catch(() => setClaim(null))
+    fetchExistingClaim().then(setClaim).catch(() => setClaim(null))
   }, [isLoaded, isSignedIn])
 
-  const handleClaim = useCallback(async () => {
+  const handleClaim = async () => {
     setLoading(true)
-    try {
-      const res = await fetch("/api/claims", { method: "POST" })
-      const data = await res.json()
-      if (res.ok) {
-        setClaim(data.claim)
-        posthog.capture('certificate_claim_submitted', { source: 'landing_page' })
-      }
-    } catch (err) {
-      posthog.captureException(err)
-    } finally {
-      setLoading(false)
+    const result = await claimCertificate()
+    if (result.success) {
+      setClaim(result.claim)
+      posthog.capture('certificate_claim_submitted', { source: 'landing_page' })
     }
-  }, [])
+    setLoading(false)
+  }
 
   if (!isLoaded) {
     return (

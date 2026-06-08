@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 
 const PREDEFINED_COLORS = [
   { label: 'Black', value: '#000000' },
@@ -36,14 +36,6 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isPredefined = PREDEFINED_COLORS.some((c) => c.value.toLowerCase() === value.toLowerCase())
 
-  useEffect(() => {
-    if (value === '#000000') {
-      setCustomInput('')
-    } else if (customInput !== value) {
-      setCustomInput(value)
-    }
-  }, [value])
-
   function handleCustomInputChange(raw: string) {
     setCustomInput(raw)
     const normalized = normalizeHex(raw)
@@ -74,7 +66,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
             onClick={() => {
               onChange(color.value)
               setShowCustom(false)
-              setCustomInput('')
+              setCustomInput(color.value === '#000000' ? '' : color.value)
             }}
             className={`size-8 rounded-full border-2 transition-all ${
               value.toLowerCase() === color.value.toLowerCase()
@@ -116,7 +108,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                 value={value}
                 onChange={(e) => {
                   onChange(e.target.value)
-                  setCustomInput(e.target.value)
+                  setCustomInput(e.target.value === '#000000' ? '' : e.target.value)
                 }}
                 className="absolute inset-0 size-full cursor-pointer opacity-0"
               />

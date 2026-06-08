@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link, redirect } from '@/i18n/routing'
 import { auth } from '@clerk/nextjs/server'
@@ -5,6 +6,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Certificate02Icon, Clock01Icon, CheckmarkCircle02Icon, Cancel01Icon, Settings02Icon, Share01Icon, ClubIcon } from "@hugeicons/core-free-icons"
 import { PublicPageLayout } from "@/components/layout/public-page-layout"
+
+export const metadata: Metadata = {
+  title: 'My Certificate | FluencyCert',
+  description: 'View your speaking club certificate status',
+}
 
 export default async function MyCertificatePage({ params }: { params: Promise<{ lang: string }> }) {
   const [{ lang }, { userId }, t] = await Promise.all([params, auth(), getTranslations('myCertificate')])

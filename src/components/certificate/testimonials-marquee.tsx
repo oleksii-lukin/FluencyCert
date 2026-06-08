@@ -102,7 +102,7 @@ function MarqueeRow({ items, speed, t }: { items: FeedbackWithReviewer[]; speed:
       setOverflows(track!.scrollWidth > el!.clientWidth)
     }
 
-    check()
+    queueMicrotask(check)
     const ro = new ResizeObserver(check)
     ro.observe(el)
     ro.observe(track)
@@ -161,7 +161,7 @@ export function TestimonialsMarquee({ feedbacks }: TestimonialsMarqueeProps) {
       </p>
       <div className="flex flex-col gap-3">
         {rows.map((row, i) => (
-          <MarqueeRow key={i} items={row} speed={speeds[i % speeds.length]} t={t} />
+          <MarqueeRow key={row[0]?.id ?? i} items={row} speed={speeds[i % speeds.length]} t={t} />
         ))}
       </div>
     </div>

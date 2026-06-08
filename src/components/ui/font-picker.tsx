@@ -27,6 +27,32 @@ import { Check, ChevronsUpDown, Filter } from "lucide-react";
 import * as React from "react";
 import { List, type RowComponentProps } from "react-window";
 
+const RowComponent = ({
+  index,
+  style,
+  fonts,
+  selectedFont,
+  onSelectFont,
+  localePangram,
+}: RowComponentProps<{
+  fonts: GoogleFont[];
+  selectedFont: GoogleFont | null;
+  onSelectFont: (font: GoogleFont) => void;
+  localePangram?: string;
+}>) => {
+  const font = fonts[index];
+  return (
+    <div style={style}>
+      <FontListItem
+        font={font}
+        isSelected={selectedFont?.family === font.family}
+        onSelect={() => onSelectFont(font)}
+        localePangram={localePangram}
+      />
+    </div>
+  );
+};
+
 function FontListItem({
   font,
   isSelected,
@@ -38,16 +64,7 @@ function FontListItem({
   onSelect: () => void;
   localePangram?: string;
 }) {
-  const [isFontLoaded, setIsFontLoaded] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isFontLoaded) {
-      loadFont(font.family, font)
-        .then(() => setIsFontLoaded(true))
-        .catch(() => {});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFontLoaded, font.family]);
+  const isFontLoaded = isSelected;
 
   return (
     <CommandItem
@@ -117,6 +134,15 @@ interface FontPickerProps {
   localePangram?: string;
 }
 
+async function fetchFonts() {
+  try {
+    const fonts = await fetchGoogleFonts()
+    return { success: true as const, fonts }
+  } catch (err) {
+    return { success: false as const, error: err instanceof Error ? err : new Error("Failed to load fonts") }
+  }
+}
+
 export function FontPicker({
   onChange,
   value,
@@ -138,85 +164,52 @@ export function FontPicker({
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
-    const loadFonts = async () => {
-      try {
-        setIsLoading(true);
-        const fetchedFonts = await fetchGoogleFonts();
-        setFonts(fetchedFonts);
-        const font = fetchedFonts.find((font) => font.family === value);
+    let cancelled = false;
+
+    fetchFonts().then((result) => {
+      if (cancelled) return;
+      if (result.success) {
+        setFonts(result.fonts);
+        const font = result.fonts.find((f: GoogleFont) => f.family === value);
         if (font) {
           setSelectedFont(font);
           loadFont(font.family, font).catch(() => {});
         }
         setError(null);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to load fonts"),
-        );
-        console.error("Error loading fonts:", err);
-      } finally {
-        setIsLoading(false);
+      } else {
+        setError(result.error);
       }
-    };
+      setIsLoading(false);
+    });
 
-    loadFonts();
+    return () => { cancelled = true };
   }, [value]);
 
-  const categories = React.useMemo(() => {
+  const categories = (() => {
     const uniqueCategories = new Set(fonts.map((font) => font.category));
     return Array.from(uniqueCategories).sort();
-  }, [fonts]);
+  })();
 
-  const filteredFonts = React.useMemo(() => {
-    return fonts.filter((font: GoogleFont) => {
-      const matchesSearch = font.family
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const matchesCategory =
-        !showFilters ||
-        selectedCategory === "all" ||
-        font.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [fonts, search, selectedCategory, showFilters]);
+  const filteredFonts = fonts.filter((font: GoogleFont) => {
+    const matchesSearch = font.family
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesCategory =
+      !showFilters ||
+      selectedCategory === "all" ||
+      font.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
-  const handleSelectFont = React.useCallback(
-    (font: GoogleFont) => {
-      setSelectedFont(font);
-      onChange?.(font.family);
-      setIsOpen(false);
-    },
-    [onChange],
-  );
+  const handleSelectFont = (font: GoogleFont) => {
+    setSelectedFont(font);
+    loadFont(font.family, font).catch(() => {});
+    onChange?.(font.family);
+    setIsOpen(false);
+  };
 
-  const handleOpenChange = React.useCallback((open: boolean) => {
+  const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-  }, []);
-
-  const RowComponent = ({
-    index,
-    style,
-    fonts,
-    selectedFont,
-    onSelectFont,
-    localePangram,
-  }: RowComponentProps<{
-    fonts: GoogleFont[];
-    selectedFont: GoogleFont | null;
-    onSelectFont: (font: GoogleFont) => void;
-    localePangram?: string;
-  }>) => {
-    const font = fonts[index];
-    return (
-      <div style={style}>
-        <FontListItem
-          font={font}
-          isSelected={selectedFont?.family === font.family}
-          onSelect={() => onSelectFont(font)}
-          localePangram={localePangram}
-        />
-      </div>
-    );
   };
 
   return (
@@ -228,6 +221,7 @@ export function FontPicker({
           role="combobox"
           aria-expanded={isOpen}
           aria-haspopup="listbox"
+          aria-controls="font-picker-listbox"
           aria-label="Select font"
           className={cn("group relative justify-between", className)}
           style={{ width }}
@@ -243,7 +237,7 @@ export function FontPicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0" style={{ width, height }} align="start">
-        <Command>
+        <Command id="font-picker-listbox">
           <CommandInput
             placeholder="Search fonts..."
             value={search}

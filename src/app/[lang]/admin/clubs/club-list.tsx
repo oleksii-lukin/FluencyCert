@@ -1,10 +1,79 @@
 "use client"
 
-import { useState } from "react"
+import { useReducer } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Link } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
+
+interface FormState {
+  name: string
+  slug: string
+  description: string
+}
+
+interface UiState {
+  showCreate: boolean
+  creating: boolean
+  createError: string
+}
+
+type FormAction =
+  | { type: "SET_NAME"; value: string }
+  | { type: "SET_SLUG"; value: string }
+  | { type: "SET_DESCRIPTION"; value: string }
+  | { type: "RESET" }
+
+type UiAction =
+  | { type: "SHOW_CREATE" }
+  | { type: "HIDE_CREATE" }
+  | { type: "START_CREATING" }
+  | { type: "CREATE_ERROR"; error: string }
+  | { type: "CREATE_SUCCESS" }
+
+const initialFormState: FormState = {
+  name: "",
+  slug: "",
+  description: "",
+}
+
+const initialUiState: UiState = {
+  showCreate: false,
+  creating: false,
+  createError: "",
+}
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case "SET_NAME":
+      return { ...state, name: action.value }
+    case "SET_SLUG":
+      return { ...state, slug: action.value }
+    case "SET_DESCRIPTION":
+      return { ...state, description: action.value }
+    case "RESET":
+      return initialFormState
+    default:
+      return state
+  }
+}
+
+function uiReducer(state: UiState, action: UiAction): UiState {
+  switch (action.type) {
+    case "SHOW_CREATE":
+      return { ...state, showCreate: true }
+    case "HIDE_CREATE":
+      return { ...state, showCreate: false }
+    case "START_CREATING":
+      return { ...state, creating: true, createError: "" }
+    case "CREATE_ERROR":
+      return { ...state, creating: false, createError: action.error }
+    case "CREATE_SUCCESS":
+      return { ...state, showCreate: false, creating: false }
+    default:
+      return state
+  }
+}
 
 export function ClubList({
   clubs,
@@ -22,48 +91,40 @@ export function ClubList({
   const t = useTranslations("admin")
   const ca = useTranslations("clubs")
   const router = useRouter()
-  const [showCreate, setShowCreate] = useState(false)
-  const [name, setName] = useState("")
-  const [slug, setSlug] = useState("")
-  const [description, setDescription] = useState("")
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState("")
+  const [form, dispatchForm] = useReducer(formReducer, initialFormState)
+  const [ui, dispatchUi] = useReducer(uiReducer, initialUiState)
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim() || !slug.trim()) return
+    if (!form.name.trim() || !form.slug.trim()) return
 
-    setCreating(true)
-    setCreateError("")
+    dispatchUi({ type: "START_CREATING" })
 
     const res = await fetch("/api/clubs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), slug: slug.trim(), description: description.trim() || null }),
+      body: JSON.stringify({ name: form.name.trim(), slug: form.slug.trim(), description: form.description.trim() || null }),
     })
 
     if (!res.ok) {
       const data = await res.json()
-      setCreateError(data.error || "Failed to create club")
-      setCreating(false)
+      dispatchUi({ type: "CREATE_ERROR", error: data.error || "Failed to create club" })
       return
     }
 
-    setShowCreate(false)
-    setName("")
-    setSlug("")
-    setDescription("")
+    dispatchForm({ type: "RESET" })
+    dispatchUi({ type: "CREATE_SUCCESS" })
     router.refresh()
   }
 
   return (
     <div>
-      <Button onClick={() => setShowCreate(true)} className="mb-6 bg-bright-sky text-white">
+      <Button onClick={() => dispatchUi({ type: "SHOW_CREATE" })} className="mb-6 bg-bright-sky text-white">
         {t("createClub")}
       </Button>
 
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
+      {ui.showCreate && (
+        <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => dispatchUi({ type: "HIDE_CREATE" })}>
           <div
             className="w-full max-w-lg rounded-xl border bg-white p-6 shadow-xl dark:bg-graphite"
             onClick={(e) => e.stopPropagation()}
@@ -77,8 +138,8 @@ export function ClubList({
                   required
                   aria-label="Club name"
                   className="w-full rounded-lg border bg-background p-2.5 text-sm"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={form.name}
+                  onChange={(e) => dispatchForm({ type: "SET_NAME", value: e.target.value })}
                 />
               </div>
               <div>
@@ -89,8 +150,8 @@ export function ClubList({
                   aria-label="Club slug"
                   className="w-full rounded-lg border bg-background p-2.5 text-sm font-mono"
                   placeholder="my-speaking-club"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                  value={form.slug}
+                  onChange={(e) => dispatchForm({ type: "SET_SLUG", value: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
                 />
               </div>
               <div>
@@ -99,17 +160,17 @@ export function ClubList({
                   aria-label="Club description"
                   className="w-full rounded-lg border bg-background p-2.5 text-sm"
                   rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  value={form.description}
+                  onChange={(e) => dispatchForm({ type: "SET_DESCRIPTION", value: e.target.value })}
                 />
               </div>
-              {createError && <p className="text-sm text-red-500">{createError}</p>}
+              {ui.createError && <p className="text-sm text-red-500">{ui.createError}</p>}
               <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
+                <Button type="button" variant="outline" onClick={() => dispatchUi({ type: "HIDE_CREATE" })}>
                   {ca("cancel") || "Cancel"}
                 </Button>
-                <Button type="submit" disabled={creating} className="bg-bright-sky text-white">
-                  {creating ? "..." : t("createClub")}
+                <Button type="submit" disabled={ui.creating} className="bg-bright-sky text-white">
+                  {ui.creating ? "..." : t("createClub")}
                 </Button>
               </div>
             </form>

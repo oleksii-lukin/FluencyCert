@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useReducer } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,69 @@ import { Button } from "@/components/ui/button"
 const LOCALES = ["en", "uk"] as const
 
 type Translations = Record<string, { name?: string; description?: string }>
+
+interface FormState {
+  name: string
+  description: string
+  translations: Translations
+}
+
+interface UiState {
+  saving: boolean
+  error: string
+  success: boolean
+  showTranslations: boolean
+}
+
+type FormAction =
+  | { type: "SET_NAME"; value: string }
+  | { type: "SET_DESCRIPTION"; value: string }
+  | { type: "SET_TRANSLATIONS"; value: Translations }
+
+type UiAction =
+  | { type: "START_SAVING" }
+  | { type: "SAVE_ERROR"; error: string }
+  | { type: "SAVE_SUCCESS" }
+  | { type: "TOGGLE_TRANSLATIONS" }
+
+function createFormState(name: string, description: string, translations: Translations): FormState {
+  return { name, description, translations }
+}
+
+const initialUiState: UiState = {
+  saving: false,
+  error: "",
+  success: false,
+  showTranslations: false,
+}
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case "SET_NAME":
+      return { ...state, name: action.value }
+    case "SET_DESCRIPTION":
+      return { ...state, description: action.value }
+    case "SET_TRANSLATIONS":
+      return { ...state, translations: action.value }
+    default:
+      return state
+  }
+}
+
+function uiReducer(state: UiState, action: UiAction): UiState {
+  switch (action.type) {
+    case "START_SAVING":
+      return { ...state, saving: true, error: "", success: false }
+    case "SAVE_ERROR":
+      return { ...state, saving: false, error: action.error }
+    case "SAVE_SUCCESS":
+      return { ...state, saving: false, success: true }
+    case "TOGGLE_TRANSLATIONS":
+      return { ...state, showTranslations: !state.showTranslations }
+    default:
+      return state
+  }
+}
 
 export function ClubSettingsForm({
   club,
@@ -22,47 +85,43 @@ export function ClubSettingsForm({
 }) {
   const t = useTranslations("admin")
   const router = useRouter()
-  const [name, setName] = useState(club.name)
-  const [description, setDescription] = useState(club.description ?? "")
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
-
-  const [showTranslations, setShowTranslations] = useState(false)
-  const [translations, setTranslations] = useState<Translations>(club.translations ?? {})
+  const slug = club.slug
+  const [form, dispatchForm] = useReducer(formReducer, club.name, (name) =>
+    createFormState(name, club.description ?? "", club.translations ?? {})
+  )
+  const [ui, dispatchUi] = useReducer(uiReducer, initialUiState)
 
   function updateTranslation(locale: string, field: "name" | "description", value: string) {
-    setTranslations((prev) => ({
-      ...prev,
-      [locale]: { ...prev[locale], [field]: value || undefined },
-    }))
+    dispatchForm({
+      type: "SET_TRANSLATIONS",
+      value: {
+        ...form.translations,
+        [locale]: { ...form.translations[locale], [field]: value || undefined },
+      },
+    })
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    setSaving(true)
-    setError("")
-    setSuccess(false)
+    dispatchUi({ type: "START_SAVING" })
 
     const res = await fetch(`/api/clubs/${club.slug}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: name.trim(),
-        description: description.trim() || null,
-        translations,
+        name: form.name.trim(),
+        description: form.description.trim() || null,
+        translations: form.translations,
       }),
     })
 
     if (!res.ok) {
       const data = await res.json()
-      setError(data.error || "Failed to save")
-      setSaving(false)
+      dispatchUi({ type: "SAVE_ERROR", error: data.error || "Failed to save" })
       return
     }
 
-    setSuccess(true)
-    setSaving(false)
+    dispatchUi({ type: "SAVE_SUCCESS" })
     router.refresh()
   }
 
@@ -78,8 +137,8 @@ export function ClubSettingsForm({
             required
             aria-label="Club name"
             className="w-full rounded-lg border bg-background p-2.5 text-sm"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={form.name}
+            onChange={(e) => dispatchForm({ type: "SET_NAME", value: e.target.value })}
           />
         </div>
         <div>
@@ -88,7 +147,7 @@ export function ClubSettingsForm({
             type="text"
             aria-label="Club slug"
             className="w-full rounded-lg border bg-background p-2.5 text-sm font-mono text-muted-foreground"
-            value={club.slug}
+            value={slug}
             disabled
           />
           <p className="text-xs text-muted-foreground mt-1">{t("slugCannotChange")}</p>
@@ -99,8 +158,8 @@ export function ClubSettingsForm({
             aria-label="Club description"
             className="w-full rounded-lg border bg-background p-2.5 text-sm"
             rows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={form.description}
+            onChange={(e) => dispatchForm({ type: "SET_DESCRIPTION", value: e.target.value })}
           />
         </div>
 
@@ -109,13 +168,13 @@ export function ClubSettingsForm({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setShowTranslations(!showTranslations)}
+            onClick={() => dispatchUi({ type: "TOGGLE_TRANSLATIONS" })}
           >
             {t("manageTranslations")}
           </Button>
         </div>
 
-        {showTranslations && (
+        {ui.showTranslations && (
           <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
             <p className="text-sm font-medium">{t("translations")}</p>
             {LOCALES.map((locale) => (
@@ -126,7 +185,7 @@ export function ClubSettingsForm({
                   aria-label="Translated club name"
                   className="w-full rounded-lg border bg-background p-2 text-sm"
                   placeholder={t("clubName")}
-                  value={translations[locale]?.name ?? ""}
+                  value={form.translations[locale]?.name ?? ""}
                   onChange={(e) => updateTranslation(locale, "name", e.target.value)}
                 />
                 <textarea
@@ -134,7 +193,7 @@ export function ClubSettingsForm({
                   className="w-full rounded-lg border bg-background p-2 text-sm"
                   rows={2}
                   placeholder={t("clubDescription")}
-                  value={translations[locale]?.description ?? ""}
+                  value={form.translations[locale]?.description ?? ""}
                   onChange={(e) => updateTranslation(locale, "description", e.target.value)}
                 />
               </div>
@@ -142,12 +201,12 @@ export function ClubSettingsForm({
           </div>
         )}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        {success && <p className="text-sm text-green-600">{t("saved")}</p>}
+        {ui.error && <p className="text-sm text-red-500">{ui.error}</p>}
+        {ui.success && <p className="text-sm text-green-600">{t("saved")}</p>}
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={saving} className="bg-bright-sky text-white">
-            {saving ? "..." : t("save")}
+          <Button type="submit" disabled={ui.saving} className="bg-bright-sky text-white">
+            {ui.saving ? "..." : t("save")}
           </Button>
         </div>
       </form>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { useEffect, useRef, useReducer } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { FontPicker } from '@/components/ui/font-picker'
@@ -56,6 +56,58 @@ interface TemplateData {
   file_url: string
   pdf_template_fields: FieldMapping[]
 }
+
+interface LoadingState {
+  loading: boolean
+  saving: boolean
+  uploadingFont: boolean
+  savingFont: boolean
+}
+
+interface FormState {
+  fields: FieldMapping[]
+  selectedFieldIndex: number
+  error: string
+  success: boolean
+  showPdfPreview: boolean
+  showPdfFonts: boolean
+}
+
+interface DataState {
+  template: TemplateData | null
+  uploadedFonts: UploadedFont[]
+  pdfFonts: PdfFontInfo[]
+  googleFonts: GoogleFont[]
+  incompatibleFontKeys: Set<string>
+  incompatibleGoogleFonts: Set<string>
+}
+
+type LoadingAction =
+  | { type: 'SET_LOADING'; value: boolean }
+  | { type: 'START_SAVING' }
+  | { type: 'STOP_SAVING' }
+  | { type: 'SET_UPLOADING_FONT'; value: boolean }
+  | { type: 'SET_SAVING_FONT'; value: boolean }
+
+type FormAction =
+  | { type: 'SET_FIELDS'; fields: FieldMapping[] }
+  | { type: 'UPDATE_FIELD'; index: number; updates: Partial<FieldMapping> }
+  | { type: 'ADD_FIELD' }
+  | { type: 'SET_SELECTED_INDEX'; index: number }
+  | { type: 'SET_ERROR'; error: string }
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'SET_SUCCESS'; value: boolean }
+  | { type: 'TOGGLE_PDF_PREVIEW' }
+  | { type: 'TOGGLE_PDF_FONTS' }
+
+type DataAction =
+  | { type: 'SET_TEMPLATE'; template: TemplateData }
+  | { type: 'SET_UPLOADED_FONTS'; fonts: UploadedFont[] }
+  | { type: 'ADD_UPLOADED_FONT'; font: UploadedFont }
+  | { type: 'SET_PDF_FONTS'; fonts: PdfFontInfo[] }
+  | { type: 'SET_GOOGLE_FONTS'; googleFonts: GoogleFont[] }
+  | { type: 'ADD_INCOMPATIBLE_FONT_KEY'; key: string }
+  | { type: 'ADD_INCOMPATIBLE_GOOGLE_FONT'; family: string }
 
 function getContrastBg(hex: string | null): string {
   if (!hex || hex === '#000000') return ''
@@ -121,34 +173,317 @@ function QrCodeLivePreview({ content, dotsColor, bgColor, dotsType, cornersType,
   )
 }
 
+async function apiSaveFields(templateId: string, fields: FieldMapping[]) {
+  const res = await fetch(`/api/admin/pdf-templates/${templateId}/fields`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fields: fields.map((f, i) => ({ ...f, sort_order: i })),
+    }),
+  })
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.error || 'Failed to save fields')
+  }
+  const { fields: savedFields } = await res.json()
+  return savedFields ?? []
+}
+
+async function apiParsePdfTemplate(templateId: string) {
+  const res = await fetch(`/api/admin/pdf-templates/${templateId}/parse`, { method: 'POST' })
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.error || 'Failed to parse PDF')
+  }
+  return await res.json()
+}
+
+async function apiDeletePdfTemplate(templateId: string) {
+  const res = await fetch(`/api/admin/pdf-templates/${templateId}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Delete failed')
+}
+
+async function loadTemplateData(
+  templateId: string,
+  dispatchData: React.Dispatch<DataAction>,
+  dispatchForm: React.Dispatch<FormAction>,
+  dispatchLoading: React.Dispatch<LoadingAction>
+) {
+  try {
+    const res = await fetch(`/api/admin/pdf-templates/${templateId}`)
+    const data = await res.json()
+    dispatchData({ type: 'SET_TEMPLATE', template: data.template })
+    const fields: FieldMapping[] = (data.template?.pdf_template_fields ?? []).map((f: any) => ({ ...f, multiline: f.multiline ?? false }))
+    dispatchForm({ type: 'SET_FIELDS', fields })
+  } catch {} finally {
+    dispatchLoading({ type: 'SET_LOADING', value: false })
+  }
+}
+
+async function loadEditorFontsData(dispatchData: React.Dispatch<DataAction>) {
+  try {
+    const res = await fetch('/api/admin/fonts/uploaded')
+    const data = await res.json()
+    dispatchData({ type: 'SET_UPLOADED_FONTS', fonts: data.fonts ?? [] })
+  } catch {}
+  try {
+    const fonts = await fetchGoogleFonts()
+    dispatchData({ type: 'SET_GOOGLE_FONTS', googleFonts: fonts })
+  } catch {}
+}
+
+async function checkUploadedFontsCompatibility(fields: FieldMapping[], dispatchData: React.Dispatch<DataAction>) {
+  const uploadedKeys = fields
+    .filter((f) => f.font_source === 'uploaded' && f.uploaded_font_key)
+    .map((f) => f.uploaded_font_key!)
+  if (uploadedKeys.length === 0) return
+  const results = await Promise.all(
+    uploadedKeys.map(async (key) => {
+      try {
+        const res = await fetch(`/api/fonts/uploaded?key=${key}`)
+        if (!res.ok) {
+          console.warn('[FontCheck] fetch failed for uploaded font', key, res.status)
+          return null
+        }
+        const buf = await res.arrayBuffer()
+        const compatible = await testFontCompatibility(new Uint8Array(buf), `uploaded:${key}`)
+        return compatible ? null : key
+      } catch (err) {
+        console.warn('[FontCheck] error checking uploaded font', key, err)
+        return null
+      }
+    }),
+  )
+  const incompatible = results.filter(Boolean) as string[]
+  for (const key of incompatible) {
+    dispatchData({ type: 'ADD_INCOMPATIBLE_FONT_KEY', key })
+  }
+}
+
+async function checkGoogleFontsCompatibility(fields: FieldMapping[], dispatchData: React.Dispatch<DataAction>) {
+  const families = fields
+    .filter((f) => f.font_source === 'google' && f.font_family)
+    .map((f) => f.font_family)
+  if (families.length === 0) return
+  const results = await Promise.all(
+    families.map(async (family) => {
+      try {
+        const res = await fetch(`/api/fonts?family=${encodeURIComponent(family)}`)
+        if (!res.ok) {
+          console.warn('[FontCheck] fetch failed for Google font', family, res.status)
+          return null
+        }
+        const buf = await res.arrayBuffer()
+        const compatible = await testFontCompatibility(new Uint8Array(buf), `google:${family}`)
+        return compatible ? null : family
+      } catch (err) {
+        console.warn('[FontCheck] error checking Google font', family, err)
+        return null
+      }
+    }),
+  )
+  const incompatible = results.filter(Boolean) as string[]
+  for (const family of incompatible) {
+    dispatchData({ type: 'ADD_INCOMPATIBLE_GOOGLE_FONT', family })
+  }
+}
+
+function syncUploadedFontStyles(fields: FieldMapping[]) {
+  const uploadedKeys = fields
+    .filter((f) => f.font_source === 'uploaded' && f.uploaded_font_key)
+    .map((f) => f.uploaded_font_key!)
+  const existing = document.getElementById('uploaded-font-styles')
+  if (existing) existing.remove()
+  if (uploadedKeys.length === 0) return
+  const styleEl = document.createElement('style')
+  styleEl.id = 'uploaded-font-styles'
+  styleEl.textContent = uploadedKeys
+    .map((key) => `@font-face{font-family:UPLOADED_FONT_${key};src:url("/api/fonts/uploaded?key=${key}") format("truetype");}`)
+    .join('')
+  document.head.appendChild(styleEl)
+}
+
+function syncGoogleFontVariant(
+  field: FieldMapping | undefined,
+  googleFonts: GoogleFont[],
+  fontVariantStyleId: React.MutableRefObject<string | null>
+) {
+  const prev = fontVariantStyleId.current
+  if (prev) {
+    const el = document.getElementById(prev)
+    if (el) el.remove()
+    fontVariantStyleId.current = null
+  }
+  if (!field || field.font_source !== 'google' || !field.font_family) return
+  const font = googleFonts.find((f) => f.family === field.font_family)
+  if (!font?.files) return
+  const variant = field.font_variant || 'regular'
+  const fileUrl = font.files[variant]
+  if (!fileUrl) return
+  const numericWeight = variant === 'regular' ? '400' : variant === 'italic' ? '400' : variant.replace('italic', '')
+  const fontStyle = variant === 'italic' || variant.endsWith('italic') ? 'italic' : 'normal'
+  const fontFamilyKey = `${font.family}-${variant}`
+  const id = `gfont-variant-${fontFamilyKey.replace(/[^a-zA-Z0-9-]/g, '')}`
+  const existing = document.getElementById(id)
+  if (existing) existing.remove()
+  const style = document.createElement('style')
+  style.id = id
+  style.textContent = `
+    @font-face {
+      font-family: "${fontFamilyKey}";
+      src: url("${fileUrl}") format("truetype");
+      font-weight: ${numericWeight};
+      font-style: ${fontStyle};
+    }
+  `
+  document.head.appendChild(style)
+  fontVariantStyleId.current = id
+}
+
+async function apiDownloadFont(family: string, variant: string): Promise<{ blob: Blob; fileName: string }> {
+  const res = await fetch(`/api/fonts?family=${encodeURIComponent(family)}&variant=${variant}`)
+  if (!res.ok) throw new Error('Failed to download font')
+  const blob = await res.blob()
+  const variantSuffix = variant !== 'regular' ? `-${variant}` : ''
+  const fileName = `${family}${variantSuffix}.ttf`
+  return { blob, fileName }
+}
+
+const initialLoadingState: LoadingState = {
+  loading: true,
+  saving: false,
+  uploadingFont: false,
+  savingFont: false,
+}
+
+const initialFormState: FormState = {
+  fields: [],
+  selectedFieldIndex: 0,
+  error: '',
+  success: false,
+  showPdfPreview: false,
+  showPdfFonts: false,
+}
+
+const initialDataState: DataState = {
+  template: null,
+  uploadedFonts: [],
+  pdfFonts: [],
+  googleFonts: [],
+  incompatibleFontKeys: new Set(),
+  incompatibleGoogleFonts: new Set(),
+}
+
+function loadingReducer(state: LoadingState, action: LoadingAction): LoadingState {
+  switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, loading: action.value }
+    case 'START_SAVING':
+      return { ...state, saving: true }
+    case 'STOP_SAVING':
+      return { ...state, saving: false }
+    case 'SET_UPLOADING_FONT':
+      return { ...state, uploadingFont: action.value }
+    case 'SET_SAVING_FONT':
+      return { ...state, savingFont: action.value }
+    default:
+      return state
+  }
+}
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case 'SET_FIELDS':
+      return { ...state, fields: action.fields }
+    case 'UPDATE_FIELD':
+      return {
+        ...state,
+        fields: state.fields.map((f, i) => (i === action.index ? { ...f, ...action.updates } : f)),
+      }
+    case 'ADD_FIELD':
+      return {
+        ...state,
+        fields: [
+          ...state.fields,
+          {
+            id: '',
+            pdf_field_name: `custom_${Date.now()}`,
+            source_type: 'custom',
+            source_key: null,
+            display_label: 'New Field',
+            is_enabled: true,
+            font_family: 'Inter',
+            font_size: 12,
+            font_source: 'google',
+            font_variant: 'regular',
+            uploaded_font_key: null,
+            custom_default_value: '',
+            custom_overridable: true,
+            date_format: null,
+            level_format: null,
+            multiline: false,
+            text_color: null,
+            qr_dots_color: '#1a1a2e',
+            qr_bg_color: '#FFFFFF',
+            qr_dots_type: 'rounded',
+            qr_corners_type: 'square',
+            qr_corners_color: '#1a1a2e',
+            sort_order: state.fields.length,
+          },
+        ],
+      }
+    case 'SET_SELECTED_INDEX':
+      return { ...state, selectedFieldIndex: action.index }
+    case 'SET_ERROR':
+      return { ...state, error: action.error }
+    case 'CLEAR_ERROR':
+      return { ...state, error: '' }
+    case 'SET_SUCCESS':
+      return { ...state, success: action.value }
+    case 'TOGGLE_PDF_PREVIEW':
+      return { ...state, showPdfPreview: !state.showPdfPreview }
+    case 'TOGGLE_PDF_FONTS':
+      return { ...state, showPdfFonts: !state.showPdfFonts }
+    default:
+      return state
+  }
+}
+
+function dataReducer(state: DataState, action: DataAction): DataState {
+  switch (action.type) {
+    case 'SET_TEMPLATE':
+      return { ...state, template: action.template }
+    case 'SET_UPLOADED_FONTS':
+      return { ...state, uploadedFonts: action.fonts }
+    case 'ADD_UPLOADED_FONT':
+      return { ...state, uploadedFonts: [...state.uploadedFonts, action.font] }
+    case 'SET_PDF_FONTS':
+      return { ...state, pdfFonts: action.fonts }
+    case 'SET_GOOGLE_FONTS':
+      return { ...state, googleFonts: action.googleFonts }
+    case 'ADD_INCOMPATIBLE_FONT_KEY':
+      return { ...state, incompatibleFontKeys: new Set(state.incompatibleFontKeys).add(action.key) }
+    case 'ADD_INCOMPATIBLE_GOOGLE_FONT':
+      return { ...state, incompatibleGoogleFonts: new Set(state.incompatibleGoogleFonts).add(action.family) }
+    default:
+      return state
+  }
+}
+
 export function TemplateFieldEditor({ templateId, lang }: { templateId: string; lang: string }) {
   const t = useTranslations('adminPdfTemplates')
   const langPicker = useTranslations('adminFonts')
   const locale = useLocale()
   const localePangram = locale !== 'en' ? langPicker('pangram') : undefined
   const router = useRouter()
-  const [template, setTemplate] = useState<TemplateData | null>(null)
-  const [fields, setFields] = useState<FieldMapping[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  const [showPdfPreview, setShowPdfPreview] = useState(false)
-  const [uploadedFonts, setUploadedFonts] = useState<UploadedFont[]>([])
-  const [uploadingFont, setUploadingFont] = useState(false)
-  const [savingFont, setSavingFont] = useState(false)
-  const [pdfFonts, setPdfFonts] = useState<PdfFontInfo[]>([])
-  const [showPdfFonts, setShowPdfFonts] = useState(false)
-  const [incompatibleFontKeys, setIncompatibleFontKeys] = useState<Set<string>>(new Set())
-  const [incompatibleGoogleFonts, setIncompatibleGoogleFonts] = useState<Set<string>>(new Set())
+  const [loadingState, dispatchLoading] = useReducer(loadingReducer, initialLoadingState)
+  const [form, dispatchForm] = useReducer(formReducer, initialFormState)
+  const [data, dispatchData] = useReducer(dataReducer, initialDataState)
   const fontVariantStyleId = useRef<string | null>(null)
 
-  const [googleFonts, setGoogleFonts] = useState<GoogleFont[]>([])
-  const [selectedFieldIndex, setSelectedFieldIndex] = useState(0)
-
-  const sortedFields = useMemo(() => {
+  const sortedFields = (() => {
     const dbOrder = new Map(DATABASE_FIELD_MAP.map((e, i) => [e.key, i]))
-    return fields.toSorted((a, b) => {
+    return form.fields.toSorted((a, b) => {
       const aKey = a.source_key
       const bKey = b.source_key
       const aIsDb = a.source_type === 'database' && aKey != null && dbOrder.has(aKey)
@@ -162,311 +497,113 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       if (a.source_type !== 'qr_code' && b.source_type === 'qr_code') return 1
       return 0
     })
-  }, [fields])
+  })()
 
-  const selectedFont = useMemo(() => {
-    const field = fields[selectedFieldIndex]
+  const selectedFont = (() => {
+    const field = form.fields[form.selectedFieldIndex]
     if (!field || field.font_source !== 'google' || !field.font_family) return null
-    return googleFonts.find((f) => f.family === field.font_family) ?? null
-  }, [fields, selectedFieldIndex, googleFonts])
+    return data.googleFonts.find((f) => f.family === field.font_family) ?? null
+  })()
 
-  const uploadedFontGroups = useMemo(() => groupUploadedFonts(uploadedFonts), [uploadedFonts])
+  const uploadedFontGroups = groupUploadedFonts(data.uploadedFonts)
 
-  const currentUploadedFont = useMemo(() => {
-    const field = fields[selectedFieldIndex]
+  const currentUploadedFont = (() => {
+    const field = form.fields[form.selectedFieldIndex]
     if (field?.font_source !== 'uploaded' || !field.uploaded_font_key) return null
-    return uploadedFonts.find((uf) => uf.key === field.uploaded_font_key) ?? null
-  }, [fields, selectedFieldIndex, uploadedFonts])
+    return data.uploadedFonts.find((uf) => uf.key === field.uploaded_font_key) ?? null
+  })()
 
-  const currentUploadedParsed = useMemo(() => {
-    if (!currentUploadedFont) return null
-    return parseFontFilename(currentUploadedFont.name)
-  }, [currentUploadedFont])
+  const currentUploadedParsed = !currentUploadedFont
+    ? null
+    : parseFontFilename(currentUploadedFont.name)
 
   useEffect(() => {
-    fetch(`/api/admin/pdf-templates/${templateId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setTemplate(data.template)
-        setFields((data.template?.pdf_template_fields ?? []).map((f: any) => ({ ...f, multiline: f.multiline ?? false })))
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
+    loadTemplateData(templateId, dispatchData, dispatchForm, dispatchLoading)
   }, [templateId])
 
   useEffect(() => {
-    fetch('/api/admin/fonts/uploaded')
-      .then((r) => r.json())
-      .then((data) => setUploadedFonts(data.fonts ?? []))
-      .catch(() => {})
-    fetchGoogleFonts()
-      .then(setGoogleFonts)
-      .catch(() => {})
+    loadEditorFontsData(dispatchData)
   }, [])
 
   useEffect(() => {
-    const uploadedKeys = fields
-      .filter((f) => f.font_source === 'uploaded' && f.uploaded_font_key)
-      .map((f) => f.uploaded_font_key!)
-
-    const existing = document.getElementById('uploaded-font-styles')
-    if (existing) existing.remove()
-
-    if (uploadedKeys.length === 0) return
-
-    const styleEl = document.createElement('style')
-    styleEl.id = 'uploaded-font-styles'
-    styleEl.textContent = uploadedKeys
-      .map(
-        (key) =>
-          `@font-face{font-family:UPLOADED_FONT_${key};src:url("/api/fonts/uploaded?key=${key}") format("truetype");}`,
-      )
-      .join('')
-    document.head.appendChild(styleEl)
-
-    return () => {
-      const el = document.getElementById('uploaded-font-styles')
-      if (el) el.remove()
-    }
-  }, [fields])
+    syncUploadedFontStyles(form.fields)
+  }, [form.fields])
 
   useEffect(() => {
-    const uploadedKeys = fields
-      .filter((f) => f.font_source === 'uploaded' && f.uploaded_font_key)
-      .map((f) => f.uploaded_font_key!)
-
-    if (uploadedKeys.length === 0) return
-
-    let cancelled = false
-
-    Promise.all(
-      uploadedKeys.map(async (key) => {
-        try {
-          const res = await fetch(`/api/fonts/uploaded?key=${key}`)
-          if (!res.ok) {
-            console.warn('[FontCheck] fetch failed for uploaded font', key, res.status)
-            return null
-          }
-          const buf = await res.arrayBuffer()
-          const compatible = await testFontCompatibility(new Uint8Array(buf), `uploaded:${key}`)
-          return compatible ? null : key
-        } catch (err) {
-          console.warn('[FontCheck] error checking uploaded font', key, err)
-          return null
-        }
-      }),
-    ).then((results) => {
-      if (cancelled) return
-      const incompatible = results.filter(Boolean) as string[]
-      if (incompatible.length === 0) return
-      setIncompatibleFontKeys((prev) => {
-        const next = new Set(prev)
-        for (const key of incompatible) next.add(key)
-        return next
-      })
-    })
-
-    return () => { cancelled = true }
-  }, [fields])
+    checkUploadedFontsCompatibility(form.fields, dispatchData)
+  }, [form.fields])
 
   useEffect(() => {
-    const googleFonts = fields
-      .filter((f) => f.font_source === 'google' && f.font_family)
-      .map((f) => f.font_family)
-
-    if (googleFonts.length === 0) return
-
-    let cancelled = false
-
-    Promise.all(
-      googleFonts.map(async (family) => {
-        try {
-          const res = await fetch(`/api/fonts?family=${encodeURIComponent(family)}`)
-          if (!res.ok) {
-            console.warn('[FontCheck] fetch failed for Google font', family, res.status)
-            return null
-          }
-          const buf = await res.arrayBuffer()
-          const compatible = await testFontCompatibility(new Uint8Array(buf), `google:${family}`)
-          return compatible ? null : family
-        } catch (err) {
-          console.warn('[FontCheck] error checking Google font', family, err)
-          return null
-        }
-      }),
-    ).then((results) => {
-      if (cancelled) return
-      const incompatible = results.filter(Boolean) as string[]
-      if (incompatible.length === 0) return
-      setIncompatibleGoogleFonts((prev) => {
-        const next = new Set(prev)
-        for (const family of incompatible) next.add(family)
-        return next
-      })
-    })
-
-    return () => { cancelled = true }
-  }, [fields])
+    checkGoogleFontsCompatibility(form.fields, dispatchData)
+  }, [form.fields])
 
   useEffect(() => {
-    const prev = fontVariantStyleId.current
-    if (prev) {
-      const el = document.getElementById(prev)
-      if (el) el.remove()
-      fontVariantStyleId.current = null
-    }
+    syncGoogleFontVariant(form.fields[form.selectedFieldIndex], data.googleFonts, fontVariantStyleId)
+  }, [form.fields, form.selectedFieldIndex, data.googleFonts])
 
-    const field = fields[selectedFieldIndex]
-    if (!field || field.font_source !== 'google' || !field.font_family) return
-
-    const font = googleFonts.find((f) => f.family === field.font_family)
-    if (!font?.files) return
-
-    const variant = field.font_variant || 'regular'
-    const fileUrl = font.files[variant]
-    if (!fileUrl) return
-
-    const numericWeight = variant === 'regular' ? '400' : variant === 'italic' ? '400' : variant.replace('italic', '')
-    const fontStyle = variant === 'italic' || variant.endsWith('italic') ? 'italic' : 'normal'
-    const fontFamilyKey = `${font.family}-${variant}`
-
-    const id = `gfont-variant-${fontFamilyKey.replace(/[^a-zA-Z0-9-]/g, '')}`
-    const existing = document.getElementById(id)
-    if (existing) {
-      existing.remove()
-    }
-
-    const style = document.createElement('style')
-    style.id = id
-    style.textContent = `
-      @font-face {
-        font-family: "${fontFamilyKey}";
-        src: url("${fileUrl}") format("truetype");
-        font-weight: ${numericWeight};
-        font-style: ${fontStyle};
-      }
-    `
-    document.head.appendChild(style)
-    fontVariantStyleId.current = id
-  }, [fields, selectedFieldIndex, googleFonts])
-
-  const updateField = useCallback((index: number, updates: Partial<FieldMapping>) => {
-    setFields((prev) => prev.map((f, i) => (i === index ? { ...f, ...updates } : f)))
-  }, [])
+  const updateField = (index: number, updates: Partial<FieldMapping>) => {
+    dispatchForm({ type: 'UPDATE_FIELD', index, updates })
+  }
 
   function addCustomField() {
-    setFields((prev) => [
-      ...prev,
-      {
-        id: '',
-        pdf_field_name: `custom_${Date.now()}`,
-        source_type: 'custom',
-        source_key: null,
-        display_label: 'New Field',
-        is_enabled: true,
-        font_family: 'Inter',
-        font_size: 12,
-        font_source: 'google',
-        font_variant: 'regular',
-        uploaded_font_key: null,
-        custom_default_value: '',
-        custom_overridable: true,
-        date_format: null,
-        level_format: null,
-        multiline: false,
-        text_color: null,
-        qr_dots_color: '#1a1a2e',
-        qr_bg_color: '#FFFFFF',
-        qr_dots_type: 'rounded',
-        qr_corners_type: 'square',
-        qr_corners_color: '#1a1a2e',
-        sort_order: prev.length,
-      },
-    ])
+    dispatchForm({ type: 'ADD_FIELD' })
   }
 
   async function handleSave() {
-    setSaving(true)
-    setError('')
-    setSuccess(false)
+    dispatchLoading({ type: 'START_SAVING' })
+    dispatchForm({ type: 'CLEAR_ERROR' })
+    dispatchForm({ type: 'SET_SUCCESS', value: false })
 
     try {
-      const res = await fetch(`/api/admin/pdf-templates/${templateId}/fields`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: fields.map((f, i) => ({ ...f, sort_order: i })),
-        }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to save fields')
-      }
-
-      const { fields: savedFields } = await res.json()
-      setFields((savedFields ?? []).map((f: any) => ({ ...f, multiline: f.multiline ?? false })))
-      setSuccess(true)
+      const savedFields = await apiSaveFields(templateId, form.fields)
+      dispatchForm({ type: 'SET_FIELDS', fields: savedFields.map((f: any) => ({ ...f, multiline: f.multiline ?? false })) })
+      dispatchForm({ type: 'SET_SUCCESS', value: true })
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
-    } finally {
-      setSaving(false)
+      dispatchForm({ type: 'SET_ERROR', error: err instanceof Error ? err.message : 'Save failed' })
     }
+    dispatchLoading({ type: 'STOP_SAVING' })
   }
 
   async function handleRefreshFields() {
-    setLoading(true)
+    dispatchLoading({ type: 'SET_LOADING', value: true })
     try {
-      const res = await fetch(`/api/admin/pdf-templates/${templateId}/parse`, { method: 'POST' })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to parse PDF')
-      }
-      const data = await res.json()
-      setFields(data.fields)
-      setPdfFonts(data.pdfFonts ?? [])
+      const result = await apiParsePdfTemplate(templateId)
+      dispatchForm({ type: 'SET_FIELDS', fields: result.fields })
+      dispatchData({ type: 'SET_PDF_FONTS', fonts: result.pdfFonts ?? [] })
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Parse failed')
-    } finally {
-      setLoading(false)
+      dispatchForm({ type: 'SET_ERROR', error: err instanceof Error ? err.message : 'Parse failed' })
     }
+    dispatchLoading({ type: 'SET_LOADING', value: false })
   }
 
   async function handleDeleteTemplate() {
     if (!confirm(t('deleteTemplateConfirm'))) return
     try {
-      const res = await fetch(`/api/admin/pdf-templates/${templateId}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Delete failed')
+      await apiDeletePdfTemplate(templateId)
       router.push(`/${lang}/admin/pdf-templates`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Delete failed')
+      dispatchForm({ type: 'SET_ERROR', error: err instanceof Error ? err.message : 'Delete failed' })
     }
   }
 
   async function handleSaveFont(index: number) {
-    const field = fields[index]
+    const field = form.fields[index]
     if (!field.font_family) return
 
-    setSavingFont(true)
-    setError('')
+    dispatchLoading({ type: 'SET_SAVING_FONT', value: true })
+    dispatchForm({ type: 'CLEAR_ERROR' })
     try {
-      const variant = field.font_variant || 'regular'
-      const res = await fetch(`/api/fonts?family=${encodeURIComponent(field.font_family)}&variant=${variant}`)
-      if (!res.ok) throw new Error('Failed to download font')
-      const blob = await res.blob()
-
-      const variantSuffix = variant !== 'regular' ? `-${variant}` : ''
-      const fileName = `${field.font_family}${variantSuffix}.ttf`
+      const { blob, fileName } = await apiDownloadFont(field.font_family, field.font_variant || 'regular')
       const file = new File([blob], fileName, { type: 'font/ttf' })
 
       await uploadFiles('fontFileUpload', { files: [file] })
 
       const fontsRes = await fetch('/api/admin/fonts/uploaded')
-      const data = await fontsRes.json()
-      const updatedFonts = data.fonts ?? []
-      setUploadedFonts(updatedFonts)
+      const fontsData = await fontsRes.json()
+      const updatedFonts = fontsData.fonts ?? []
+      dispatchData({ type: 'SET_UPLOADED_FONTS', fonts: updatedFonts })
 
       const uploaded = updatedFonts.find((uf: UploadedFont) => uf.name === fileName)
       if (uploaded) {
@@ -479,38 +616,37 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save font')
-    } finally {
-      setSavingFont(false)
+      dispatchForm({ type: 'SET_ERROR', error: err instanceof Error ? err.message : 'Failed to save font' })
     }
+    dispatchLoading({ type: 'SET_SAVING_FONT', value: false })
   }
 
-  if (loading) {
+  if (loadingState.loading) {
     return <div className="text-muted-foreground">{t('loading')}</div>
   }
 
-  if (!template) {
+  if (!data.template) {
     return <div className="text-red-500">{t('templateNotFound')}</div>
   }
 
-  const hasUnsavedIds = fields.some((f) => !f.id)
+  const hasUnsavedIds = form.fields.some((f) => !f.id)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">{template.name}</h2>
-          {template.description && (
-            <p className="text-sm text-muted-foreground">{template.description}</p>
+          <h2 className="text-xl font-semibold">{data.template.name}</h2>
+          {data.template.description && (
+            <p className="text-sm text-muted-foreground">{data.template.description}</p>
           )}
         </div>
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setShowPdfPreview(!showPdfPreview)}
+            onClick={() => dispatchForm({ type: 'TOGGLE_PDF_PREVIEW' })}
             className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
           >
-            {showPdfPreview ? t('hidePreview') : t('previewPdf')}
+            {form.showPdfPreview ? t('hidePreview') : t('previewPdf')}
           </button>
           <button
             type="button"
@@ -522,10 +658,10 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         </div>
       </div>
 
-      {showPdfPreview && template.file_url && (
+      {form.showPdfPreview && data.template.file_url && (
         <div className="rounded-xl border overflow-hidden">
           <iframe
-            src={template.file_url}
+            src={data.template.file_url}
             className="h-[500px] w-full"
             title="PDF Preview"
             sandbox="allow-scripts"
@@ -533,31 +669,31 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         </div>
       )}
 
-      {error && (
+      {form.error && (
         <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-600">
-          {error}
+          {form.error}
         </div>
       )}
 
-      {success && (
+      {form.success && (
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600">
           {t('savedSuccess')}
         </div>
       )}
 
-      {pdfFonts.length > 0 && (
+      {data.pdfFonts.length > 0 && (
         <div className="rounded-xl border p-4 space-y-3">
           <button
             type="button"
-            onClick={() => setShowPdfFonts(!showPdfFonts)}
+            onClick={() => dispatchForm({ type: 'TOGGLE_PDF_FONTS' })}
             className="flex items-center justify-between w-full text-left"
           >
-            <h3 className="text-sm font-semibold">{t('pdfFontsUsed')} ({pdfFonts.length})</h3>
-            <span className="text-xs text-muted-foreground">{showPdfFonts ? '▲' : '▼'}</span>
+            <h3 className="text-sm font-semibold">{t('pdfFontsUsed')} ({data.pdfFonts.length})</h3>
+            <span className="text-xs text-muted-foreground">{form.showPdfFonts ? '▲' : '▼'}</span>
           </button>
-          {showPdfFonts && (
+          {form.showPdfFonts && (
             <div className="space-y-1.5">
-              {pdfFonts.map((font) => (
+              {data.pdfFonts.map((font) => (
                 <div key={font.name} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{font.name}</span>
@@ -576,14 +712,14 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       <div className="flex gap-6">
         <div className="w-56 shrink-0 space-y-1">
           {sortedFields.map((field, sortedIndex) => {
-            const originalIndex = fields.indexOf(field)
+            const originalIndex = form.fields.indexOf(field)
             return (
               <button
                 type="button"
                 key={field.pdf_field_name + sortedIndex}
-                onClick={() => setSelectedFieldIndex(originalIndex)}
+                onClick={() => dispatchForm({ type: 'SET_SELECTED_INDEX', index: originalIndex })}
                 className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                  originalIndex === selectedFieldIndex
+                  originalIndex === form.selectedFieldIndex
                     ? 'bg-bright-sky/10 text-bright-sky font-medium'
                     : 'text-muted-foreground hover:bg-muted'
                 }`}
@@ -613,9 +749,9 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         </div>
 
         <div className="flex-1 min-w-0">
-          {fields.length > 0 && selectedFieldIndex < fields.length && (() => {
-            const field = fields[selectedFieldIndex]
-            const index = selectedFieldIndex
+          {form.fields.length > 0 && form.selectedFieldIndex < form.fields.length && (() => {
+            const field = form.fields[form.selectedFieldIndex]
+            const index = form.selectedFieldIndex
             return (
               <div className="rounded-xl border p-4 space-y-4">
                 <div className="flex items-center justify-between">
@@ -760,7 +896,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                               value={field.qr_dots_type}
                               onChange={(e) => updateField(index, { qr_dots_type: e.target.value })}
                             >
-                              {QR_DOT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                              {QR_DOT_TYPES.map((qt) => <option key={qt} value={qt}>{qt}</option>)}
                             </select>
                           </div>
                           <div>
@@ -770,7 +906,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                               value={field.qr_corners_type}
                               onChange={(e) => updateField(index, { qr_corners_type: e.target.value })}
                             >
-                              {QR_CORNER_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                              {QR_CORNER_TYPES.map((qt) => <option key={qt} value={qt}>{qt}</option>)}
                             </select>
                           </div>
                         </div>
@@ -909,22 +1045,22 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                             onChange={async (e) => {
                               const file = e.target.files?.[0]
                               if (!file) return
-                              setUploadingFont(true)
+                              dispatchLoading({ type: 'SET_UPLOADING_FONT', value: true })
                               try {
                                 const [res] = await uploadFiles('fontFileUpload', { files: [file] })
-                                setUploadedFonts((prev) => [...prev, { key: res.key, name: file.name }])
+                                dispatchData({ type: 'ADD_UPLOADED_FONT', font: { key: res.key, name: file.name } })
                                 updateField(index, { font_source: 'uploaded', uploaded_font_key: res.key, font_family: `UPLOADED_FONT_${res.key}` })
                               } catch { /* noop */ }
-                              setUploadingFont(false)
+                              dispatchLoading({ type: 'SET_UPLOADING_FONT', value: false })
                             }}
                           />
-                          {uploadingFont && <span className="text-xs text-muted-foreground">{t('uploading')}</span>}
+                          {loadingState.uploadingFont && <span className="text-xs text-muted-foreground">{t('uploading')}</span>}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           {t('uploadNamingHint')}
                         </p>
                       </div>
-                      {field.uploaded_font_key && incompatibleFontKeys.has(field.uploaded_font_key) && (
+                      {field.uploaded_font_key && data.incompatibleFontKeys.has(field.uploaded_font_key) && (
                         <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
                           {t('fontIncompatibleWarning')}
                         </p>
@@ -940,11 +1076,11 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                         />
                         <button
                           type="button"
-                          disabled={!field.font_family || savingFont}
+                          disabled={!field.font_family || loadingState.savingFont}
                           onClick={() => handleSaveFont(index)}
                           className="rounded-lg bg-bright-sky px-3 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
                         >
-                          {savingFont ? t('savingFont') : t('saveFont')}
+                          {loadingState.savingFont ? t('savingFont') : t('saveFont')}
                         </button>
                       </div>
                       {field.font_family && selectedFont && selectedFont.variants.length > 0 && (
@@ -981,7 +1117,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                           </select>
                         </div>
                       )}
-                      {field.font_family && incompatibleGoogleFonts.has(field.font_family) && (
+                      {field.font_family && data.incompatibleGoogleFonts.has(field.font_family) && (
                         <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
                           {t('fontIncompatibleWarning')}
                         </p>
@@ -1122,10 +1258,10 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving || hasUnsavedIds}
+          disabled={loadingState.saving || hasUnsavedIds}
           className="rounded-lg bg-bright-sky px-6 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
         >
-          {saving ? t('saving') : t('saveMappings')}
+          {loadingState.saving ? t('saving') : t('saveMappings')}
         </button>
       </div>
     </div>

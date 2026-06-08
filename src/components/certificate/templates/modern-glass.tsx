@@ -4,12 +4,6 @@ import { useTranslations } from 'next-intl'
 import type { CertificateTemplateProps } from "../template"
 import "./modern-glass.css"
 
-export const ModernGlassTemplate = {
-  id: "modern-glass",
-  name: "modernGlass",
-  component: ModernGlassCertificate,
-}
-
 export function ModernGlassCertificate({
   fullName,
   englishLevel,

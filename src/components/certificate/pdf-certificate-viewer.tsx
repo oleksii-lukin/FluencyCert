@@ -51,6 +51,227 @@ interface PdfCertificateViewerProps {
 
 const CACHE_NAME = 'pdf-fonts'
 
+let pdfjsLoading: Promise<any> | null = null
+async function ensurePdfjs() {
+  if (!pdfjsLoading) {
+    pdfjsLoading = import('pdfjs-dist').then((mod) => {
+      mod.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+      return mod
+    })
+  }
+  return pdfjsLoading
+}
+
+interface GeneratePdfInput {
+  templateFileUrl: string
+  fields: FieldMapping[]
+  certificateData: PdfCertificateViewerProps['certificateData']
+  customValues: Record<string, string>
+  certificateUrl: string
+  viewerLocale?: string
+  pdfjsLib: any
+  cancelled: () => boolean
+}
+
+async function generatePdf(input: GeneratePdfInput) {
+  const { templateFileUrl, fields, certificateData, customValues, certificateUrl, viewerLocale, pdfjsLib } = input
+  const cancelled = input.cancelled
+
+  const pdfRes = await fetch(templateFileUrl)
+  if (!pdfRes.ok) throw new Error('Failed to download template PDF')
+  if (cancelled()) throw new Error('Cancelled')
+  const pdfBytes = await pdfRes.arrayBuffer()
+
+  const pdfDoc = await PDFDocument.load(pdfBytes)
+  pdfDoc.registerFontkit(fontkit)
+  const form = pdfDoc.getForm()
+
+  const fieldFontCache: Record<string, Uint8Array> = {}
+  const dataMap = certificateData as Record<string, unknown>
+  for (const field of fields) {
+    if (!field.is_enabled) continue
+    if (field.source_type === 'qr_code') continue
+
+    try {
+      const pdfField = form.getTextField(field.pdf_field_name)
+      if (cancelled()) throw new Error('Cancelled')
+
+      let value = ''
+      if (field.source_type === 'database' && field.source_key) {
+        value = String(dataMap[field.source_key] ?? '')
+        if (field.source_key === 'createdAt') {
+          value = formatDate(value, field.date_format as any, viewerLocale)
+        } else if (field.source_key === 'englishLevel') {
+          value = formatEnglishLevel(value, field.level_format as any)
+        }
+      } else if (field.source_type === 'custom') {
+        value = customValues[field.id] ?? field.custom_default_value ?? ''
+      }
+
+      pdfField.setText(value)
+
+      if (field.multiline) {
+        pdfField.enableMultiline()
+      }
+
+      if (field.text_color) {
+        const parsed = hexToRgb(field.text_color)
+        if (parsed) {
+          const colorStr = `${(parsed.r / 255).toFixed(3)} ${(parsed.g / 255).toFixed(3)} ${(parsed.b / 255).toFixed(3)} rg`
+          const existingDa = pdfField.acroField.getDefaultAppearance() ?? ''
+          const cleanedDa = existingDa.replace(/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+rg\s*/g, '')
+          pdfField.acroField.setDefaultAppearance(cleanedDa.trim() ? `${colorStr} ${cleanedDa.trim()}` : colorStr)
+          for (const fw of pdfField.acroField.getWidgets()) {
+            const widgetDa = fw.getDefaultAppearance()
+            if (widgetDa !== undefined) {
+              const cleanedWDa = widgetDa.replace(/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+rg\s*/g, '')
+              fw.setDefaultAppearance(cleanedWDa.trim() ? `${colorStr} ${cleanedWDa.trim()}` : colorStr)
+            }
+          }
+        }
+      }
+
+      const fontKey = `${field.font_family}-${field.font_variant || 'regular'}-${field.font_source}-${field.uploaded_font_key}`
+      if (!fieldFontCache[fontKey]) {
+        let fontBytes: ArrayBuffer
+        if (field.font_source === 'google') {
+          fontBytes = await getGoogleFontBytes(field.font_family, field.font_variant)
+        } else if (field.uploaded_font_key) {
+          const fontRes = await fetch(`/api/fonts/uploaded?key=${field.uploaded_font_key}`)
+          if (!fontRes.ok) throw new Error(`Font fetch returned ${fontRes.status}`)
+          fontBytes = await fontRes.arrayBuffer()
+        } else {
+          fontBytes = await getGoogleFontBytes(field.font_family, field.font_variant)
+        }
+        fieldFontCache[fontKey] = new Uint8Array(fontBytes)
+      }
+
+      const fontBytes = fieldFontCache[fontKey]
+      let font
+
+      const compatible = await testFontCompatibility(fontBytes, fontKey)
+      if (compatible) {
+        font = await pdfDoc.embedFont(fontBytes)
+      } else {
+        font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+      }
+
+      pdfField.setFontSize(field.font_size)
+      pdfField.defaultUpdateAppearances(font)
+
+      const widgets = pdfField.acroField.getWidgets()
+      for (const widget of widgets) {
+        const ap = widget.getAppearanceCharacteristics()
+        if (ap) {
+          ap.setBackgroundColor([])
+        }
+      }
+    } catch (err) {
+      console.log('[PDF]   field error:', err)
+    }
+  }
+
+  const qrFields = fields.filter((f) => f.is_enabled && f.source_type === 'qr_code')
+  await Promise.all(qrFields.map(async (field) => {
+    try {
+      const qrField = form.getTextField(field.pdf_field_name)
+      qrField.setText('')
+      const qrWidgets = qrField.acroField.getWidgets()
+      if (qrWidgets.length === 0) return
+
+      const ap = qrWidgets[0].getAppearanceCharacteristics()
+      if (ap) ap.setBackgroundColor([])
+
+      const rect = qrWidgets[0].getRectangle()
+
+      const qr = new QrCodeWithLogo({
+        content: certificateUrl,
+        width: 300,
+        logo: {
+          src: '/icon.png',
+          logoRadius: 6,
+        },
+        dotsOptions: {
+          color: field.qr_dots_color,
+          type: field.qr_dots_type as any,
+        },
+        cornersOptions: {
+          color: field.qr_corners_color,
+          type: field.qr_corners_type as any,
+        },
+        nodeQrCodeOptions: {
+          color: {
+            dark: field.qr_dots_color,
+            light: field.qr_bg_color === 'transparent' ? 'rgba(255,255,255,0)' : field.qr_bg_color,
+          },
+        },
+      })
+
+      const canvas = await qr.getCanvas()
+      const dataUrl = canvas.toDataURL('image/png')
+      const base64 = dataUrl.split(',')[1]
+      const qrBytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+      const qrImage = await pdfDoc.embedPng(qrBytes)
+
+      const pages = pdfDoc.getPages()
+      pages[0].drawImage(qrImage, {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      })
+    } catch (err) {
+      console.log('[PDF]   QR field error:', err)
+    }
+  }))
+
+  form.flatten()
+  const filledBytes = await pdfDoc.save()
+
+  const blob = new Blob([filledBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
+  const blobUrl = URL.createObjectURL(blob)
+  return { blobUrl, filledBytes }
+}
+
+async function prepareCertificate(
+  templateFileUrl: string,
+  fields: FieldMapping[],
+  certificateData: PdfCertificateViewerProps['certificateData'],
+  customValues: Record<string, string>,
+  certificateUrl: string,
+  viewerLocale: string | undefined,
+  pdfjsLib: any,
+  cancelled: () => boolean,
+): Promise<{ success: true; blobUrl: string; filledBytes: Uint8Array } | { success: false; error?: string }> {
+  try {
+    const result = await generatePdf({
+      templateFileUrl, fields, certificateData, customValues, certificateUrl, viewerLocale,
+      pdfjsLib, cancelled,
+    })
+    if (cancelled()) return { success: false as const }
+    return { success: true as const, blobUrl: result.blobUrl, filledBytes: result.filledBytes }
+  } catch (err) {
+    console.error('[PDF] ERROR:', err instanceof Error ? err.message : String(err))
+    if (!(err instanceof RangeError)) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to generate PDF' }
+    }
+    console.log('[PDF] save failed, retrying with Helvetica fallback')
+    clearFontCompatibilityCache()
+  }
+
+  try {
+    const result = await generatePdf({
+      templateFileUrl, fields, certificateData, customValues, certificateUrl, viewerLocale,
+      pdfjsLib, cancelled,
+    })
+    if (cancelled()) return { success: false as const }
+    return { success: true as const, blobUrl: result.blobUrl, filledBytes: result.filledBytes }
+  } catch (err) {
+    console.error('[PDF] ERROR:', err instanceof Error ? err.message : String(err))
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to generate PDF' }
+  }
+}
+
 export function PdfCertificateViewer({
   templateFileUrl,
   fields,
@@ -65,185 +286,36 @@ export function PdfCertificateViewer({
   const [error, setError] = useState<string | null>(null)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const pdfjsRef = useRef<any>(null)
-  const [pdfjsReady, setPdfjsReady] = useState(false)
 
   useEffect(() => {
-    import('pdfjs-dist').then((mod) => {
-      mod.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
-      pdfjsRef.current = mod
-      setPdfjsReady(true)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!pdfjsReady) return
     let cancelled = false
 
-    async function generate() {
-      const pdfjsLib = pdfjsRef.current!
-
-      const pdfRes = await fetch(templateFileUrl)
-      if (!pdfRes.ok) throw new Error('Failed to download template PDF')
+    async function run() {
+      const mod = await ensurePdfjs()
       if (cancelled) return
-      const pdfBytes = await pdfRes.arrayBuffer()
+      pdfjsRef.current = mod
 
-      const pdfDoc = await PDFDocument.load(pdfBytes)
-      pdfDoc.registerFontkit(fontkit)
-      const form = pdfDoc.getForm()
+      setLoading(true)
+      setError(null)
 
-      const fieldFontCache: Record<string, Uint8Array> = {}
-      const dataMap = certificateData as Record<string, unknown>
-      for (const field of fields) {
-        if (!field.is_enabled) continue
-        if (field.source_type === 'qr_code') continue
-
-        try {
-          const pdfField = form.getTextField(field.pdf_field_name)
-          if (cancelled) return
-
-          let value = ''
-          if (field.source_type === 'database' && field.source_key) {
-            value = String(dataMap[field.source_key] ?? '')
-            if (field.source_key === 'createdAt') {
-              value = formatDate(value, field.date_format as any, viewerLocale)
-            } else if (field.source_key === 'englishLevel') {
-              value = formatEnglishLevel(value, field.level_format as any)
-            }
-          } else if (field.source_type === 'custom') {
-            value = customValues[field.id] ?? field.custom_default_value ?? ''
-          }
-
-          pdfField.setText(value)
-
-          if (field.multiline) {
-            pdfField.enableMultiline()
-          }
-
-          if (field.text_color) {
-            const parsed = hexToRgb(field.text_color)
-            if (parsed) {
-              const colorStr = `${(parsed.r / 255).toFixed(3)} ${(parsed.g / 255).toFixed(3)} ${(parsed.b / 255).toFixed(3)} rg`
-              const existingDa = pdfField.acroField.getDefaultAppearance() ?? ''
-              const cleanedDa = existingDa.replace(/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+rg\s*/g, '')
-              pdfField.acroField.setDefaultAppearance(cleanedDa.trim() ? `${colorStr} ${cleanedDa.trim()}` : colorStr)
-              for (const fw of pdfField.acroField.getWidgets()) {
-                const widgetDa = fw.getDefaultAppearance()
-                if (widgetDa !== undefined) {
-                  const cleanedWDa = widgetDa.replace(/\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+rg\s*/g, '')
-                  fw.setDefaultAppearance(cleanedWDa.trim() ? `${colorStr} ${cleanedWDa.trim()}` : colorStr)
-                }
-              }
-            }
-          }
-
-          const fontKey = `${field.font_family}-${field.font_variant || 'regular'}-${field.font_source}-${field.uploaded_font_key}`
-          if (!fieldFontCache[fontKey]) {
-            let fontBytes: ArrayBuffer
-            if (field.font_source === 'google') {
-              fontBytes = await getGoogleFontBytes(field.font_family, field.font_variant)
-            } else if (field.uploaded_font_key) {
-              const fontRes = await fetch(`/api/fonts/uploaded?key=${field.uploaded_font_key}`)
-              if (!fontRes.ok) throw new Error(`Font fetch returned ${fontRes.status}`)
-              fontBytes = await fontRes.arrayBuffer()
-            } else {
-              fontBytes = await getGoogleFontBytes(field.font_family, field.font_variant)
-            }
-            fieldFontCache[fontKey] = new Uint8Array(fontBytes)
-          }
-
-          const fontBytes = fieldFontCache[fontKey]
-          let font
-
-          const compatible = await testFontCompatibility(fontBytes, fontKey)
-          if (compatible) {
-            font = await pdfDoc.embedFont(fontBytes)
-          } else {
-            font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-          }
-
-          pdfField.setFontSize(field.font_size)
-          pdfField.defaultUpdateAppearances(font)
-
-          const widgets = pdfField.acroField.getWidgets()
-          for (const widget of widgets) {
-            const ap = widget.getAppearanceCharacteristics()
-            if (ap) {
-              ap.setBackgroundColor([])
-            }
-          }
-        } catch (err) {
-          console.log('[PDF]   field error:', err)
-        }
+      const result = await prepareCertificate(
+        templateFileUrl, fields, certificateData, customValues, certificateUrl, viewerLocale,
+        pdfjsRef.current!, () => cancelled,
+      )
+      if (cancelled) return
+      if (!result.success) {
+        if (result.error) setError(result.error)
+        setLoading(false)
+        return
       }
 
-      for (const field of fields) {
-        if (!field.is_enabled || field.source_type !== 'qr_code') continue
-
-        try {
-          const qrField = form.getTextField(field.pdf_field_name)
-          qrField.setText('')
-          const qrWidgets = qrField.acroField.getWidgets()
-          if (qrWidgets.length === 0) continue
-
-          const ap = qrWidgets[0].getAppearanceCharacteristics()
-          if (ap) ap.setBackgroundColor([])
-
-          const rect = qrWidgets[0].getRectangle()
-
-          const qr = new QrCodeWithLogo({
-            content: certificateUrl,
-            width: 300,
-            logo: {
-              src: '/icon.png',
-              logoRadius: 6,
-            },
-            dotsOptions: {
-              color: field.qr_dots_color,
-              type: field.qr_dots_type as any,
-            },
-            cornersOptions: {
-              color: field.qr_corners_color,
-              type: field.qr_corners_type as any,
-            },
-            nodeQrCodeOptions: {
-              color: {
-                dark: field.qr_dots_color,
-                light: field.qr_bg_color === 'transparent' ? 'rgba(255,255,255,0)' : field.qr_bg_color,
-              },
-            },
-          })
-
-          const canvas = await qr.getCanvas()
-          const dataUrl = canvas.toDataURL('image/png')
-          const base64 = dataUrl.split(',')[1]
-          const qrBytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-          const qrImage = await pdfDoc.embedPng(qrBytes)
-
-          const pages = pdfDoc.getPages()
-          pages[0].drawImage(qrImage, {
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height,
-          })
-        } catch (err) {
-          console.log('[PDF]   QR field error:', err)
-        }
-      }
-
-      form.flatten()
-      const filledBytes = await pdfDoc.save()
-
-      if (cancelled) return
-
-      const blob = new Blob([filledBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
-      const blobUrl = URL.createObjectURL(blob)
-      setDownloadUrl(blobUrl)
+      setDownloadUrl(result.blobUrl)
 
       const canvas = canvasRef.current
       const container = containerRef.current
       if (canvas && container) {
-        const pdf = await pdfjsLib.getDocument({ data: filledBytes }).promise
+        const pdfjsLib = pdfjsRef.current!
+        const pdf = await pdfjsLib.getDocument({ data: result.filledBytes }).promise
         const page = await pdf.getPage(1)
 
         const containerWidth = container.clientWidth
@@ -262,39 +334,13 @@ export function PdfCertificateViewer({
           await page.render({ canvasContext: ctx, viewport, canvas }).promise
         }
       }
-    }
-
-    async function run() {
-      setLoading(true)
-      setError(null)
-
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          await generate()
-          return
-        } catch (err) {
-          console.error('[PDF] ERROR:', err instanceof Error ? err.message : String(err))
-          if (attempt === 0 && err instanceof RangeError) {
-            console.log('[PDF] save failed, retrying with Helvetica fallback')
-            clearFontCompatibilityCache()
-            continue
-          }
-          if (!cancelled) {
-            setError(err instanceof Error ? err.message : 'Failed to generate PDF')
-          }
-          return
-        } finally {
-          if (!cancelled) {
-            setLoading(false)
-          }
-        }
-      }
+      setLoading(false)
     }
 
     run()
 
     return () => { cancelled = true }
-  }, [templateFileUrl, fields, certificateData, customValues, certificateUrl, pdfjsReady])
+  }, [templateFileUrl, fields, certificateData, customValues, certificateUrl, viewerLocale])
 
   function handleDownload() {
     if (!downloadUrl) return

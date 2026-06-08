@@ -9,10 +9,8 @@ import { ContactButton } from '@/components/ui/contact-button'
 export default async function AdminUsersPage({ params }: { params: Promise<{ lang: string }> }) {
   const [{ lang }, { userId }] = await Promise.all([params, auth()])
 
-  const isMaster = await isMasterAdmin(userId!)
+  const [isMaster, t] = await Promise.all([isMasterAdmin(userId!), getTranslations('admin')])
   if (!isMaster) redirect({ href: '/', locale: lang })
-
-  const t = await getTranslations('admin')
   const supabase = createAdminClient()
 
   const { data: profiles } = await supabase

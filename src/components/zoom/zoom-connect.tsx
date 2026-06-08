@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 
 interface ZoomUserInfo {
@@ -16,46 +16,52 @@ interface ZoomConnectProps {
   onDisconnected?: () => void
 }
 
+const icon = (
+  <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
+    <path d="M24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-7.5-3.75c-.414 0-.75.336-.75.75v6c0 .414.336.75.75.75h.75c.414 0 .75-.336.75-.75V9c0-.414-.336-.75-.75-.75h-.75zm-4.5 0c-.414 0-.75.336-.75.75v6c0 .414.336.75.75.75h.75c.414 0 .75-.336.75-.75V9c0-.414-.336-.75-.75-.75h-.75zm-4.5 0c-.414 0-.75.336-.75.75v6c0 .414.336.75.75.75h.75c.414 0 .75-.336.75-.75V9c0-.414-.336-.75-.75-.75h-.75z" />
+  </svg>
+)
+
 export function ZoomConnect({ initialZoomUserInfo, onConnected, onDisconnected }: ZoomConnectProps) {
   const [connected, setConnected] = useState(!!initialZoomUserInfo)
   const [userInfo, setUserInfo] = useState<ZoomUserInfo | null>(initialZoomUserInfo)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const onConnectedRef = useRef(onConnected)
+  const onDisconnectedRef = useRef(onDisconnected)
+  useEffect(() => { onConnectedRef.current = onConnected })
+  useEffect(() => { onDisconnectedRef.current = onDisconnected })
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.data?.type === 'zoom-auth' && event.data?.code) {
         const redirectUri = `${window.location.origin}/zoom/callback`
-        handleAuthorizationCode(event.data.code, redirectUri)
+        setLoading(true)
+        setError(null)
+        fetch('/api/zoom/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ authorizationCode: event.data.code, redirectUri }),
+        }).then(async (res) => {
+          const result = await res.json()
+          if (res.ok) {
+            setConnected(true)
+            const info = result.zoomUserInfo ?? null
+            setUserInfo(info)
+            if (info && onConnectedRef.current) onConnectedRef.current(info)
+          } else {
+            setError(result.error ?? 'Failed to connect Zoom')
+          }
+        }).catch(() => {
+          setError('Failed to connect Zoom')
+        }).finally(() => {
+          setLoading(false)
+        })
       }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
   }, [])
-
-  const handleAuthorizationCode = async (code: string, redirectUri: string) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/zoom/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authorizationCode: code, redirectUri }),
-      })
-      const result = await res.json()
-      if (res.ok) {
-        setConnected(true)
-        const info = result.zoomUserInfo ?? null
-        setUserInfo(info)
-        if (info && onConnected) onConnected(info)
-      } else {
-        setError(result.error ?? 'Failed to connect Zoom')
-      }
-    } catch {
-      setError('Failed to connect Zoom')
-    }
-    setLoading(false)
-  }
 
   const handleConnect = () => {
     setError(null)
@@ -124,12 +130,6 @@ export function ZoomConnect({ initialZoomUserInfo, onConnected, onDisconnected }
     }
     setLoading(false)
   }
-
-  const icon = (
-    <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
-      <path d="M24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-7.5-3.75c-.414 0-.75.336-.75.75v6c0 .414.336.75.75.75h.75c.414 0 .75-.336.75-.75V9c0-.414-.336-.75-.75-.75h-.75zm-4.5 0c-.414 0-.75.336-.75.75v6c0 .414.336.75.75.75h.75c.414 0 .75-.336.75-.75V9c0-.414-.336-.75-.75-.75h-.75zm-4.5 0c-.414 0-.75.336-.75.75v6c0 .414.336.75.75.75h.75c.414 0 .75-.336.75-.75V9c0-.414-.336-.75-.75-.75h-.75z" />
-    </svg>
-  )
 
   if (connected) {
     return (

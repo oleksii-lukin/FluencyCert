@@ -4,12 +4,6 @@ import { useTranslations } from 'next-intl'
 import type { CertificateTemplateProps } from "../template"
 import "./natural-green.css"
 
-export const NaturalGreenTemplate = {
-  id: "natural-green",
-  name: "naturalGreen",
-  component: NaturalGreenCertificate,
-}
-
 export function NaturalGreenCertificate({
   fullName,
   englishLevel,

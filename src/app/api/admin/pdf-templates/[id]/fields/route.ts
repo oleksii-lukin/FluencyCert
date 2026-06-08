@@ -57,9 +57,10 @@ export async function PUT(
     return NextResponse.json({ error: 'fields must be an array' }, { status: 400 })
   }
 
-  const fieldIds = fields
-    .filter((f: { id: string }) => f.id)
-    .map((f: { id: string }) => f.id)
+  const fieldIds: string[] = []
+  for (const f of fields) {
+    if (f.id) fieldIds.push(f.id)
+  }
 
   if (fieldIds.length > 0) {
     const { data: existing } = await supabase

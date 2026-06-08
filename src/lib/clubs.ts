@@ -52,7 +52,11 @@ export async function isClubMember(userId: string, clubId: string): Promise<bool
 
 export async function getAdminClubIds(userId: string): Promise<string[]> {
   const roles = await getUserClubRoles(userId)
-  return roles.filter((r) => r.role === 'admin').map((r) => r.clubId)
+  const adminIds: string[] = []
+  for (const r of roles) {
+    if (r.role === 'admin') adminIds.push(r.clubId)
+  }
+  return adminIds
 }
 
 export async function requireMasterAdmin(userId: string) {

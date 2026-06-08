@@ -155,7 +155,7 @@ export async function PATCH(
       .eq('template_id', pdf_template_id)
       .eq('source_type', 'database')
 
-    const dbKeys = new Set(templateDbFields?.map((f) => f.source_key).filter(Boolean) ?? [])
+    const dbKeys = new Set(templateDbFields?.flatMap((f) => f.source_key ? [f.source_key] : []) ?? [])
 
     if (dbKeys.has('englishLevel')) {
       if (!english_level || typeof english_level !== 'string') {
@@ -187,13 +187,16 @@ export async function PATCH(
 
       const validFieldIds = new Set(validFields?.map((f) => f.id) ?? [])
 
-      const valuesToUpsert = custom_values
-        .filter((cv: { field_id: string }) => validFieldIds.has(cv.field_id))
-        .map((cv: { field_id: string; value: string }) => ({
-          claim_id: id,
-          field_id: cv.field_id,
-          value: cv.value,
-        }))
+      const valuesToUpsert: { claim_id: string; field_id: string; value: string }[] = []
+      for (const cv of custom_values) {
+        if (validFieldIds.has(cv.field_id)) {
+          valuesToUpsert.push({
+            claim_id: id,
+            field_id: cv.field_id,
+            value: cv.value,
+          })
+        }
+      }
 
       if (valuesToUpsert.length > 0) {
         const { error: cvError } = await supabase

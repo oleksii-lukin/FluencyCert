@@ -13,7 +13,7 @@ function CallbackContent() {
     const error = searchParams.get('error')
 
     if (error) {
-      setMessage(`Authorization failed: ${error}`)
+      queueMicrotask(() => setMessage(`Authorization failed: ${error}`))
       if (window.opener) {
         window.opener.postMessage({ type: 'zoom-auth', error }, window.opener.location.origin)
       }
@@ -21,21 +21,22 @@ function CallbackContent() {
     }
 
     if (!code) {
-      setMessage("No authorization code received.")
+      queueMicrotask(() => setMessage("No authorization code received."))
       return
     }
 
     const savedState = sessionStorage.getItem('zoom_oauth_state')
     if (state && savedState && state !== savedState) {
-      setMessage("State mismatch — possible CSRF attack.")
+      queueMicrotask(() => setMessage("State mismatch — possible CSRF attack."))
       return
     }
     sessionStorage.removeItem('zoom_oauth_state')
 
     const origin = window.opener?.location.origin ?? window.location.origin
     window.opener?.postMessage({ type: 'zoom-auth', code, state }, origin)
-    setMessage("Connected! You can close this window.")
-    setTimeout(() => window.close(), 1000)
+    queueMicrotask(() => setMessage("Connected! You can close this window."))
+    const timer = setTimeout(() => window.close(), 1000)
+    return () => clearTimeout(timer)
   }, [searchParams])
 
   return (

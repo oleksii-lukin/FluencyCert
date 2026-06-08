@@ -8,10 +8,8 @@ import { ClubList } from './club-list'
 export default async function AdminClubsPage({ params }: { params: Promise<{ lang: string }> }) {
   const [{ lang }, { userId }] = await Promise.all([params, auth()])
 
-  const isMaster = await isMasterAdmin(userId!)
+  const [isMaster, t] = await Promise.all([isMasterAdmin(userId!), getTranslations('admin')])
   if (!isMaster) redirect({ href: '/', locale: lang })
-
-  const t = await getTranslations('admin')
   const supabase = createAdminClient()
 
   const { data: clubs } = await supabase

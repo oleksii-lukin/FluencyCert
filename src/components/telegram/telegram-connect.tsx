@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useTranslations } from 'next-intl'
+import { useEffect, useRef, useReducer } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 
 declare global {
@@ -30,92 +30,126 @@ interface TelegramConnectProps {
   initialTelegramUsername: string | null
 }
 
+interface State {
+  connected: boolean
+  username: string
+  loading: boolean
+  error: string | null
+}
+
+type Action =
+  | { type: "CONNECT_SUCCESS"; telegram_username: string }
+  | { type: "DISCONNECT_SUCCESS" }
+  | { type: "START_LOADING" }
+  | { type: "STOP_LOADING" }
+  | { type: "SET_ERROR"; error: string | null }
+
+function createInitialState(telegramId: string | null, telegramUsername: string | null): State {
+  return {
+    connected: !!telegramId,
+    username: telegramUsername ?? "",
+    loading: false,
+    error: null,
+  }
+}
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "CONNECT_SUCCESS":
+      return { ...state, connected: true, username: action.telegram_username, loading: false }
+    case "DISCONNECT_SUCCESS":
+      return { ...state, connected: false, username: "", loading: false }
+    case "START_LOADING":
+      return { ...state, loading: true, error: null }
+    case "STOP_LOADING":
+      return { ...state, loading: false }
+    case "SET_ERROR":
+      return { ...state, error: action.error, loading: false }
+    default:
+      return state
+  }
+}
+
 export function TelegramConnect({ initialTelegramId, initialTelegramUsername }: TelegramConnectProps) {
-  const t = useTranslations('profile')
-  const [connected, setConnected] = useState(!!initialTelegramId)
-  const [username, setUsername] = useState(initialTelegramUsername ?? '')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [sdkReady, setSdkReady] = useState(false)
+  const t = useTranslations("profile")
+  const [state, dispatch] = useReducer(reducer, { initialTelegramId, initialTelegramUsername }, (init) =>
+    createInitialState(init.initialTelegramId, init.initialTelegramUsername)
+  )
+  const sdkReadyRef = useRef(false)
 
   useEffect(() => {
     if (window.Telegram?.Login) {
-      setSdkReady(true)
+      sdkReadyRef.current = true
       return
     }
 
-    const script = document.createElement('script')
-    script.src = 'https://oauth.telegram.org/js/telegram-login.js'
+    const script = document.createElement("script")
+    script.src = "https://oauth.telegram.org/js/telegram-login.js"
     script.async = true
-    script.onload = () => setSdkReady(true)
-    script.onerror = () => setError('Failed to load Telegram SDK')
+    script.onload = () => { sdkReadyRef.current = true }
+    script.onerror = () => dispatch({ type: "SET_ERROR", error: "Failed to load Telegram SDK" })
     document.head.appendChild(script)
   }, [])
 
   const handleConnect = () => {
-    setError(null)
+    dispatch({ type: "SET_ERROR", error: null })
     const clientId = Number(process.env.NEXT_PUBLIC_TELEGRAM_CLIENT_ID)
     if (!clientId) {
-      setError('Telegram client ID not configured')
+      dispatch({ type: "SET_ERROR", error: "Telegram client ID not configured" })
       return
     }
 
     if (!window.Telegram?.Login) {
-      setError('Telegram SDK not loaded yet')
+      dispatch({ type: "SET_ERROR", error: "Telegram SDK not loaded yet" })
       return
     }
 
     window.Telegram.Login.auth(
       {
         client_id: clientId,
-        request_access: ['profile', 'write'],
+        request_access: ["profile", "write"],
       },
       async (data) => {
         if (data.id_token) {
-          setLoading(true)
+          dispatch({ type: "START_LOADING" })
           try {
-            const res = await fetch('/api/telegram/connect', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            const res = await fetch("/api/telegram/connect", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ id_token: data.id_token }),
             })
             const result = await res.json()
             if (res.ok) {
-              setConnected(true)
-              setUsername(result.telegram_username ?? '')
+              dispatch({ type: "CONNECT_SUCCESS", telegram_username: result.telegram_username ?? "" })
             } else {
-              setError(result.error ?? t('error'))
+              dispatch({ type: "SET_ERROR", error: result.error ?? t("error") })
             }
           } catch {
-            setError(t('error'))
+            dispatch({ type: "SET_ERROR", error: t("error") })
           }
-          setLoading(false)
         } else if (data.error) {
-          setError(data.error)
+          dispatch({ type: "SET_ERROR", error: data.error })
         }
       },
     )
   }
 
   const handleDisconnect = async () => {
-    setError(null)
-    setLoading(true)
+    dispatch({ type: "START_LOADING" })
     try {
-      const res = await fetch('/api/telegram/connect', { method: 'DELETE' })
+      const res = await fetch("/api/telegram/connect", { method: "DELETE" })
       if (res.ok) {
-        setConnected(false)
-        setUsername('')
+        dispatch({ type: "DISCONNECT_SUCCESS" })
       } else {
         const result = await res.json()
-        setError(result.error ?? t('error'))
+        dispatch({ type: "SET_ERROR", error: result.error ?? t("error") })
       }
     } catch {
-      setError(t('error'))
+      dispatch({ type: "SET_ERROR", error: t("error") })
     }
-    setLoading(false)
   }
 
-  if (connected) {
+  if (state.connected) {
     return (
       <div className="flex items-center justify-between rounded-xl border bg-white/50 p-4 dark:bg-graphite/50">
         <div className="flex items-center gap-3">
@@ -126,7 +160,7 @@ export function TelegramConnect({ initialTelegramId, initialTelegramUsername }: 
           </div>
           <div>
             <p className="text-sm font-medium text-graphite dark:text-snow">
-              {t('telegramConnected', { username })}
+              {t("telegramConnected", { username: state.username })}
             </p>
           </div>
         </div>
@@ -134,9 +168,9 @@ export function TelegramConnect({ initialTelegramId, initialTelegramUsername }: 
           variant="destructive"
           size="sm"
           onClick={handleDisconnect}
-          disabled={loading}
+          disabled={state.loading}
         >
-          {t('disconnectTelegram')}
+          {t("disconnectTelegram")}
         </Button>
       </div>
     )
@@ -153,23 +187,23 @@ export function TelegramConnect({ initialTelegramId, initialTelegramUsername }: 
           </div>
           <div>
             <p className="text-sm font-medium text-graphite dark:text-snow">
-              {t('connectTelegram')}
+              {t("connectTelegram")}
             </p>
             <p className="text-xs text-muted-foreground">
-              {t('telegramNotConnected')}
+              {t("telegramNotConnected")}
             </p>
           </div>
         </div>
         <Button
           size="sm"
           onClick={handleConnect}
-          disabled={loading}
+          disabled={state.loading}
         >
-          {loading ? t('connecting') : t('connectTelegram')}
+          {state.loading ? t("connecting") : t("connectTelegram")}
         </Button>
       </div>
-      {error && (
-        <p className="mt-2 text-xs text-red-500">{error}</p>
+      {state.error && (
+        <p className="mt-2 text-xs text-red-500">{state.error}</p>
       )}
     </div>
   )
