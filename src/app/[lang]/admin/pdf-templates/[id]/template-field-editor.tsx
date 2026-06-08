@@ -145,6 +145,24 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const [googleFonts, setGoogleFonts] = useState<GoogleFont[]>([])
   const [selectedFieldIndex, setSelectedFieldIndex] = useState(0)
 
+  const sortedFields = useMemo(() => {
+    const dbOrder = new Map(DATABASE_FIELD_MAP.map((e, i) => [e.key, i]))
+    return fields.toSorted((a, b) => {
+      const aKey = a.source_key
+      const bKey = b.source_key
+      const aIsDb = a.source_type === 'database' && aKey != null && dbOrder.has(aKey)
+      const bIsDb = b.source_type === 'database' && bKey != null && dbOrder.has(bKey)
+
+      if (aIsDb && bIsDb) return dbOrder.get(aKey)! - dbOrder.get(bKey)!
+      if (aIsDb) return -1
+      if (bIsDb) return 1
+
+      if (a.source_type === 'qr_code' && b.source_type !== 'qr_code') return -1
+      if (a.source_type !== 'qr_code' && b.source_type === 'qr_code') return 1
+      return 0
+    })
+  }, [fields])
+
   const selectedFont = useMemo(() => {
     const field = fields[selectedFieldIndex]
     if (!field || field.font_source !== 'google' || !field.font_family) return null
@@ -555,31 +573,34 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
 
       <div className="flex gap-6">
         <div className="w-56 shrink-0 space-y-1">
-          {fields.map((field, index) => (
-            <button
-              type="button"
-              key={field.pdf_field_name + index}
-              onClick={() => setSelectedFieldIndex(index)}
-              className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                index === selectedFieldIndex
-                  ? 'bg-bright-sky/10 text-bright-sky font-medium'
-                  : 'text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={field.is_enabled}
-                onChange={(e) => {
-                  e.stopPropagation()
-                  updateField(index, { is_enabled: e.target.checked })
-                }}
-                className="rounded shrink-0"
-                onClick={(e) => e.stopPropagation()}
-                aria-label={field.pdf_field_name ? `Toggle field "${field.pdf_field_name}"` : 'Toggle field enabled'}
-              />
-              <span className="truncate">{field.pdf_field_name}</span>
-            </button>
-          ))}
+          {sortedFields.map((field, sortedIndex) => {
+            const originalIndex = fields.indexOf(field)
+            return (
+              <button
+                type="button"
+                key={field.pdf_field_name + sortedIndex}
+                onClick={() => setSelectedFieldIndex(originalIndex)}
+                className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  originalIndex === selectedFieldIndex
+                    ? 'bg-bright-sky/10 text-bright-sky font-medium'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={field.is_enabled}
+                  onChange={(e) => {
+                    e.stopPropagation()
+                    updateField(originalIndex, { is_enabled: e.target.checked })
+                  }}
+                  className="rounded shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={field.pdf_field_name ? `Toggle field "${field.pdf_field_name}"` : 'Toggle field enabled'}
+                />
+                <span className="truncate">{field.pdf_field_name}</span>
+              </button>
+            )
+          })}
           <button
             type="button"
             onClick={addCustomField}
