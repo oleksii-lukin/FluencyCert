@@ -17,6 +17,7 @@ export type Database = {
       certificate_claims: {
         Row: {
           admin_feedback: string | null
+          approved_at: string | null
           background_template: string | null
           club_id: string | null
           created_at: string
@@ -32,6 +33,7 @@ export type Database = {
         }
         Insert: {
           admin_feedback?: string | null
+          approved_at?: string | null
           background_template?: string | null
           club_id?: string | null
           created_at?: string
@@ -47,6 +49,7 @@ export type Database = {
         }
         Update: {
           admin_feedback?: string | null
+          approved_at?: string | null
           background_template?: string | null
           club_id?: string | null
           created_at?: string
@@ -272,6 +275,7 @@ export type Database = {
           id: string
           is_enabled: boolean
           level_format: string | null
+          multiline: boolean
           pdf_field_name: string
           qr_bg_color: string
           qr_corners_color: string
@@ -299,6 +303,7 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           level_format?: string | null
+          multiline?: boolean
           pdf_field_name: string
           qr_bg_color?: string
           qr_corners_color?: string
@@ -326,6 +331,7 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           level_format?: string | null
+          multiline?: boolean
           pdf_field_name?: string
           qr_bg_color?: string
           qr_corners_color?: string

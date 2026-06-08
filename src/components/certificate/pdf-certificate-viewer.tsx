@@ -22,6 +22,7 @@ interface FieldMapping {
   custom_default_value: string | null
   date_format: string | null
   level_format: string | null
+  multiline: boolean
   text_color: string | null
   qr_dots_color: string
   qr_bg_color: string
@@ -113,6 +114,10 @@ export function PdfCertificateViewer({
           }
 
           pdfField.setText(value)
+
+          if (field.multiline) {
+            pdfField.enableMultiline()
+          }
 
           if (field.text_color) {
             const parsed = hexToRgb(field.text_color)

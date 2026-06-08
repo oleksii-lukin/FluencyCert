@@ -90,6 +90,7 @@ export async function PUT(
     custom_overridable: boolean
     date_format?: string | null
     level_format?: string | null
+    multiline?: boolean
     text_color?: string | null
     qr_dots_color?: string
     qr_bg_color?: string
@@ -113,6 +114,7 @@ export async function PUT(
     custom_overridable: field.custom_overridable,
     date_format: field.date_format ?? null,
     level_format: field.level_format ?? null,
+    multiline: field.multiline ?? false,
     text_color: field.text_color ?? null,
     qr_dots_color: field.qr_dots_color ?? '#1a1a2e',
     qr_bg_color: field.qr_bg_color ?? '#FFFFFF',

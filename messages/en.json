@@ -441,7 +441,9 @@
     "qrDotsType": "Dots Style",
     "qrCornersType": "Corners Style",
     "qrCornersColor": "Corners Color",
-    "transparent": "Transparent"
+    "transparent": "Transparent",
+    "multiline": "Multiline",
+    "multilineHint": "Enable for long text fields (e.g. descriptions, feedback). Text will wrap to multiple lines."
   },
   "claimActions": {
     "approve": "Approve",

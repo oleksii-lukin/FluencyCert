@@ -176,6 +176,7 @@ export default async function CertificatePage({ params }: PageProps) {
     custom_default_value: string | null
     date_format: string | null
     level_format: string | null
+    multiline: boolean
     text_color: string | null
     qr_dots_color: string
     qr_bg_color: string
@@ -266,7 +267,7 @@ export default async function CertificatePage({ params }: PageProps) {
                     speakingClubsCount: claim.speaking_clubs_count ?? 0,
                     hoursParticipated: claim.hours_participated,
                     adminFeedback: claim.admin_feedback,
-                    createdAt: claim.created_at,
+                    createdAt: claim.approved_at ?? claim.created_at,
                     slug: claim.slug,
                   }}
                   customValues={pdfTemplateData.customValues}
@@ -282,7 +283,7 @@ export default async function CertificatePage({ params }: PageProps) {
                 speakingClubsCount={claim.speaking_clubs_count ?? 0}
                 hoursParticipated={claim.hours_participated}
                 adminFeedback={claim.admin_feedback}
-                createdAt={claim.created_at}
+                createdAt={claim.approved_at ?? claim.created_at}
                 slug={claim.slug}
               />
             )}

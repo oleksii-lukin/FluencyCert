@@ -6,6 +6,7 @@ export type CertificateClaim = {
   slug: string
   status: ClaimStatus
   admin_feedback: string | null
+  approved_at: string | null
   english_level: string | null
   speaking_clubs_count: number | null
   hours_participated: number | null

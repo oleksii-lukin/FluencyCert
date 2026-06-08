@@ -122,9 +122,14 @@ export async function PATCH(
     speaking_clubs_count?: number
     hours_participated?: number
     background_template?: string
+    approved_at?: string
   } = {
     status: effectiveStatus,
     admin_feedback: admin_feedback.trim(),
+  }
+
+  if (!isUpdate && effectiveStatus === 'approved') {
+    updateData.approved_at = new Date().toISOString()
   }
 
   if (newSlug !== undefined) {

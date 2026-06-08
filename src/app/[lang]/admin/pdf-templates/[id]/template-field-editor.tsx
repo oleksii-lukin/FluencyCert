@@ -34,6 +34,7 @@ type FieldMapping = {
   custom_overridable: boolean
   date_format: string | null
   level_format: string | null
+  multiline: boolean
   text_color: string | null
   qr_dots_color: string
   qr_bg_color: string
@@ -187,7 +188,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       .then((r) => r.json())
       .then((data) => {
         setTemplate(data.template)
-        setFields(data.template?.pdf_template_fields ?? [])
+        setFields((data.template?.pdf_template_fields ?? []).map((f: any) => ({ ...f, multiline: f.multiline ?? false })))
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -372,6 +373,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         custom_overridable: true,
         date_format: null,
         level_format: null,
+        multiline: false,
         text_color: null,
         qr_dots_color: '#1a1a2e',
         qr_bg_color: '#FFFFFF',
@@ -403,7 +405,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       }
 
       const { fields: savedFields } = await res.json()
-      setFields(savedFields)
+      setFields((savedFields ?? []).map((f: any) => ({ ...f, multiline: f.multiline ?? false })))
       setSuccess(true)
       router.refresh()
     } catch (err) {
@@ -1000,6 +1002,20 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
                       onChange={(e) => updateField(index, { font_size: parseInt(e.target.value, 10) || 12 })}
                       aria-label="Font size"
                     />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={field.multiline}
+                        onChange={(e) => updateField(index, { multiline: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span>{t('multiline')}</span>
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1 ml-6">
+                      {t('multilineHint')}
+                    </p>
                   </div>
                 </div>
 
