@@ -137,7 +137,6 @@ export default async function ClubDetailPage({
         <h2 className="text-2xl font-semibold mb-6">{t('certificateHolders')}</h2>
         <CertificateHolders
           holders={certificateHolders ?? []}
-          lang={lang}
           page={page}
           totalPages={totalPages}
           slug={slug}

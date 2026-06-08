@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   }
 }
 
-export default async function PrivacyPage({ params }: { params: Promise<{ lang: string }> }) {
+export default async function PrivacyPage() {
   const t = await getTranslations('privacy')
 
   return (

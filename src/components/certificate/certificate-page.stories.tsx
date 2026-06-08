@@ -8,6 +8,7 @@ import { NaturalGreenCertificate } from "./templates/natural-green"
 import type { CertificateTemplateProps } from "./template"
 import { UpvoteRosette } from "./upvote-rosette"
 import { TestimonialsMarquee } from "./testimonials-marquee"
+import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons"
 import "./guilloche-pattern.css"
@@ -38,8 +39,6 @@ type FeedbackItem = {
   reviewer_certificate_id: string | null
   profiles: Profile
 }
-
-const NOW = "2026-03-15T10:30:00Z"
 
 const TESTIMONIALS: FeedbackItem[] = [
   { id: "fb-01", feedback_text: "I've seen Alex's progress firsthand — his dedication to improving his speaking skills is truly inspiring. Highly recommended!", display_name_preference: "full_name", status: "approved", sort_order: 1, is_visible: true, created_at: "2026-03-01T12:00:00Z", certificate_id: "cert-1", linkedin_url: null, reviewer_certificate_id: "cert-review-01", profiles: { id: "prof-01", first_name: "Sarah", last_name: "Chen", username: "sarahchen", avatar_url: null } },
@@ -134,13 +133,13 @@ function CertificatePageLayout({
   return (
     <div className="min-h-screen bg-gradient-to-b from-bright-sky/5 via-white to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <a
+        <Link
           href="/"
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
           Back to FluencyCert
-        </a>
+        </Link>
 
         <div className="flex flex-col items-start gap-8 lg:flex-row lg:items-start">
           <div className="flex-1">

@@ -1198,7 +1198,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     dispatchLoading({ type: 'SET_SAVING_FONT', value: false })
   }
 
-  async function handleUploadFont(file: File, _index: number): Promise<string | null> {
+  async function handleUploadFont(file: File): Promise<string | null> {
     dispatchLoading({ type: 'SET_UPLOADING_FONT', value: true })
     try {
       const [res] = await uploadFiles('fontFileUpload', { files: [file] })

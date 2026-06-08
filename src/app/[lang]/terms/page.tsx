@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   }
 }
 
-export default async function TermsPage({ params }: { params: Promise<{ lang: string }> }) {
+export default async function TermsPage() {
   const t = await getTranslations('terms')
 
   return (

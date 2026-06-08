@@ -96,7 +96,7 @@ const fakeUsers: Record<string, {
   },
 }
 
-export default async function GalleryPage({ params }: { params: Promise<{ lang: string }> }) {
+export default async function GalleryPage() {
   const [t, td, tn] = await Promise.all([
     getTranslations('gallery'),
     getTranslations('templateDescriptions'),

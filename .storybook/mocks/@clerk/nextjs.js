@@ -43,4 +43,5 @@ export function ClerkProvider({ children }) {
   return React.createElement(React.Fragment, null, children)
 }
 
-export default { Show, UserButton, SignUpButton, SignInButton, useUser, ClerkProvider }
+const clerkMocks = { Show, UserButton, SignUpButton, SignInButton, useUser, ClerkProvider }
+export default clerkMocks

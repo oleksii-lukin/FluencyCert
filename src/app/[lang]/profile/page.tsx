@@ -4,7 +4,7 @@ import { Link, redirect } from '@/i18n/routing'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Certificate02Icon, Settings02Icon, Share01Icon, Clock01Icon, CheckmarkCircle02Icon, Cancel01Icon, ClubIcon } from "@hugeicons/core-free-icons"
+import { Settings02Icon, Share01Icon, Clock01Icon, CheckmarkCircle02Icon, Cancel01Icon } from "@hugeicons/core-free-icons"
 import { PublicPageLayout } from "@/components/layout/public-page-layout"
 import { TelegramConnect } from "@/components/telegram/telegram-connect"
 import { LinkedInConnect } from "@/components/linkedin/linkedin-connect"

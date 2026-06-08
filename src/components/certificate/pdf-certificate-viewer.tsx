@@ -74,7 +74,7 @@ interface GeneratePdfInput {
 }
 
 async function generatePdf(input: GeneratePdfInput) {
-  const { templateFileUrl, fields, certificateData, customValues, certificateUrl, viewerLocale, pdfjsLib } = input
+  const { templateFileUrl, fields, certificateData, customValues, certificateUrl, viewerLocale } = input
   const cancelled = input.cancelled
 
   const pdfRes = await fetch(templateFileUrl)

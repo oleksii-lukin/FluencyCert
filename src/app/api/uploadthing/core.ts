@@ -11,7 +11,6 @@ export const ourFileRouter = {
       const { userId } = await auth()
       if (!userId) throw new Error('Unauthorized')
 
-      const supabase = createAdminClient()
       const [isMaster, adminClubIds] = await Promise.all([isMasterAdmin(userId), getAdminClubIds(userId)])
 
       if (!isMaster && adminClubIds.length === 0) throw new Error('Forbidden')

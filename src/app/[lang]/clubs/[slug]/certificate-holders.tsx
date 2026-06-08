@@ -15,13 +15,11 @@ interface Holder {
 
 export async function CertificateHolders({
   holders,
-  lang,
   page,
   totalPages,
   slug,
 }: {
   holders: Holder[]
-  lang: string
   page: number
   totalPages: number
   slug: string
