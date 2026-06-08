@@ -20,10 +20,10 @@ async function checkTemplateAccess(userId: string, templateId: string, supabase:
     .single()
 
   if (!tpl) return NextResponse.json({ error: 'Template not found' }, { status: 404 })
-  if (!tpl.club_id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-  const isAdmin = await isClubAdmin(userId, tpl.club_id)
-  if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (tpl.club_id) {
+    const isAdmin = await isClubAdmin(userId, tpl.club_id)
+    if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   return null
 }

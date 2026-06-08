@@ -40,10 +40,10 @@ export async function POST(
       .single()
 
     if (!tpl) return NextResponse.json({ error: 'Template not found' }, { status: 404 })
-    if (!tpl.club_id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-    const isAdmin = await isClubAdmin(userId, tpl.club_id)
-    if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (tpl.club_id) {
+      const isAdmin = await isClubAdmin(userId, tpl.club_id)
+      if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
   }
 
   const { data: template } = await supabase
@@ -98,7 +98,7 @@ export async function POST(
         font_variant: 'regular',
         uploaded_font_key: null,
         custom_default_value: null,
-        custom_overridable: false,
+        custom_overridable: mapping.source_type === 'custom',
         sort_order: (existingFields?.length ?? 0) + index,
       }
     })

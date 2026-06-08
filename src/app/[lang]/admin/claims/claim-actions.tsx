@@ -16,6 +16,8 @@ interface OverridableField {
   custom_default_value: string | null
   pdf_field_name: string
   custom_overridable: boolean
+  source_type?: string
+  source_key?: string | null
 }
 
 interface InitialClaimData {
@@ -58,6 +60,7 @@ export function ClaimActions({
   const [selectedPdfTemplate, setSelectedPdfTemplate] = useState("")
   const [overridableFields, setOverridableFields] = useState<OverridableField[]>([])
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
+  const [templateDbKeys, setTemplateDbKeys] = useState<string[]>([])
 
   useEffect(() => {
     if (certType === 'pdf') {
@@ -74,6 +77,7 @@ export function ClaimActions({
     setSelectedPdfTemplate("")
     setOverridableFields([])
     setCustomFieldValues({})
+    setTemplateDbKeys([])
     setOpen('approve')
   }
 
@@ -95,6 +99,7 @@ export function ClaimActions({
         setSelectedPdfTemplate("")
         setOverridableFields([])
         setCustomFieldValues({})
+        setTemplateDbKeys([])
       }
     }
     setOpen('approve')
@@ -112,12 +117,14 @@ export function ClaimActions({
     setHoursParticipated("")
     setSlug("")
     setError("")
+    setTemplateDbKeys([])
   }
 
   function fetchOverridableFields(templateId: string) {
     if (!templateId) return
     setOverridableFields([])
     setCustomFieldValues({})
+    setTemplateDbKeys([])
     fetch(`/api/admin/pdf-templates/${templateId}`)
       .then((r) => r.json())
       .then((data) => {
@@ -129,6 +136,11 @@ export function ClaimActions({
           defaults[f.id] = f.custom_default_value ?? ''
         }
         setCustomFieldValues(defaults)
+        const dbKeys = fields.reduce((keys: string[], f: OverridableField) => {
+          if (f.source_type === 'database' && f.source_key) keys.push(f.source_key)
+          return keys
+        }, [])
+        setTemplateDbKeys(dbKeys)
       })
       .catch(() => {})
   }
@@ -149,12 +161,16 @@ export function ClaimActions({
     }
 
     if (mode === 'update') {
-      body.english_level = englishLevel.trim()
-      body.speaking_clubs_count = parseInt(speakingClubsCount, 10)
+      if (certType !== 'pdf' || templateDbKeys.includes('englishLevel')) {
+        body.english_level = englishLevel.trim()
+      }
+      if (certType !== 'pdf' || templateDbKeys.includes('speakingClubsCount')) {
+        body.speaking_clubs_count = parseInt(speakingClubsCount, 10)
+      }
       if (certType === 'react') {
         body.background_template = backgroundTemplate
       }
-      if (hoursParticipated) {
+      if (hoursParticipated && (certType !== 'pdf' || templateDbKeys.includes('hoursParticipated'))) {
         body.hours_participated = parseInt(hoursParticipated, 10)
       }
       if (certType === 'pdf') {
@@ -166,12 +182,16 @@ export function ClaimActions({
       }
     } else if (status === 'approved') {
       body.status = status
-      body.english_level = englishLevel.trim()
-      body.speaking_clubs_count = parseInt(speakingClubsCount, 10)
+      if (certType !== 'pdf' || templateDbKeys.includes('englishLevel')) {
+        body.english_level = englishLevel.trim()
+      }
+      if (certType !== 'pdf' || templateDbKeys.includes('speakingClubsCount')) {
+        body.speaking_clubs_count = parseInt(speakingClubsCount, 10)
+      }
       if (certType === 'react') {
         body.background_template = backgroundTemplate
       }
-      if (hoursParticipated) {
+      if (hoursParticipated && (certType !== 'pdf' || templateDbKeys.includes('hoursParticipated'))) {
         body.hours_participated = parseInt(hoursParticipated, 10)
       }
       if (certType === 'pdf') {
@@ -208,6 +228,7 @@ export function ClaimActions({
     setCertType('react')
     setOverridableFields([])
     setCustomFieldValues({})
+    setTemplateDbKeys([])
     setSubmitting(false)
     router.refresh()
   }
@@ -303,46 +324,52 @@ export function ClaimActions({
                     </>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{ca('englishLevel')}</label>
-                    <select
-                      className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                      value={englishLevel}
-                      onChange={(e) => setEnglishLevel(e.target.value)}
-                    >
-                      <option value="">{ca('selectLevel')}</option>
-                      <option value="A1 (Beginner)">{ca('levelA1')}</option>
-                      <option value="A2 (Elementary)">{ca('levelA2')}</option>
-                      <option value="B1 (Intermediate)">{ca('levelB1')}</option>
-                      <option value="B2 (Upper-Intermediate)">{ca('levelB2')}</option>
-                      <option value="C1 (Advanced)">{ca('levelC1')}</option>
-                      <option value="C2 (Proficient)">{ca('levelC2')}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{ca('speakingClubsVisited')}</label>
-                    <input
-                      type="number"
-                      min="0"
-                      aria-label={ca('speakingClubsVisited')}
-                      className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                      placeholder={ca('clubsPlaceholder')}
-                      value={speakingClubsCount}
-                      onChange={(e) => setSpeakingClubsCount(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{ca('hoursParticipatedOptional')}</label>
-                    <input
-                      type="number"
-                      min="0"
-                      aria-label={ca('hoursParticipatedOptional')}
-                      className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                      placeholder={ca('hoursPlaceholder')}
-                      value={hoursParticipated}
-                      onChange={(e) => setHoursParticipated(e.target.value)}
-                    />
-                  </div>
+                  {(certType !== 'pdf' || templateDbKeys.includes('englishLevel')) && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{ca('englishLevel')}</label>
+                      <select
+                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                        value={englishLevel}
+                        onChange={(e) => setEnglishLevel(e.target.value)}
+                      >
+                        <option value="">{ca('selectLevel')}</option>
+                        <option value="A1 (Beginner)">{ca('levelA1')}</option>
+                        <option value="A2 (Elementary)">{ca('levelA2')}</option>
+                        <option value="B1 (Intermediate)">{ca('levelB1')}</option>
+                        <option value="B2 (Upper-Intermediate)">{ca('levelB2')}</option>
+                        <option value="C1 (Advanced)">{ca('levelC1')}</option>
+                        <option value="C2 (Proficient)">{ca('levelC2')}</option>
+                      </select>
+                    </div>
+                  )}
+                  {(certType !== 'pdf' || templateDbKeys.includes('speakingClubsCount')) && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{ca('speakingClubsVisited')}</label>
+                      <input
+                        type="number"
+                        min="0"
+                        aria-label={ca('speakingClubsVisited')}
+                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                        placeholder={ca('clubsPlaceholder')}
+                        value={speakingClubsCount}
+                        onChange={(e) => setSpeakingClubsCount(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  {(certType !== 'pdf' || templateDbKeys.includes('hoursParticipated')) && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{ca('hoursParticipatedOptional')}</label>
+                      <input
+                        type="number"
+                        min="0"
+                        aria-label={ca('hoursParticipatedOptional')}
+                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                        placeholder={ca('hoursPlaceholder')}
+                        value={hoursParticipated}
+                        onChange={(e) => setHoursParticipated(e.target.value)}
+                      />
+                    </div>
+                  )}
                   {certType !== 'pdf' && (
                     <div>
                       <label className="block text-sm font-medium mb-1">{ca('backgroundTemplate')}</label>
@@ -407,7 +434,10 @@ export function ClaimActions({
                 disabled={
                   !feedback.trim() ||
                   submitting ||
-                  (open === 'approve' && (!englishLevel || !speakingClubsCount)) ||
+                  (open === 'approve' && (
+                    (certType !== 'pdf' || templateDbKeys.includes('englishLevel')) && !englishLevel ||
+                    (certType !== 'pdf' || templateDbKeys.includes('speakingClubsCount')) && !speakingClubsCount
+                  )) ||
                   (open === 'approve' && certType === 'pdf' && !selectedPdfTemplate)
                 }
                 onClick={() => handleSubmit(isUpdate ? 'approved' : (open === 'approve' ? 'approved' : 'rejected'))}

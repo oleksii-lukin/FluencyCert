@@ -113,15 +113,6 @@ export async function PATCH(
     return NextResponse.json({ error: 'admin_feedback is required' }, { status: 400 })
   }
 
-  if (effectiveStatus === 'approved') {
-    if (!english_level || typeof english_level !== 'string') {
-      return NextResponse.json({ error: 'english_level is required when approving' }, { status: 400 })
-    }
-    if (speaking_clubs_count == null || typeof speaking_clubs_count !== 'number') {
-      return NextResponse.json({ error: 'speaking_clubs_count is required when approving' }, { status: 400 })
-    }
-  }
-
   const updateData: {
     status?: string
     admin_feedback?: string
@@ -152,8 +143,29 @@ export async function PATCH(
     }
 
     updateData.pdf_template_id = pdf_template_id
-    updateData.english_level = english_level.trim()
-    updateData.speaking_clubs_count = speaking_clubs_count
+
+    const { data: templateDbFields } = await supabase
+      .from('pdf_template_fields')
+      .select('source_key')
+      .eq('template_id', pdf_template_id)
+      .eq('source_type', 'database')
+
+    const dbKeys = new Set(templateDbFields?.map((f) => f.source_key).filter(Boolean) ?? [])
+
+    if (dbKeys.has('englishLevel')) {
+      if (!english_level || typeof english_level !== 'string') {
+        return NextResponse.json({ error: 'english_level is required when approving' }, { status: 400 })
+      }
+      updateData.english_level = english_level.trim()
+    }
+
+    if (dbKeys.has('speakingClubsCount')) {
+      if (speaking_clubs_count == null || typeof speaking_clubs_count !== 'number') {
+        return NextResponse.json({ error: 'speaking_clubs_count is required when approving' }, { status: 400 })
+      }
+      updateData.speaking_clubs_count = speaking_clubs_count
+    }
+
     if (hours_participated != null) {
       updateData.hours_participated = hours_participated
     }
@@ -189,6 +201,13 @@ export async function PATCH(
       }
     }
   } else if (effectiveStatus === 'approved') {
+    if (!english_level || typeof english_level !== 'string') {
+      return NextResponse.json({ error: 'english_level is required when approving' }, { status: 400 })
+    }
+    if (speaking_clubs_count == null || typeof speaking_clubs_count !== 'number') {
+      return NextResponse.json({ error: 'speaking_clubs_count is required when approving' }, { status: 400 })
+    }
+
     updateData.english_level = english_level.trim()
     updateData.speaking_clubs_count = speaking_clubs_count
     if (hours_participated != null) {

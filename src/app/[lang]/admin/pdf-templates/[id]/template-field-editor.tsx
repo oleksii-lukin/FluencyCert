@@ -369,7 +369,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         font_variant: 'regular',
         uploaded_font_key: null,
         custom_default_value: '',
-        custom_overridable: false,
+        custom_overridable: true,
         date_format: null,
         level_format: null,
         text_color: null,
