@@ -29,11 +29,21 @@ interface SeedField {
   multiline?: boolean
 }
 
+interface SeedVariantFieldOverrides {
+  [fieldPdfName: string]: Record<string, unknown>
+}
+
+interface SeedVariant {
+  name: string
+  fileName: string
+  fieldOverrides?: SeedVariantFieldOverrides
+}
+
 interface SeedPdfTemplate {
   name: string
   description?: string
-  fileName: string
   fields: SeedField[]
+  variants: SeedVariant[]
 }
 
 interface SeedFont {
@@ -183,11 +193,12 @@ function generateSql(
     }
   }
 
-  // ── PDF Templates & Fields ─────────────────────────────────────
+  // ── PDF Templates, Variants & Fields ───────────────────────────
   for (const t of templates) {
-    const r = templateResults.get(basename(t.fileName))
-    if (!r) {
-      console.warn(`  ⚠ No upload result for ${t.fileName}, skipping SQL`)
+    const firstVariant = t.variants[0]
+    const firstResult = firstVariant ? templateResults.get(basename(firstVariant.fileName)) : null
+    if (!firstResult) {
+      console.warn(`  ⚠ No upload result for first variant of "${t.name}", skipping SQL`)
       continue
     }
 
@@ -195,18 +206,21 @@ function generateSql(
     lines.push(`-- Template: ${t.name}`)
     lines.push(`INSERT INTO pdf_templates (id, name, description, file_url, file_key)`)
     lines.push(
-      `VALUES (${pgLiteral(templateId)}, ${pgLiteral(t.name)}, ${pgLiteral(t.description ?? null)}, ${pgLiteral(r.ufsUrl)}, ${pgLiteral(r.key)});`,
+      `VALUES (${pgLiteral(templateId)}, ${pgLiteral(t.name)}, ${pgLiteral(t.description ?? null)}, ${pgLiteral(firstResult.ufsUrl)}, ${pgLiteral(firstResult.key)});`,
     )
     lines.push('')
 
+    // ── Fields ────────────────────────────────────────────────
     if (t.fields.length > 0) {
       lines.push(`-- Fields for: ${t.name}`)
       lines.push(
-        `INSERT INTO pdf_template_fields (template_id, pdf_field_name, source_type, source_key, display_label, font_family, font_size, font_source, uploaded_font_key, font_id, is_enabled, custom_default_value, custom_overridable, sort_order, date_format, level_format, text_color, qr_dots_color, qr_bg_color, qr_dots_type, qr_corners_type, qr_corners_color, font_variant, multiline)`,
+        `INSERT INTO pdf_template_fields (id, template_id, pdf_field_name, source_type, source_key, display_label, font_family, font_size, font_source, uploaded_font_key, font_id, is_enabled, custom_default_value, custom_overridable, sort_order, date_format, level_format, text_color, qr_dots_color, qr_bg_color, qr_dots_type, qr_corners_type, qr_corners_color, font_variant, multiline)`,
       )
 
       const values: string[] = []
       for (const f of t.fields) {
+        const fieldId = deterministicUUID('pdf-field:' + t.name + ':' + f.pdfFieldName)
+
         let uploadedFontKey: string | null = null
         let fontId: string | null = null
         if (f.fontSource === 'uploaded' && f.uploadedFontRef) {
@@ -222,13 +236,60 @@ function generateSql(
         }
 
         values.push(
-          `  (${pgLiteral(templateId)}, ${pgLiteral(f.pdfFieldName)}, ${pgLiteral(f.sourceType)}, ${pgLiteral(f.sourceKey ?? null)}, ${pgLiteral(f.displayLabel)}, ${pgLiteral(f.fontFamily ?? 'Inter')}, ${f.fontSize ?? 12}, ${pgLiteral(f.fontSource ?? 'google')}, ${pgLiteral(uploadedFontKey)}, ${fontId ? pgLiteral(fontId) + '::uuid' : 'NULL'}, ${f.isEnabled ?? true}, ${pgLiteral(f.customDefaultValue ?? null)}, ${f.customOverridable ?? false}, ${f.sortOrder ?? 0}, ${pgLiteral(f.dateFormat ?? null)}, ${pgLiteral(f.levelFormat ?? null)}, ${pgLiteral(f.textColor ?? null)}, ${pgLiteral(f.qrDotsColor ?? null)}, ${pgLiteral(f.qrBgColor ?? null)}, ${pgLiteral(f.qrDotsType ?? null)}, ${pgLiteral(f.qrCornersType ?? null)}, ${pgLiteral(f.qrCornersColor ?? null)}, ${pgLiteral(f.fontVariant ?? null)}, ${f.multiline ?? false})`,
+          `  (${pgLiteral(fieldId)}, ${pgLiteral(templateId)}, ${pgLiteral(f.pdfFieldName)}, ${pgLiteral(f.sourceType)}, ${pgLiteral(f.sourceKey ?? null)}, ${pgLiteral(f.displayLabel)}, ${pgLiteral(f.fontFamily ?? 'Inter')}, ${f.fontSize ?? 12}, ${pgLiteral(f.fontSource ?? 'google')}, ${pgLiteral(uploadedFontKey)}, ${fontId ? pgLiteral(fontId) + '::uuid' : 'NULL'}, ${f.isEnabled ?? true}, ${pgLiteral(f.customDefaultValue ?? null)}, ${f.customOverridable ?? false}, ${f.sortOrder ?? 0}, ${pgLiteral(f.dateFormat ?? null)}, ${pgLiteral(f.levelFormat ?? null)}, ${pgLiteral(f.textColor ?? null)}, ${pgLiteral(f.qrDotsColor ?? '#1a1a2e')}, ${pgLiteral(f.qrBgColor ?? '#FFFFFF')}, ${pgLiteral(f.qrDotsType ?? 'rounded')}, ${pgLiteral(f.qrCornersType ?? 'square')}, ${pgLiteral(f.qrCornersColor ?? '#1a1a2e')}, ${pgLiteral(f.fontVariant ?? 'regular')}, ${f.multiline ?? false})`,
         )
       }
 
       lines.push('VALUES')
       lines.push(values.join(',\n') + ';')
       lines.push('')
+    }
+
+    // ── Variants ─────────────────────────────────────────────
+    for (let i = 0; i < t.variants.length; i++) {
+      const v = t.variants[i]
+      const vr = templateResults.get(basename(v.fileName))
+      if (!vr) {
+        console.warn(`  ⚠ No upload result for variant "${v.name}" of "${t.name}", skipping`)
+        continue
+      }
+
+      const variantId = deterministicUUID('pdf-variant:' + t.name + ':' + v.name)
+      lines.push(`-- Variant: ${v.name} (${t.name})`)
+      lines.push(
+        `INSERT INTO pdf_template_variants (id, template_id, name, file_url, file_key, sort_order)`,
+      )
+      lines.push(
+        `VALUES (${pgLiteral(variantId)}, ${pgLiteral(templateId)}, ${pgLiteral(v.name)}, ${pgLiteral(vr.ufsUrl)}, ${pgLiteral(vr.key)}, ${i});`,
+      )
+      lines.push('')
+
+      // ── Field overrides ──────────────────────────────────────
+      if (v.fieldOverrides) {
+        for (const [fieldPdfName, overrides] of Object.entries(v.fieldOverrides)) {
+          const fieldId = deterministicUUID('pdf-field:' + t.name + ':' + fieldPdfName)
+
+          const overrideCols: string[] = ['variant_id', 'field_id']
+          const overrideVals: string[] = [pgLiteral(variantId), pgLiteral(fieldId)]
+
+          for (const [key, value] of Object.entries(overrides)) {
+            overrideCols.push(key)
+            if (typeof value === 'boolean') {
+              overrideVals.push(value ? 'TRUE' : 'FALSE')
+            } else if (value === null || value === undefined) {
+              overrideVals.push('NULL')
+            } else if (typeof value === 'number') {
+              overrideVals.push(String(value))
+            } else {
+              overrideVals.push(pgLiteral(String(value)))
+            }
+          }
+
+          lines.push(`INSERT INTO pdf_template_field_overrides (${overrideCols.join(', ')})`)
+          lines.push(`VALUES (${overrideVals.join(', ')});`)
+          lines.push('')
+        }
+      }
     }
   }
 
@@ -264,16 +325,22 @@ async function main() {
   const utapi = new UTApi()
 
   const pdfResults: UploadResult[] = []
+  const uniquePdfFiles = new Set<string>()
   for (const t of manifest.pdfTemplates) {
-    const filePath = resolve(SEED_FILES_DIR, t.fileName)
-    if (!existsSync(filePath)) {
-      console.error(`  File not found: ${filePath}`)
-      process.exit(1)
+    for (const v of t.variants) {
+      if (uniquePdfFiles.has(v.fileName)) continue
+      uniquePdfFiles.add(v.fileName)
+
+      const filePath = resolve(SEED_FILES_DIR, v.fileName)
+      if (!existsSync(filePath)) {
+        console.error(`  File not found: ${filePath}`)
+        process.exit(1)
+      }
+      process.stdout.write(`  Uploading PDF: ${v.fileName}... `)
+      const result = await uploadFile(utapi, filePath, basename(v.fileName))
+      pdfResults.push(result)
+      console.log(`key: ${result.key}`)
     }
-    process.stdout.write(`  Uploading PDF: ${t.fileName}... `)
-    const result = await uploadFile(utapi, filePath, basename(t.fileName))
-    pdfResults.push(result)
-    console.log(`key: ${result.key}`)
   }
 
   const fontResults = new Map<string, UploadResult>()

@@ -77,6 +77,7 @@ interface PdfTemplate {
   file_url: string
   created_at: string
   pdf_template_fields: { count: number }[]
+  pdf_template_variants: { count: number }[]
 }
 
 interface UploadFormState {
@@ -291,8 +292,17 @@ export function ClubPdfTemplateList() {
             {data.templates.map((template) => (
               <tr key={template.id} className="border-b last:border-b-0 hover:bg-muted/30">
                 <td className="px-4 py-3 font-medium">{template.name}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">
-                  {template.pdf_template_fields?.[0]?.count ?? 0}
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center rounded-full bg-bright-sky/10 px-2.5 py-0.5 text-xs font-medium text-bright-sky">
+                      {template.pdf_template_fields?.[0]?.count ?? 0} fields
+                    </span>
+                    {(template.pdf_template_variants?.[0]?.count ?? 0) > 0 && (
+                      <span className="inline-flex items-center rounded-full bg-harvest-orange/10 px-2.5 py-0.5 text-xs font-medium text-harvest-orange">
+                        {template.pdf_template_variants[0].count} layouts
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
                   {new Date(template.created_at).toLocaleDateString()}

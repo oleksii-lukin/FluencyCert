@@ -5,8 +5,8 @@ import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
 import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
 
-const apiAj = aj.withRule(
-  slidingWindow({ mode: "LIVE", interval: 60, max: 120, characteristics: ["userId"] }),
+const ajInstance = aj.withRule(
+  slidingWindow({ mode: 'LIVE', interval: 60, max: 20, characteristics: ['userId'] }),
 )
 
 async function checkTemplateAccess(userId: string, templateId: string, supabase: ReturnType<typeof createAdminClient>) {
@@ -28,71 +28,16 @@ async function checkTemplateAccess(userId: string, templateId: string, supabase:
   return null
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
-  const decision = await apiAj.protect(request, { userId })
-  if (decision.isDenied()) {
-    if (decision.reason.isRateLimit()) {
-      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
-    }
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  const supabase = createAdminClient()
-  const { id } = await params
-
-  const accessError = await checkTemplateAccess(userId, id, supabase)
-  if (accessError) return accessError
-
-  const { data: template, error } = await supabase
-    .from('pdf_templates')
-    .select('*, pdf_template_fields(*)')
-    .eq('id', id)
-    .order('sort_order', { foreignTable: 'pdf_template_fields', ascending: true })
-    .single()
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  if (!template) {
-    return NextResponse.json({ error: 'Template not found' }, { status: 404 })
-  }
-
-  const { data: variants } = await supabase
-    .from('pdf_template_variants')
-    .select('*, pdf_template_field_overrides(*)')
-    .eq('template_id', id)
-    .order('sort_order')
-
-  const sortedVariants = [...(variants ?? [])].sort((a, b) => {
-    const nameOrder: Record<string, number> = { Landscape: 0, Portrait: 1 }
-    const aOrder = nameOrder[a.name] ?? 2
-    const bOrder = nameOrder[b.name] ?? 2
-    if (aOrder !== bOrder) return aOrder - bOrder
-    return a.sort_order - b.sort_order
-  })
-
-  return NextResponse.json({ template, variants: sortedVariants })
-}
-
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string; variantId: string }> },
 ) {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const decision = await apiAj.protect(request, { userId })
+  const decision = await ajInstance.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -101,18 +46,23 @@ export async function PATCH(
   }
 
   const supabase = createAdminClient()
-  const { id } = await params
+  const { id, variantId } = await params
 
   const accessError = await checkTemplateAccess(userId, id, supabase)
   if (accessError) return accessError
 
   const body = await request.json()
-  const { name, description } = body
+  const { name } = body
 
-  const { data: template, error } = await supabase
-    .from('pdf_templates')
-    .update({ name, description })
-    .eq('id', id)
+  if (!name) {
+    return NextResponse.json({ error: 'name is required' }, { status: 400 })
+  }
+
+  const { data: variant, error } = await supabase
+    .from('pdf_template_variants')
+    .update({ name })
+    .eq('id', variantId)
+    .eq('template_id', id)
     .select()
     .single()
 
@@ -120,19 +70,23 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ template })
+  if (!variant) {
+    return NextResponse.json({ error: 'Variant not found' }, { status: 404 })
+  }
+
+  return NextResponse.json({ variant })
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string; variantId: string }> },
 ) {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const decision = await apiAj.protect(request, { userId })
+  const decision = await ajInstance.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -141,15 +95,16 @@ export async function DELETE(
   }
 
   const supabase = createAdminClient()
-  const { id } = await params
+  const { id, variantId } = await params
 
   const accessError = await checkTemplateAccess(userId, id, supabase)
   if (accessError) return accessError
 
   const { error } = await supabase
-    .from('pdf_templates')
+    .from('pdf_template_variants')
     .delete()
-    .eq('id', id)
+    .eq('id', variantId)
+    .eq('template_id', id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

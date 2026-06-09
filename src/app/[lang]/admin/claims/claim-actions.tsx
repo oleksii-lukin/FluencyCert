@@ -12,9 +12,14 @@ async function fetchPdfTemplatesList() {
   return data.templates ?? []
 }
 
+interface PdfTemplateVariant {
+  id: string
+  name: string
+}
+
 async function fetchTemplateFields(templateId: string) {
   const res = await fetch(`/api/admin/pdf-templates/${templateId}`)
-  if (!res.ok) return { overridable: [], defaults: {}, dbKeys: [] }
+  if (!res.ok) return { overridable: [], defaults: {}, dbKeys: [], variants: [] }
   const data = await res.json()
   const fields = data.template?.pdf_template_fields ?? []
   const overridable = fields.filter((f: OverridableField) => f.custom_overridable === true)
@@ -26,7 +31,8 @@ async function fetchTemplateFields(templateId: string) {
     if (f.source_type === 'database' && f.source_key) keys.push(f.source_key)
     return keys
   }, [])
-  return { overridable, defaults, dbKeys }
+  const variants: PdfTemplateVariant[] = (data.variants ?? []).map((v: { id: string; name: string }) => ({ id: v.id, name: v.name }))
+  return { overridable, defaults, dbKeys, variants }
 }
 
 async function fetchOverridableFieldsData(
@@ -68,6 +74,7 @@ interface InitialClaimData {
   slug: string
   admin_feedback: string | null
   pdf_template_id: string | null
+  pdf_template_variant_id: string | null
   status: string
 }
 
@@ -80,7 +87,9 @@ interface FormState {
   slug: string
   certType: 'react' | 'pdf'
   selectedPdfTemplate: string
+  selectedPdfTemplateVariant: string
   pdfTemplates: PdfTemplate[]
+  pdfTemplateVariants: PdfTemplateVariant[]
 }
 
 interface UiState {
@@ -104,7 +113,9 @@ type FormAction =
   | { type: 'SET_SLUG'; value: string }
   | { type: 'SET_CERT_TYPE'; value: 'react' | 'pdf' }
   | { type: 'SET_SELECTED_PDF_TEMPLATE'; value: string }
+  | { type: 'SET_SELECTED_PDF_TEMPLATE_VARIANT'; value: string }
   | { type: 'SET_PDF_TEMPLATES'; templates: PdfTemplate[] }
+  | { type: 'SET_PDF_TEMPLATE_VARIANTS'; variants: PdfTemplateVariant[] }
   | { type: 'LOAD_INITIAL_DATA'; data: InitialClaimData }
   | { type: 'RESET_FORM' }
 
@@ -133,7 +144,9 @@ function createInitialFormState(): FormState {
     slug: "",
     certType: 'react',
     selectedPdfTemplate: "",
+    selectedPdfTemplateVariant: "",
     pdfTemplates: [],
+    pdfTemplateVariants: [],
   }
 }
 
@@ -167,8 +180,12 @@ function formReducer(state: FormState, action: FormAction): FormState {
       return { ...state, certType: action.value }
     case 'SET_SELECTED_PDF_TEMPLATE':
       return { ...state, selectedPdfTemplate: action.value }
+    case 'SET_SELECTED_PDF_TEMPLATE_VARIANT':
+      return { ...state, selectedPdfTemplateVariant: action.value }
     case 'SET_PDF_TEMPLATES':
       return { ...state, pdfTemplates: action.templates }
+    case 'SET_PDF_TEMPLATE_VARIANTS':
+      return { ...state, pdfTemplateVariants: action.variants }
     case 'LOAD_INITIAL_DATA':
       return {
         ...state,
@@ -180,7 +197,7 @@ function formReducer(state: FormState, action: FormAction): FormState {
         slug: action.data.slug ?? "",
       }
     case 'RESET_FORM':
-      return createInitialFormState()
+      return { ...createInitialFormState(), pdfTemplates: state.pdfTemplates }
     default:
       return state
   }
@@ -293,6 +310,21 @@ function ClaimActionModal({
                       ))}
                     </select>
                   </div>
+                  {form.selectedPdfTemplate && form.pdfTemplateVariants.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{pt('variantName')}</label>
+                      <select
+                        className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
+                        value={form.selectedPdfTemplateVariant}
+                        onChange={(e) => dispatchForm({ type: 'SET_SELECTED_PDF_TEMPLATE_VARIANT', value: e.target.value })}
+                      >
+                        <option value="">{pt('variantDefault')}</option>
+                        {form.pdfTemplateVariants.map((v) => (
+                          <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {data.overridableFields.map((field) => (
                     <div key={field.id}>
@@ -480,6 +512,12 @@ export function ClaimActions({
         handleCertTypeChange('pdf')
         dispatchForm({ type: 'SET_SELECTED_PDF_TEMPLATE', value: initialData.pdf_template_id })
         fetchOverridableFieldsData(initialData.pdf_template_id, dispatchData)
+        if (initialData.pdf_template_variant_id) {
+          dispatchForm({ type: 'SET_SELECTED_PDF_TEMPLATE_VARIANT', value: initialData.pdf_template_variant_id })
+        }
+        fetchTemplateFields(initialData.pdf_template_id).then((result) => {
+          dispatchForm({ type: 'SET_PDF_TEMPLATE_VARIANTS', variants: result.variants })
+        }).catch(() => {})
       } else {
         handleCertTypeChange('react')
         dispatchForm({ type: 'SET_SELECTED_PDF_TEMPLATE', value: "" })
@@ -497,7 +535,14 @@ export function ClaimActions({
 
   function handleTemplateChange(templateId: string) {
     dispatchForm({ type: 'SET_SELECTED_PDF_TEMPLATE', value: templateId })
+    dispatchForm({ type: 'SET_SELECTED_PDF_TEMPLATE_VARIANT', value: '' })
+    dispatchForm({ type: 'SET_PDF_TEMPLATE_VARIANTS', variants: [] })
     fetchOverridableFieldsData(templateId, dispatchData)
+    if (templateId) {
+      fetchTemplateFields(templateId).then((result) => {
+        dispatchForm({ type: 'SET_PDF_TEMPLATE_VARIANTS', variants: result.variants })
+      }).catch(() => {})
+    }
   }
 
   async function handleSubmit(status: 'approved' | 'rejected') {
@@ -524,6 +569,9 @@ export function ClaimActions({
       }
       if (form.certType === 'pdf') {
         body.pdf_template_id = form.selectedPdfTemplate
+        if (form.selectedPdfTemplateVariant) {
+          body.pdf_template_variant_id = form.selectedPdfTemplateVariant
+        }
         body.custom_values = Object.entries(data.customFieldValues).map(([field_id, value]) => ({
           field_id,
           value,
@@ -545,6 +593,9 @@ export function ClaimActions({
       }
       if (form.certType === 'pdf') {
         body.pdf_template_id = form.selectedPdfTemplate
+        if (form.selectedPdfTemplateVariant) {
+          body.pdf_template_variant_id = form.selectedPdfTemplateVariant
+        }
         body.custom_values = Object.entries(data.customFieldValues).map(([field_id, value]) => ({
           field_id,
           value,

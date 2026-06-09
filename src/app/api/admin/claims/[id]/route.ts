@@ -44,7 +44,7 @@ export async function PATCH(
   }
 
   const [{ id }, body] = await Promise.all([params, request.json()])
-  const { slug: newSlug, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, pdf_template_id, custom_values } = body
+  const { slug: newSlug, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, pdf_template_id, pdf_template_variant_id, custom_values } = body
 
   if (newSlug !== undefined) {
     const upperSlug = newSlug.toUpperCase()
@@ -74,6 +74,7 @@ export async function PATCH(
       hours_participated === undefined &&
       background_template === undefined &&
       pdf_template_id === undefined &&
+      pdf_template_variant_id === undefined &&
       custom_values === undefined
 
     if (hasOnlySlug) {
@@ -118,6 +119,7 @@ export async function PATCH(
     admin_feedback?: string
     slug?: string
     pdf_template_id?: string
+    pdf_template_variant_id?: string
     english_level?: string
     speaking_clubs_count?: number
     hours_participated?: number
@@ -148,6 +150,21 @@ export async function PATCH(
     }
 
     updateData.pdf_template_id = pdf_template_id
+
+    if (pdf_template_variant_id) {
+      const { data: variant } = await supabase
+        .from('pdf_template_variants')
+        .select('id')
+        .eq('id', pdf_template_variant_id)
+        .eq('template_id', pdf_template_id)
+        .single()
+
+      if (!variant) {
+        return NextResponse.json({ error: 'PDF template variant not found for this template' }, { status: 404 })
+      }
+
+      updateData.pdf_template_variant_id = pdf_template_variant_id
+    }
 
     const { data: templateDbFields } = await supabase
       .from('pdf_template_fields')

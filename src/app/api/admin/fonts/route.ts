@@ -5,7 +5,7 @@ import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
 
 const listAj = aj.withRule(
-  slidingWindow({ mode: "LIVE", interval: 60, max: 30, characteristics: ["userId"] }),
+  slidingWindow({ mode: "LIVE", interval: 60, max: 120, characteristics: ["userId"] }),
 )
 
 export async function GET(request: Request) {

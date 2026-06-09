@@ -443,7 +443,15 @@
     "qrCornersColor": "Corners Color",
     "transparent": "Transparent",
     "multiline": "Multiline",
-    "multilineHint": "Enable for long text fields (e.g. descriptions, feedback). Text will wrap to multiple lines."
+    "multilineHint": "Enable for long text fields (e.g. descriptions, feedback). Text will wrap to multiple lines.",
+    "defaultConfig": "Default Config",
+    "addVariant": "Add Variant",
+    "variantName": "Variant Name",
+    "renameVariant": "Rename Variant",
+    "deleteVariant": "Delete Variant",
+    "deleteVariantConfirm": "Are you sure you want to delete this variant?",
+    "saveOverrides": "Save Variant Mappings",
+    "variantDefault": "Default"
   },
   "claimActions": {
     "approve": "Approve",

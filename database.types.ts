@@ -25,6 +25,7 @@ export type Database = {
           hours_participated: number | null
           id: string
           pdf_template_id: string | null
+          pdf_template_variant_id: string | null
           slug: string
           speaking_clubs_count: number | null
           status: string
@@ -41,6 +42,7 @@ export type Database = {
           hours_participated?: number | null
           id?: string
           pdf_template_id?: string | null
+          pdf_template_variant_id?: string | null
           slug: string
           speaking_clubs_count?: number | null
           status?: string
@@ -57,6 +59,7 @@ export type Database = {
           hours_participated?: number | null
           id?: string
           pdf_template_id?: string | null
+          pdf_template_variant_id?: string | null
           slug?: string
           speaking_clubs_count?: number | null
           status?: string
@@ -76,6 +79,13 @@ export type Database = {
             columns: ["pdf_template_id"]
             isOneToOne: false
             referencedRelation: "pdf_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_claims_pdf_template_variant_id_fkey"
+            columns: ["pdf_template_variant_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_template_variants"
             referencedColumns: ["id"]
           },
           {
@@ -297,6 +307,103 @@ export type Database = {
         }
         Relationships: []
       }
+      pdf_template_field_overrides: {
+        Row: {
+          custom_default_value: string | null
+          custom_overridable: boolean | null
+          date_format: string | null
+          display_label: string | null
+          field_id: string
+          font_family: string | null
+          font_id: string | null
+          font_size: number | null
+          font_source: string | null
+          font_variant: string | null
+          id: string
+          is_enabled: boolean | null
+          level_format: string | null
+          multiline: boolean | null
+          qr_bg_color: string | null
+          qr_corners_color: string | null
+          qr_corners_type: string | null
+          qr_dots_color: string | null
+          qr_dots_type: string | null
+          text_color: string | null
+          uploaded_font_key: string | null
+          variant_id: string
+        }
+        Insert: {
+          custom_default_value?: string | null
+          custom_overridable?: boolean | null
+          date_format?: string | null
+          display_label?: string | null
+          field_id: string
+          font_family?: string | null
+          font_id?: string | null
+          font_size?: number | null
+          font_source?: string | null
+          font_variant?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          level_format?: string | null
+          multiline?: boolean | null
+          qr_bg_color?: string | null
+          qr_corners_color?: string | null
+          qr_corners_type?: string | null
+          qr_dots_color?: string | null
+          qr_dots_type?: string | null
+          text_color?: string | null
+          uploaded_font_key?: string | null
+          variant_id: string
+        }
+        Update: {
+          custom_default_value?: string | null
+          custom_overridable?: boolean | null
+          date_format?: string | null
+          display_label?: string | null
+          field_id?: string
+          font_family?: string | null
+          font_id?: string | null
+          font_size?: number | null
+          font_source?: string | null
+          font_variant?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          level_format?: string | null
+          multiline?: boolean | null
+          qr_bg_color?: string | null
+          qr_corners_color?: string | null
+          qr_corners_type?: string | null
+          qr_dots_color?: string | null
+          qr_dots_type?: string | null
+          text_color?: string | null
+          uploaded_font_key?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_template_field_overrides_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_template_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdf_template_field_overrides_font_id_fkey"
+            columns: ["font_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_fonts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdf_template_field_overrides_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_template_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdf_template_fields: {
         Row: {
           created_at: string
@@ -395,6 +502,47 @@ export type Database = {
           },
           {
             foreignKeyName: "pdf_template_fields_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_template_variants: {
+        Row: {
+          created_at: string
+          file_key: string
+          file_url: string
+          id: string
+          name: string
+          sort_order: number
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_key: string
+          file_url: string
+          id?: string
+          name: string
+          sort_order?: number
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_key?: string
+          file_url?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_template_variants_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "pdf_templates"

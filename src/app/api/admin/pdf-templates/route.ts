@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   if (isMaster) {
     const { data: templates, error } = await supabase
       .from('pdf_templates')
-      .select('*, pdf_template_fields(count)')
+      .select('*, pdf_template_fields(count), pdf_template_variants(count)')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
 
   const { data: templates, error } = await supabase
     .from('pdf_templates')
-    .select('*, pdf_template_fields(count)')
+    .select('*, pdf_template_fields(count), pdf_template_variants(count)')
     .or(`club_id.is.null,club_id.in.(${adminClubIds.join(',')})`)
     .order('created_at', { ascending: false })
 

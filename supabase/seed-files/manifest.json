@@ -1,9 +1,18 @@
 {
   "pdfTemplates": [
     {
-      "name": "Dark Navy Gold Border Landscape Certificate of Participation",
-      "description": "An elegant landscape certificate with a dark navy background, gold decorative border frame, gold star badge, QR code verification, and classic serif typography.",
-      "fileName": "pdfs/84-forms.pdf",
+      "name": "Dark Navy Gold Border Certificate",
+      "description": "An elegant certificate with a dark navy background, gold decorative border frame, gold star badge, QR code verification, and classic serif typography. Available in landscape and portrait orientations.",
+      "variants": [
+        {
+          "name": "Landscape",
+          "fileName": "pdfs/84-forms.pdf"
+        },
+        {
+          "name": "Portrait",
+          "fileName": "pdfs/88-forms.pdf"
+        }
+      ],
       "fields": [
         {
           "pdfFieldName": "[certificateissued_on]",
@@ -100,157 +109,18 @@
       ]
     },
     {
-      "name": "Dark Navy Gold Border Portrait Certificate of Participation",
-      "description": "An elegant portrait certificate with a dark navy background, gold decorative border frame, gold star badge, QR code verification, and classic serif typography.",
-      "fileName": "pdfs/88-forms.pdf",
-      "fields": [
+      "name": "Elegant Gold Recognition Certificate",
+      "description": "A refined certificate of recognition featuring soft pink background, ornate gold corner decorations, classic serif typography, and QR code verification. Available in landscape and portrait orientations.",
+      "variants": [
         {
-          "pdfFieldName": "[recipientname]",
-          "sourceType": "database",
-          "sourceKey": "fullName",
-          "displayLabel": "[recipientname]",
-          "fontFamily": "Kalam",
-          "fontSize": 156,
-          "fontSource": "uploaded",
-          "uploadedFontRef": "Kalam",
-          "isEnabled": true,
-          "customOverridable": false,
-          "sortOrder": 0,
-          "fontVariant": "regular"
+          "name": "Landscape",
+          "fileName": "pdfs/90-forms.pdf"
         },
         {
-          "pdfFieldName": "[masterclassname]",
-          "sourceType": "custom",
-          "displayLabel": "[masterclassname]",
-          "fontFamily": "Kalam",
-          "fontSize": 156,
-          "fontSource": "uploaded",
-          "uploadedFontRef": "Kalam",
-          "isEnabled": true,
-          "customDefaultValue": "",
-          "customOverridable": true,
-          "sortOrder": 1,
-          "fontVariant": "regular"
-        },
-        {
-          "pdfFieldName": "[masterclassdescription]",
-          "sourceType": "custom",
-          "displayLabel": "[masterclassdescription]",
-          "fontFamily": "Kalam",
-          "fontSize": 56,
-          "fontSource": "uploaded",
-          "uploadedFontRef": "Kalam-700",
-          "isEnabled": true,
-          "customDefaultValue": null,
-          "customOverridable": true,
-          "sortOrder": 2,
-          "textColor": "#6b7280",
-          "fontVariant": "700",
-          "multiline": true
-        },
-        {
-          "pdfFieldName": "[certificateissued_on]",
-          "sourceType": "database",
-          "sourceKey": "createdAt",
-          "displayLabel": "[certificateissued_on]",
-          "fontFamily": "Martian Mono",
-          "fontSize": 80,
-          "fontSource": "uploaded",
-          "uploadedFontRef": "Martian Mono",
-          "isEnabled": true,
-          "customOverridable": false,
-          "sortOrder": 3,
-          "dateFormat": "gb",
-          "fontVariant": "500"
-        },
-        {
-          "pdfFieldName": "[certificateuuid]",
-          "sourceType": "database",
-          "sourceKey": "slug",
-          "displayLabel": "[certificateuuid]",
-          "fontFamily": "Martian Mono",
-          "fontSize": 80,
-          "fontSource": "uploaded",
-          "uploadedFontRef": "Martian Mono",
-          "isEnabled": true,
-          "customOverridable": false,
-          "sortOrder": 4,
-          "fontVariant": "500"
-        },
-        {
-          "pdfFieldName": "qrCode",
-          "sourceType": "qr_code",
-          "displayLabel": "qrCode",
-          "fontFamily": "Inter",
-          "fontSize": 12,
-          "fontSource": "google",
-          "isEnabled": true,
-          "sortOrder": 5,
-          "qrDotsColor": "#171110",
-          "qrBgColor": "transparent",
-          "qrDotsType": "tile",
-          "qrCornersType": "square",
-          "qrCornersColor": "#171110"
+          "name": "Portrait",
+          "fileName": "pdfs/95-forms.pdf"
         }
-      ]
-    },
-    {
-      "name": "Elegant Gold Album Recognition Certificate",
-      "description": "A refined certificate of recognition featuring soft pink background, ornate gold corner decorations, classic serif typography, and QR code verification. Perfect for honoring outstanding dedication and contributions.",
-      "fileName": "pdfs/90-forms.pdf",
-      "fields": [
-        {
-          "pdfFieldName": "[recipientname]",
-          "sourceType": "database",
-          "sourceKey": "fullName",
-          "displayLabel": "[recipientname]",
-          "fontFamily": "Jacques Francois",
-          "fontSize": 120,
-          "fontSource": "uploaded",
-          "uploadedFontRef": "Jacques Francois",
-          "isEnabled": true,
-          "customOverridable": false,
-          "sortOrder": 1,
-          "textColor": "#AD7C18",
-          "fontVariant": "regular"
-        },
-        {
-          "pdfFieldName": "[certificateissued_on]",
-          "sourceType": "database",
-          "sourceKey": "createdAt",
-          "displayLabel": "[certificateissued_on]",
-          "fontFamily": "Open Sans",
-          "fontSize": 80,
-          "fontSource": "uploaded",
-          "uploadedFontRef": "Open Sans",
-          "isEnabled": true,
-          "customOverridable": false,
-          "sortOrder": 2,
-          "dateFormat": "gb",
-          "textColor": "#AD7C18",
-          "fontVariant": "600"
-        },
-        {
-          "pdfFieldName": "[certificateuuid]",
-          "sourceType": "database",
-          "sourceKey": "slug",
-          "displayLabel": "[certificateuuid]",
-          "fontFamily": "Open Sans",
-          "fontSize": 80,
-          "fontSource": "uploaded",
-          "uploadedFontRef": "Open Sans",
-          "isEnabled": true,
-          "customOverridable": false,
-          "sortOrder": 3,
-          "textColor": "#AD7C18",
-          "fontVariant": "600"
-        }
-      ]
-    },
-    {
-      "name": "Elegant Gold Portrait Recognition Certificate",
-      "description": "A refined certificate of recognition featuring soft pink background, ornate gold corner decorations, classic serif typography, and QR code verification. Perfect for honoring outstanding dedication and contributions.",
-      "fileName": "pdfs/95-forms.pdf",
+      ],
       "fields": [
         {
           "pdfFieldName": "[recipientname]",

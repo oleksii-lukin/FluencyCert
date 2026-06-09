@@ -108,6 +108,7 @@ export default async function AdminClubClaimsPage({
                         slug: claim.slug,
                         admin_feedback: claim.admin_feedback,
                         pdf_template_id: claim.pdf_template_id,
+                        pdf_template_variant_id: claim.pdf_template_variant_id,
                         status: claim.status,
                       }}
                     />

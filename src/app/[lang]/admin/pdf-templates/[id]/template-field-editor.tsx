@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useReducer } from 'react'
+import { useEffect, useRef, useReducer, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { FontPicker } from '@/components/ui/font-picker'
@@ -13,6 +13,7 @@ import { getPreviewDate, getPreviewLevel } from '@/lib/pdf-formatting'
 import type { GoogleFont } from '@/lib/fonts'
 import { fetchGoogleFonts, createFontRecord } from '@/lib/fonts'
 import { groupVariants, groupUploadedFonts, parseFontFilename, type FontFamilyGroup } from '@/lib/font-variants'
+import { VariantTabs } from './template-variant-tabs'
 import QrCodeWithLogo from 'qrcode-with-logos'
 
 const QR_DOT_TYPES = ['square', 'dot', 'dot-small', 'tile', 'rounded', 'diamond', 'star', 'fluid', 'fluid-line', 'stripe', 'stripe-row', 'stripe-column'] as const
@@ -59,6 +60,83 @@ interface TemplateData {
   description: string | null
   file_url: string
   pdf_template_fields: FieldMapping[]
+}
+
+interface VariantData {
+  id: string
+  name: string
+  file_url: string
+  file_key: string
+  sort_order: number
+  pdf_template_field_overrides: VariantOverride[]
+}
+
+interface VariantOverride {
+  id: string
+  variant_id: string
+  field_id: string
+  font_family: string | null
+  font_size: number | null
+  font_source: string | null
+  font_variant: string | null
+  uploaded_font_key: string | null
+  font_id: string | null
+  text_color: string | null
+  display_label: string | null
+  is_enabled: boolean | null
+  multiline: boolean | null
+  date_format: string | null
+  level_format: string | null
+  custom_default_value: string | null
+  custom_overridable: boolean | null
+  qr_dots_color: string | null
+  qr_bg_color: string | null
+  qr_dots_type: string | null
+  qr_corners_type: string | null
+  qr_corners_color: string | null
+}
+
+interface VariantUIState {
+  variants: VariantData[]
+  activeTab: string
+  savingOverrides: boolean
+}
+
+type VariantUIAction =
+  | { type: 'SET_VARIANTS'; variants: VariantData[] }
+  | { type: 'SET_ACTIVE_TAB'; tab: string }
+  | { type: 'ADD_VARIANT'; variant: VariantData }
+  | { type: 'UPDATE_VARIANT'; id: string; name: string }
+  | { type: 'REMOVE_VARIANT'; id: string }
+  | { type: 'SET_SAVING_OVERRIDES'; value: boolean }
+
+const initialVariantUIState: VariantUIState = {
+  variants: [],
+  activeTab: 'main',
+  savingOverrides: false,
+}
+
+function variantUIReducer(state: VariantUIState, action: VariantUIAction): VariantUIState {
+  switch (action.type) {
+    case 'SET_VARIANTS':
+      return { ...state, variants: action.variants }
+    case 'SET_ACTIVE_TAB':
+      return { ...state, activeTab: action.tab }
+    case 'ADD_VARIANT':
+      return { ...state, variants: [...state.variants, action.variant], activeTab: action.variant.id }
+    case 'UPDATE_VARIANT':
+      return { ...state, variants: state.variants.map((v) => v.id === action.id ? { ...v, name: action.name } : v) }
+    case 'REMOVE_VARIANT':
+      return {
+        ...state,
+        variants: state.variants.filter((v) => v.id !== action.id),
+        activeTab: state.activeTab === action.id ? 'main' : state.activeTab,
+      }
+    case 'SET_SAVING_OVERRIDES':
+      return { ...state, savingOverrides: action.value }
+    default:
+      return state
+  }
 }
 
 interface LoadingState {
@@ -211,12 +289,14 @@ async function loadTemplateData(
   templateId: string,
   dispatchData: React.Dispatch<DataAction>,
   dispatchForm: React.Dispatch<FormAction>,
-  dispatchLoading: React.Dispatch<LoadingAction>
+  dispatchLoading: React.Dispatch<LoadingAction>,
+  dispatchVariantUI: React.Dispatch<VariantUIAction>
 ) {
   try {
     const res = await fetch(`/api/admin/pdf-templates/${templateId}`)
     const data = await res.json()
     dispatchData({ type: 'SET_TEMPLATE', template: data.template })
+    dispatchVariantUI({ type: 'SET_VARIANTS', variants: data.variants ?? [] })
     const fields: FieldMapping[] = (data.template?.pdf_template_fields ?? []).map((f: any) => ({ ...f, multiline: f.multiline ?? false }))
     dispatchForm({ type: 'SET_FIELDS', fields })
   } catch {} finally {
@@ -1068,11 +1148,68 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const [loadingState, dispatchLoading] = useReducer(loadingReducer, initialLoadingState)
   const [form, dispatchForm] = useReducer(formReducer, initialFormState)
   const [data, dispatchData] = useReducer(dataReducer, initialDataState)
+  const [variantUI, dispatchVariantUI] = useReducer(variantUIReducer, initialVariantUIState)
+  const [dirtyOverrides, setDirtyOverrides] = useState<Record<string, Record<string, unknown>>>({})
   const fontVariantStyleId = useRef<string | null>(null)
+
+  const isVariantTab = variantUI.activeTab !== 'main'
+  const activeVariant = isVariantTab
+    ? variantUI.variants.find((v) => v.id === variantUI.activeTab)
+    : null
+
+  const activeOverrides = (() => {
+    if (!isVariantTab || !activeVariant) return null
+    const map: Record<string, Partial<VariantOverride>> = {}
+    for (const o of activeVariant.pdf_template_field_overrides) {
+      const dirty = dirtyOverrides[o.field_id]
+      if (dirty) {
+        map[o.field_id] = { ...o, ...dirty } as Partial<VariantOverride>
+      } else {
+        map[o.field_id] = o
+      }
+    }
+    for (const [fieldId, dirty] of Object.entries(dirtyOverrides)) {
+      if (!map[fieldId]) {
+        map[fieldId] = dirty as Partial<VariantOverride>
+      }
+    }
+    return map
+  })()
+
+  const effectiveFields: FieldMapping[] = (() => {
+    if (!isVariantTab || !activeOverrides) return form.fields
+    return form.fields.map((f) => {
+      const override = activeOverrides[f.id]
+      if (!override) return f
+      const o = override as Record<string, unknown>
+      return {
+        ...f,
+        ...(o.font_family != null ? { font_family: o.font_family as string } : {}),
+        ...(o.font_size != null ? { font_size: o.font_size as number } : {}),
+        ...(o.font_source != null ? { font_source: o.font_source as string } : {}),
+        ...(o.font_variant != null ? { font_variant: o.font_variant as string } : {}),
+        ...(o.uploaded_font_key != null ? { uploaded_font_key: o.uploaded_font_key as string } : {}),
+        ...(o.font_id != null ? { font_id: o.font_id as string } : {}),
+        ...(o.text_color != null ? { text_color: o.text_color as string } : {}),
+        ...(o.display_label != null ? { display_label: o.display_label as string } : {}),
+        ...(o.is_enabled != null ? { is_enabled: o.is_enabled as boolean } : {}),
+        ...(o.multiline != null ? { multiline: o.multiline as boolean } : {}),
+        ...(o.date_format != null ? { date_format: o.date_format as string } : {}),
+        ...(o.level_format != null ? { level_format: o.level_format as string } : {}),
+        ...(o.custom_default_value != null ? { custom_default_value: o.custom_default_value as string } : {}),
+        ...(o.custom_overridable != null ? { custom_overridable: o.custom_overridable as boolean } : {}),
+        ...(o.qr_dots_color != null ? { qr_dots_color: o.qr_dots_color as string } : {}),
+        ...(o.qr_bg_color != null ? { qr_bg_color: o.qr_bg_color as string } : {}),
+        ...(o.qr_dots_type != null ? { qr_dots_type: o.qr_dots_type as string } : {}),
+        ...(o.qr_corners_type != null ? { qr_corners_type: o.qr_corners_type as string } : {}),
+        ...(o.qr_corners_color != null ? { qr_corners_color: o.qr_corners_color as string } : {}),
+      }
+    })
+  })()
 
   const sortedFields = (() => {
     const dbOrder = new Map(DATABASE_FIELD_MAP.map((e, i) => [e.key, i]))
-    return form.fields.toSorted((a, b) => {
+    return effectiveFields.toSorted((a, b) => {
       const aKey = a.source_key
       const bKey = b.source_key
       const aIsDb = a.source_type === 'database' && aKey != null && dbOrder.has(aKey)
@@ -1088,8 +1225,10 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     })
   })()
 
+  const savedOverrides = useRef<Record<string, Record<string, unknown>>>({})
+
   const selectedFont = (() => {
-    const field = form.fields[form.selectedFieldIndex]
+    const field = effectiveFields[form.selectedFieldIndex]
     if (!field || field.font_source !== 'google' || !field.font_family) return null
     return data.googleFonts.find((f) => f.family === field.font_family) ?? null
   })()
@@ -1097,7 +1236,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const uploadedFontGroups = groupUploadedFonts(data.uploadedFonts)
 
   const currentUploadedFont = (() => {
-    const field = form.fields[form.selectedFieldIndex]
+    const field = effectiveFields[form.selectedFieldIndex]
     if (field?.font_source !== 'uploaded' || !field.uploaded_font_key) return null
     return data.uploadedFonts.find((uf) => uf.key === field.uploaded_font_key) ?? null
   })()
@@ -1107,7 +1246,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     : parseFontFilename(currentUploadedFont.name)
 
   useEffect(() => {
-    loadTemplateData(templateId, dispatchData, dispatchForm, dispatchLoading)
+    loadTemplateData(templateId, dispatchData, dispatchForm, dispatchLoading, dispatchVariantUI)
   }, [templateId])
 
   useEffect(() => {
@@ -1115,23 +1254,52 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   }, [])
 
   useEffect(() => {
-    syncUploadedFontStyles(form.fields)
-  }, [form.fields])
+    syncUploadedFontStyles(effectiveFields)
+  }, [effectiveFields])
 
   useEffect(() => {
-    checkUploadedFontsCompatibility(form.fields, dispatchData)
-  }, [form.fields])
+    checkUploadedFontsCompatibility(effectiveFields, dispatchData)
+  }, [effectiveFields])
 
   useEffect(() => {
-    checkGoogleFontsCompatibility(form.fields, dispatchData)
-  }, [form.fields])
+    checkGoogleFontsCompatibility(effectiveFields, dispatchData)
+  }, [effectiveFields])
 
   useEffect(() => {
-    syncGoogleFontVariant(form.fields[form.selectedFieldIndex], data.googleFonts, fontVariantStyleId)
-  }, [form.fields, form.selectedFieldIndex, data.googleFonts])
+    syncGoogleFontVariant(effectiveFields[form.selectedFieldIndex], data.googleFonts, fontVariantStyleId)
+  }, [effectiveFields, form.selectedFieldIndex, data.googleFonts])
+
+  useEffect(() => {
+    savedOverrides.current = {}
+  }, [variantUI.activeTab])
 
   const updateField = (index: number, updates: Partial<FieldMapping>) => {
-    dispatchForm({ type: 'UPDATE_FIELD', index, updates })
+    if (isVariantTab) {
+      const field = form.fields[index]
+      if (!field) return
+      const dirty: Record<string, unknown> = { ...(dirtyOverrides[field.id] || {}) }
+      for (const [key, value] of Object.entries(updates)) {
+        const saved = savedOverrides.current[field.id]?.[key]
+        const base = (field as Record<string, unknown>)[key]
+        const override = activeOverrides?.[field.id]?.[key as keyof VariantOverride]
+        const currentVal = saved !== undefined ? saved : (override !== undefined ? override : base)
+        if (value !== currentVal) {
+          dirty[key] = value
+        } else {
+          delete dirty[key]
+        }
+      }
+      setDirtyOverrides((prev) => {
+        if (Object.keys(dirty).length === 0) {
+          const next = { ...prev }
+          delete next[field.id]
+          return next
+        }
+        return { ...prev, [field.id]: dirty }
+      })
+    } else {
+      dispatchForm({ type: 'UPDATE_FIELD', index, updates })
+    }
   }
 
   function addCustomField() {
@@ -1139,19 +1307,55 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   }
 
   async function handleSave() {
-    dispatchLoading({ type: 'START_SAVING' })
-    dispatchForm({ type: 'CLEAR_ERROR' })
-    dispatchForm({ type: 'SET_SUCCESS', value: false })
+    if (isVariantTab && activeVariant) {
+      dispatchVariantUI({ type: 'SET_SAVING_OVERRIDES', value: true })
+      dispatchForm({ type: 'CLEAR_ERROR' })
+      dispatchForm({ type: 'SET_SUCCESS', value: false })
+      try {
+        const mergedOverrides: Record<string, Record<string, unknown>> = {}
+        for (const [fieldId, dirty] of Object.entries(dirtyOverrides)) {
+          const saved = savedOverrides.current[fieldId] || {}
+          mergedOverrides[fieldId] = { ...saved, ...dirty }
+        }
+        const overridesPayload: Array<Record<string, unknown>> = Object.entries(mergedOverrides).map(([fieldId, values]) => ({
+          field_id: fieldId,
+          ...values,
+        }))
+        const res = await fetch(`/api/admin/pdf-templates/${templateId}/variants/${activeVariant.id}/overrides`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ overrides: overridesPayload }),
+        })
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Failed to save overrides')
+        }
+        setDirtyOverrides({})
+        savedOverrides.current = {}
+        const reloadRes = await fetch(`/api/admin/pdf-templates/${templateId}`)
+        const reloadData = await reloadRes.json()
+        dispatchVariantUI({ type: 'SET_VARIANTS', variants: reloadData.variants ?? [] })
+        dispatchForm({ type: 'SET_SUCCESS', value: true })
+        router.refresh()
+      } catch (err) {
+        dispatchForm({ type: 'SET_ERROR', error: err instanceof Error ? err.message : 'Save failed' })
+      }
+      dispatchVariantUI({ type: 'SET_SAVING_OVERRIDES', value: false })
+    } else {
+      dispatchLoading({ type: 'START_SAVING' })
+      dispatchForm({ type: 'CLEAR_ERROR' })
+      dispatchForm({ type: 'SET_SUCCESS', value: false })
 
-    try {
-      const savedFields = await apiSaveFields(templateId, form.fields)
-      dispatchForm({ type: 'SET_FIELDS', fields: savedFields.map((f: any) => ({ ...f, multiline: f.multiline ?? false })) })
-      dispatchForm({ type: 'SET_SUCCESS', value: true })
-      router.refresh()
-    } catch (err) {
-      dispatchForm({ type: 'SET_ERROR', error: err instanceof Error ? err.message : 'Save failed' })
+      try {
+        const savedFields = await apiSaveFields(templateId, form.fields)
+        dispatchForm({ type: 'SET_FIELDS', fields: savedFields.map((f: any) => ({ ...f, multiline: f.multiline ?? false })) })
+        dispatchForm({ type: 'SET_SUCCESS', value: true })
+        router.refresh()
+      } catch (err) {
+        dispatchForm({ type: 'SET_ERROR', error: err instanceof Error ? err.message : 'Save failed' })
+      }
+      dispatchLoading({ type: 'STOP_SAVING' })
     }
-    dispatchLoading({ type: 'STOP_SAVING' })
   }
 
   async function handleRefreshFields() {
@@ -1232,6 +1436,64 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     }
   }
 
+  async function handleAddVariant(name: string, file: File): Promise<{ success: boolean; error?: string }> {
+    try {
+      const result = await uploadFiles('pdfTemplateUpload', { files: [file] })
+      const uploaded = result[0]
+      const res = await fetch(`/api/admin/pdf-templates/${templateId}/variants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, file_url: uploaded.url, file_key: uploaded.key }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        if (data.missingFromVariant || data.extraInVariant) {
+          const details = [
+            data.missingFromVariant?.length ? `Missing from variant: ${data.missingFromVariant.join(', ')}` : '',
+            data.extraInVariant?.length ? `Extra in variant: ${data.extraInVariant.join(', ')}` : '',
+          ].filter(Boolean).join('. ')
+          return { success: false, error: `${data.error}. ${details}` }
+        }
+        return { success: false, error: data.error || 'Failed to add variant' }
+      }
+      const { variant } = await res.json()
+      dispatchVariantUI({ type: 'ADD_VARIANT', variant })
+      dispatchForm({ type: 'SET_SUCCESS', value: true })
+      router.refresh()
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to add variant' }
+    }
+  }
+
+  async function handleRenameVariant(variantId: string, name: string): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/admin/pdf-templates/${templateId}/variants/${variantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      if (!res.ok) return false
+      dispatchVariantUI({ type: 'UPDATE_VARIANT', id: variantId, name })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function handleDeleteVariant(variantId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/admin/pdf-templates/${templateId}/variants/${variantId}`, { method: 'DELETE' })
+      if (!res.ok) return false
+      dispatchVariantUI({ type: 'REMOVE_VARIANT', id: variantId })
+      setDirtyOverrides({})
+      router.refresh()
+      return true
+    } catch {
+      return false
+    }
+  }
+
   if (loadingState.loading) {
     return <div className="text-muted-foreground">{t('loading')}</div>
   }
@@ -1269,10 +1531,32 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         </div>
       </div>
 
-      {form.showPdfPreview && data.template.file_url && (
+      <VariantTabs
+        variants={variantUI.variants}
+        activeTab={variantUI.activeTab}
+        onSelectTab={(tab) => dispatchVariantUI({ type: 'SET_ACTIVE_TAB', tab })}
+        onAddVariant={handleAddVariant}
+        onRenameVariant={handleRenameVariant}
+        onDeleteVariant={handleDeleteVariant}
+        t={t}
+      />
+
+      {activeVariant && form.success && (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600">
+          {t('savedSuccess')}
+        </div>
+      )}
+
+      {activeVariant && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          Editing variant: <strong>{activeVariant.name}</strong>. Changes affect only this variant. Field mappings are shared with the main template.
+        </div>
+      )}
+
+      {form.showPdfPreview && (isVariantTab ? activeVariant?.file_url : data.template.file_url) && (
         <div className="rounded-xl border overflow-hidden">
           <iframe
-            src={data.template.file_url}
+            src={isVariantTab ? activeVariant!.file_url : data.template.file_url}
             className="h-[500px] w-full"
             title="PDF Preview"
             sandbox="allow-scripts"
@@ -1323,17 +1607,17 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       <div className="flex gap-6">
         <FieldSidebar
           sortedFields={sortedFields}
-          fields={form.fields}
+          fields={effectiveFields}
           selectedFieldIndex={form.selectedFieldIndex}
           onSelectField={(index) => dispatchForm({ type: 'SET_SELECTED_INDEX', index })}
           onToggleField={(index, checked) => updateField(index, { is_enabled: checked })}
-          onAddField={addCustomField}
+          onAddField={isVariantTab ? () => {} : addCustomField}
           t={t}
         />
 
-        {form.fields.length > 0 && form.selectedFieldIndex < form.fields.length && (
+        {effectiveFields.length > 0 && form.selectedFieldIndex < effectiveFields.length && (
           <FieldEditorPanel
-            field={form.fields[form.selectedFieldIndex]}
+            field={effectiveFields[form.selectedFieldIndex]}
             index={form.selectedFieldIndex}
             selectedFont={selectedFont}
             currentUploadedParsed={currentUploadedParsed}
@@ -1361,10 +1645,10 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         <button
           type="button"
           onClick={handleSave}
-          disabled={loadingState.saving || hasUnsavedIds}
+          disabled={loadingState.saving || variantUI.savingOverrides || hasUnsavedIds}
           className="rounded-lg bg-bright-sky px-6 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
         >
-          {loadingState.saving ? t('saving') : t('saveMappings')}
+          {loadingState.saving || variantUI.savingOverrides ? t('saving') : isVariantTab ? t('saveOverrides') : t('saveMappings')}
         </button>
       </div>
     </div>

@@ -50,7 +50,7 @@ export async function GET(
 
   const { data: templates } = await supabase
     .from('pdf_templates')
-    .select('*, pdf_template_fields(count)')
+    .select('*, pdf_template_fields(count), pdf_template_variants(count)')
     .eq('club_id', club.id)
     .order('created_at', { ascending: false })
 

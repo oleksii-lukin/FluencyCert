@@ -202,6 +202,54 @@ export default async function CertificatePage({ params }: PageProps) {
       .single()
 
     if (template) {
+      const fields = (template.pdf_template_fields ?? []) as PdfTemplateField[]
+
+      let fileUrl = template.file_url as string
+      let effectiveFields = fields
+
+      if (claim.pdf_template_variant_id) {
+        const { data: variant } = await supabase
+          .from('pdf_template_variants')
+          .select('*, pdf_template_field_overrides(*)')
+          .eq('id', claim.pdf_template_variant_id)
+          .single()
+
+        if (variant) {
+          fileUrl = variant.file_url
+          const overrides = (variant.pdf_template_field_overrides ?? []) as Array<Record<string, unknown>>
+          const overrideMap: Record<string, Record<string, unknown>> = {}
+          for (const o of overrides) {
+            overrideMap[o.field_id as string] = o
+          }
+          effectiveFields = fields.map((f) => {
+            const ov = overrideMap[f.id]
+            if (!ov) return f
+            return {
+              ...f,
+              ...(ov.font_family != null ? { font_family: ov.font_family as string } : {}),
+              ...(ov.font_size != null ? { font_size: ov.font_size as number } : {}),
+              ...(ov.font_source != null ? { font_source: ov.font_source as string } : {}),
+              ...(ov.font_variant != null ? { font_variant: ov.font_variant as string } : {}),
+              ...(ov.uploaded_font_key != null ? { uploaded_font_key: ov.uploaded_font_key as string } : {}),
+              ...(ov.font_id != null ? { font_id: ov.font_id as string } : {}),
+              ...(ov.text_color != null ? { text_color: ov.text_color as string } : {}),
+              ...(ov.display_label != null ? { display_label: ov.display_label as string } : {}),
+              ...(ov.is_enabled != null ? { is_enabled: ov.is_enabled as boolean } : {}),
+              ...(ov.multiline != null ? { multiline: ov.multiline as boolean } : {}),
+              ...(ov.date_format != null ? { date_format: ov.date_format as string } : {}),
+              ...(ov.level_format != null ? { level_format: ov.level_format as string } : {}),
+              ...(ov.custom_default_value != null ? { custom_default_value: ov.custom_default_value as string } : {}),
+              ...(ov.custom_overridable != null ? { custom_overridable: ov.custom_overridable as boolean } : {}),
+              ...(ov.qr_dots_color != null ? { qr_dots_color: ov.qr_dots_color as string } : {}),
+              ...(ov.qr_bg_color != null ? { qr_bg_color: ov.qr_bg_color as string } : {}),
+              ...(ov.qr_dots_type != null ? { qr_dots_type: ov.qr_dots_type as string } : {}),
+              ...(ov.corners_type != null ? { qr_corners_type: ov.qr_corners_type as string } : {}),
+              ...(ov.qr_corners_color != null ? { qr_corners_color: ov.qr_corners_color as string } : {}),
+            }
+          })
+        }
+      }
+
       const { data: customVals } = await supabase
         .from('pdf_custom_values')
         .select('field_id, value')
@@ -213,8 +261,8 @@ export default async function CertificatePage({ params }: PageProps) {
       }
 
       pdfTemplateData = {
-        fileUrl: template.file_url as string,
-        fields: (template.pdf_template_fields ?? []) as PdfTemplateField[],
+        fileUrl,
+        fields: effectiveFields,
         customValues: vals,
       }
     }
