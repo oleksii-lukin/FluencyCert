@@ -68,12 +68,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing required fields: key, name' }, { status: 400 })
   }
 
+  const resolvedFamily = family || name
+  const resolvedVariant = variant || 'regular'
+
+  const { data: existing } = await supabase
+    .from('pdf_fonts')
+    .select('id')
+    .eq('family', resolvedFamily)
+    .eq('variant', resolvedVariant)
+    .maybeSingle()
+
+  if (existing) {
+    return NextResponse.json({ error: 'Font with this family and variant already exists' }, { status: 409 })
+  }
+
   const { data, error } = await supabase
     .from('pdf_fonts')
     .insert({
       name,
-      family: family || name,
-      variant: variant || 'regular',
+      family: resolvedFamily,
+      variant: resolvedVariant,
       file_url: file_url || '',
       file_key: key,
       file_size: file_size ?? null,
@@ -82,6 +96,9 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
+    if (error.code === '23505') {
+      return NextResponse.json({ error: 'Font with this family and variant already exists' }, { status: 409 })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

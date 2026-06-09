@@ -119,6 +119,14 @@ export function groupUploadedFonts(fonts: FontInput[]): FontFamilyGroup[] {
   return result
 }
 
+export function findDuplicateFont(
+  fonts: { family: string; variant: string }[],
+  family: string,
+  variant: string
+): { family: string; variant: string } | undefined {
+  return fonts.find((f) => f.family === family && f.variant === variant)
+}
+
 function sortUploadedVariants(variants: FontVariantEntry[]): FontVariantEntry[] {
   const order = ['regular', '100', '200', '300', '400', '500', '600', '700', '800', '900', 'italic', '100italic', '200italic', '300italic', '400italic', '500italic', '600italic', '700italic', '800italic', '900italic']
   return variants.toSorted((a, b) => {

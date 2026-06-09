@@ -556,6 +556,7 @@
     "variants": "Variants",
     "deleteAll": "Delete All",
     "deleteAllConfirm": "Delete all variants of {family}?",
+    "fontAlreadyExists": "Font \"{name}\" ({variant}) already exists",
     "downloadAll": "Download All",
     "downloading": "Downloading..."
   },

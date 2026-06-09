@@ -10,7 +10,7 @@ import type { GoogleFont } from '@/lib/fonts'
 import { FontPreview } from './font-preview'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { InformationCircleIcon } from "@hugeicons/core-free-icons"
-import { groupUploadedFonts, groupVariants, parseFontFilename, type FontFamilyGroup } from '@/lib/font-variants'
+import { findDuplicateFont, groupUploadedFonts, groupVariants, parseFontFilename, type FontFamilyGroup } from '@/lib/font-variants'
 import JSZip from 'jszip'
 
 interface UploadedFont {
@@ -474,11 +474,16 @@ export function FontList() {
       return
     }
 
+    const { family, variant } = parseFontFilename(file.name)
+    if (findDuplicateFont(ufState.fonts, family, variant)) {
+      dispatchUi({ type: 'SET_ERROR', error: t('fontAlreadyExists', { name: file.name, variant }) })
+      return
+    }
+
     dispatchUi({ type: 'START_UPLOADING' })
 
     try {
       const [res] = await uploadFiles('fontFileUpload', { files: [file] })
-      const { family, variant } = parseFontFilename(file.name)
       await fetch('/api/admin/fonts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -612,9 +617,15 @@ export function FontList() {
     const fileName = `${gfState.selectedGoogleFont}${variantSuffix}.ttf`
     const file = new File([blob], fileName, { type: 'font/ttf' })
 
+    const { family } = parseFontFilename(fileName)
+    if (findDuplicateFont(ufState.fonts, family, variant)) {
+      dispatchUi({ type: 'SET_ERROR', error: t('fontAlreadyExists', { name: fileName, variant }) })
+      dispatchGf({ type: 'SAVE_ERROR' })
+      return
+    }
+
     try {
       const [uploadRes] = await uploadFiles('fontFileUpload', { files: [file] })
-      const { family } = parseFontFilename(fileName)
       await createFontRecord({ key: uploadRes.key, name: fileName, family, variant, file_url: uploadRes.ufsUrl, file_size: file.size })
       await loadUploadedFonts(dispatchUf, dispatchUi)
       dispatchGf({ type: 'SAVE_SUCCESS' })

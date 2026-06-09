@@ -557,6 +557,7 @@
     "variants": "Варіанти",
     "deleteAll": "Видалити всі",
     "deleteAllConfirm": "Видалити всі варіанти шрифту {family}?",
+    "fontAlreadyExists": "Шрифт \"{name}\" ({variant}) вже існує",
     "downloadAll": "Завантажити все",
     "downloading": "Завантаження..."
   },
