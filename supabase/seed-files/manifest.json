@@ -184,6 +184,138 @@
           "qrCornersColor": "#AD7C18"
         }
       ]
+    },
+    {
+      "name": "Professional Leadership Achievement Certificate",
+      "description": "Clean leadership certificate template with blue decorative borders, dual signature fields, and QR verification. Ideal for management training, leadership programs, and professional development courses. A perfect Certificate of Leadership template.",
+      "variants": [
+        {
+          "name": "Landscape",
+          "fileName": "pdfs/3-forms.pdf"
+        },
+        {
+          "name": "Portrait",
+          "fileName": "pdfs/4-forms.pdf"
+        }
+      ],
+      "fields": [
+        {
+          "pdfFieldName": "[certificateuuid]",
+          "sourceType": "database",
+          "sourceKey": "slug",
+          "displayLabel": "[certificateuuid]",
+          "fontFamily": "Konkhmer Sleokchher",
+          "fontSize": 64,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Konkhmer Sleokchher",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 0,
+          "textColor": "#FFFFFF",
+          "qrDotsColor": "#1a1a2e",
+          "qrBgColor": "#FFFFFF",
+          "qrDotsType": "rounded",
+          "qrCornersType": "square",
+          "qrCornersColor": "#1a1a2e",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[certificateissued_on]",
+          "sourceType": "database",
+          "sourceKey": "createdAt",
+          "displayLabel": "[certificateissued_on]",
+          "fontFamily": "Konkhmer Sleokchher",
+          "fontSize": 64,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Konkhmer Sleokchher",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 1,
+          "dateFormat": "gb",
+          "textColor": "#FFFFFF",
+          "qrDotsColor": "#1a1a2e",
+          "qrBgColor": "#FFFFFF",
+          "qrDotsType": "rounded",
+          "qrCornersType": "square",
+          "qrCornersColor": "#1a1a2e",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[recipientname]",
+          "sourceType": "database",
+          "sourceKey": "fullName",
+          "displayLabel": "[recipientname]",
+          "fontFamily": "Jacques Francois",
+          "fontSize": 200,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Jacques Francois",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 2,
+          "textColor": "#484747",
+          "qrDotsColor": "#1a1a2e",
+          "qrBgColor": "#FFFFFF",
+          "qrDotsType": "rounded",
+          "qrCornersType": "square",
+          "qrCornersColor": "#1a1a2e",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[facilitatorName]",
+          "sourceType": "custom",
+          "displayLabel": "[facilitatorName]",
+          "fontFamily": "Yellowtail",
+          "fontSize": 100,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Yellowtail",
+          "isEnabled": true,
+          "customDefaultValue": "",
+          "customOverridable": true,
+          "sortOrder": 3,
+          "textColor": "#484747",
+          "qrDotsColor": "#1a1a2e",
+          "qrBgColor": "#FFFFFF",
+          "qrDotsType": "rounded",
+          "qrCornersType": "square",
+          "qrCornersColor": "#1a1a2e",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[coordinatorName]",
+          "sourceType": "custom",
+          "displayLabel": "[coordinatorName]",
+          "fontFamily": "Yellowtail",
+          "fontSize": 100,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Yellowtail",
+          "isEnabled": true,
+          "customDefaultValue": "",
+          "customOverridable": true,
+          "sortOrder": 4,
+          "textColor": "#484747",
+          "qrDotsColor": "#1a1a2e",
+          "qrBgColor": "#FFFFFF",
+          "qrDotsType": "rounded",
+          "qrCornersType": "square",
+          "qrCornersColor": "#1a1a2e",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "qrCode",
+          "sourceType": "qr_code",
+          "displayLabel": "qrCode",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontSource": "google",
+          "isEnabled": true,
+          "sortOrder": 5,
+          "qrDotsColor": "#1a1a2e",
+          "qrBgColor": "transparent",
+          "qrDotsType": "tile",
+          "qrCornersType": "square",
+          "qrCornersColor": "#1a1a2e"
+        }
+      ]
     }
   ],
   "fonts": [
@@ -221,6 +353,20 @@
       "family": "Jacques Francois",
       "variant": "regular",
       "fileName": "fonts/Jacques Francois.ttf"
+    },
+    {
+      "ref": "Konkhmer Sleokchher",
+      "name": "Konkhmer Sleokchher.ttf",
+      "family": "Konkhmer Sleokchher",
+      "variant": "regular",
+      "fileName": "fonts/Konkhmer Sleokchher.ttf"
+    },
+    {
+      "ref": "Yellowtail",
+      "name": "Yellowtail.ttf",
+      "family": "Yellowtail",
+      "variant": "regular",
+      "fileName": "fonts/Yellowtail.ttf"
     }
   ]
 }
