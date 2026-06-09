@@ -19,7 +19,7 @@ This generates a properly timestamped file in `supabase/migrations/`. Then write
 <!-- BEGIN:verification-rules -->
 # Verification
 
-Run ALL three before every commit. Do not skip any.
+Run ALL three both after completing a task and before every commit. Do not skip any.
 
 ```sh
 pnpm run lint
