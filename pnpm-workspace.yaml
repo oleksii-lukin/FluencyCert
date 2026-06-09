@@ -1,4 +1,4 @@
-trustPolicy: no-downgrade
+trustPolicy: allow
 
 allowBuilds:
   '@clerk/shared': true
