@@ -27,10 +27,11 @@ async function createPdfTemplate(name: string, description: string, file: File) 
 
   const { template } = await res.json()
 
-  fetch(`/api/admin/pdf-templates/${template.id}/parse`, { method: 'POST' })
-    .then((r) => r.json())
-    .then((data) => { if (!data.ok) console.warn('Field parsing warning:', data.error) })
-    .catch(() => {})
+  const parseRes = await fetch(`/api/admin/pdf-templates/${template.id}/parse`, { method: 'POST' })
+  if (!parseRes.ok) {
+    const data = await parseRes.json()
+    console.warn('Field parsing warning:', data.error)
+  }
 
   return template
 }
