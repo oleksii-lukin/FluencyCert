@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
 interface VariantData {
   id: string
@@ -28,7 +28,7 @@ export function VariantTabs({
   t,
 }: VariantTabsProps) {
   const [showAddModal, setShowAddModal] = useState(false)
-  const [addName, setAddName] = useState('')
+  const [addName, setAddName] = useState('Landscape')
   const [addFile, setAddFile] = useState<File | null>(null)
   const [addError, setAddError] = useState('')
   const [adding, setAdding] = useState(false)
@@ -37,8 +37,7 @@ export function VariantTabs({
   const [renameName, setRenameName] = useState('')
   const [renaming, setRenaming] = useState(false)
 
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [menuVariantId, setMenuVariantId] = useState<string | null>(null)
 
   async function handleAdd() {
     if (!addName.trim() || !addFile) return
@@ -47,7 +46,7 @@ export function VariantTabs({
     const result = await onAddVariant(addName.trim(), addFile)
     if (result.success) {
       setShowAddModal(false)
-      setAddName('')
+      setAddName('Landscape')
       setAddFile(null)
     } else {
       setAddError(result.error ?? 'Failed to add variant')
@@ -83,39 +82,40 @@ export function VariantTabs({
           {t('defaultConfig')}
         </button>
         {variants.map((v) => (
-          <div key={v.id} className="relative" ref={dropdownRef}>
+          <div key={v.id} className="relative">
             <button
               type="button"
               onClick={() => onSelectTab(v.id)}
-              className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+              className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 activeTab === v.id
                   ? 'bg-harvest-orange/10 text-harvest-orange border-b-2 border-harvest-orange'
                   : 'text-muted-foreground hover:text-foreground border-b-2 border-transparent'
               }`}
             >
               {v.name}
+              {activeTab === v.id && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuVariantId(menuVariantId === v.id ? null : v.id)
+                  }}
+                  className="rounded px-0.5 py-0.5 text-xs leading-none hover:bg-harvest-orange/20"
+                  aria-label={`Options for ${v.name}`}
+                >
+                  ⋮
+                </button>
+              )}
             </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setOpenDropdown(openDropdown === v.id ? null : v.id)
-              }}
-              className="ml-1 rounded px-1 py-0.5 text-xs text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100"
-              aria-label={`Options for ${v.name}`}
-              style={{ position: 'absolute', right: -16, top: 2 }}
-            >
-              ⋮
-            </button>
-            {openDropdown === v.id && (
-              <div className="absolute right-0 top-full z-50 mt-1 w-36 rounded-lg border bg-background shadow-lg">
+            {menuVariantId === v.id && (
+              <div className="absolute left-0 top-full z-50 mt-1 w-36 rounded-lg border bg-background shadow-lg">
                 <button
                   type="button"
                   className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
                   onClick={() => {
                     setRenameId(v.id)
                     setRenameName(v.name)
-                    setOpenDropdown(null)
+                    setMenuVariantId(null)
                   }}
                 >
                   {t('renameVariant')}
@@ -124,7 +124,7 @@ export function VariantTabs({
                   type="button"
                   className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                   onClick={() => {
-                    setOpenDropdown(null)
+                    setMenuVariantId(null)
                     handleDelete(v.id)
                   }}
                 >
@@ -155,15 +155,45 @@ export function VariantTabs({
             <h3 className="text-lg font-semibold mb-4">{t('addVariant')}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">{t('variantName')}</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky"
-                  value={addName}
-                  onChange={(e) => setAddName(e.target.value)}
-                  aria-label="Variant name"
-                />
+                <label className="block text-sm font-medium mb-2">{t('variantOrientation')}</label>
+                <div className="flex gap-2">
+                  {(['Landscape', 'Portrait', 'Custom'] as const).map((opt) => {
+                    const isCustom = opt === 'Custom'
+                    const isActive = isCustom
+                      ? addName !== 'Landscape' && addName !== 'Portrait'
+                      : addName === opt
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          if (isCustom) {
+                            setAddName('')
+                          } else {
+                            setAddName(opt)
+                          }
+                        }}
+                        className={`rounded-lg px-3 py-1.5 text-sm border transition-colors ${
+                          isActive
+                            ? 'bg-bright-sky text-white border-bright-sky'
+                            : 'bg-background text-muted-foreground border hover:bg-muted'
+                        }`}
+                      >
+                        {opt === 'Custom' ? t('variantOrientationCustom') : opt}
+                      </button>
+                    )
+                  })}
+                </div>
+                {addName !== 'Landscape' && addName !== 'Portrait' && (
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky mt-2"
+                    placeholder={t('variantCustomName')}
+                    value={addName}
+                    onChange={(e) => setAddName(e.target.value)}
+                    aria-label="Custom variant name"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('pdfFile')}</label>

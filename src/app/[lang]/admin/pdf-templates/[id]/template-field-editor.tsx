@@ -1160,7 +1160,7 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const activeOverrides = (() => {
     if (!isVariantTab || !activeVariant) return null
     const map: Record<string, Partial<VariantOverride>> = {}
-    for (const o of activeVariant.pdf_template_field_overrides) {
+    for (const o of activeVariant.pdf_template_field_overrides ?? []) {
       const dirty = dirtyOverrides[o.field_id]
       if (dirty) {
         map[o.field_id] = { ...o, ...dirty } as Partial<VariantOverride>
@@ -1422,10 +1422,15 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   }
 
   async function handleUploadFont(file: File): Promise<{ key: string; id: string } | null> {
+    const { family, variant } = parseFontFilename(file.name)
+    const existing = data.uploadedFonts.find((f) => f.family === family && f.variant === variant)
+    if (existing) {
+      return { key: existing.key, id: existing.id }
+    }
+
     dispatchLoading({ type: 'SET_UPLOADING_FONT', value: true })
     try {
       const [res] = await uploadFiles('fontFileUpload', { files: [file] })
-      const { family, variant } = parseFontFilename(file.name)
       const createData = await createFontRecord({ key: res.key, name: file.name, family, variant, file_url: res.ufsUrl, file_size: file.size })
       dispatchData({ type: 'ADD_UPLOADED_FONT', font: { id: createData.font.id, key: res.key, name: file.name, family, variant } })
       dispatchLoading({ type: 'SET_UPLOADING_FONT', value: false })

@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
+import { UTApi } from 'uploadthing/server'
 import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
 
 const ajInstance = aj.withRule(
@@ -100,6 +101,17 @@ export async function DELETE(
   const accessError = await checkTemplateAccess(userId, id, supabase)
   if (accessError) return accessError
 
+  const { data: variant } = await supabase
+    .from('pdf_template_variants')
+    .select('file_key')
+    .eq('id', variantId)
+    .eq('template_id', id)
+    .single()
+
+  if (!variant) {
+    return NextResponse.json({ error: 'Variant not found' }, { status: 404 })
+  }
+
   const { error } = await supabase
     .from('pdf_template_variants')
     .delete()
@@ -109,6 +121,9 @@ export async function DELETE(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  const utapi = new UTApi()
+  await utapi.deleteFiles(variant.file_key).catch(() => {})
 
   return NextResponse.json({ success: true })
 }
