@@ -157,6 +157,24 @@ export async function loadFont(
   }
 }
 
+export async function createFontRecord(params: {
+  key: string
+  name: string
+  family: string
+  variant: string
+  file_url: string
+  file_size?: number
+}): Promise<{ font: { id: string } }> {
+  const res = await fetch('/api/admin/fonts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to create font record')
+  return data
+}
+
 export interface FontPickerProps {
   onFontSelect?: (font: GoogleFont) => void;
   value?: string;

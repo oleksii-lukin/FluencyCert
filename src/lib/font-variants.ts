@@ -71,6 +71,7 @@ export function parseFontFilename(filename: string): { family: string; variant: 
 
 export interface FontVariantEntry {
   key: string
+  id?: string
   variant: string
   name: string
   size: number
@@ -82,12 +83,23 @@ export interface FontFamilyGroup {
   totalSize: number
 }
 
-export function groupUploadedFonts(fonts: { key: string; name: string; size?: number }[]): FontFamilyGroup[] {
+export interface FontInput {
+  key: string
+  name: string
+  size?: number
+  family?: string
+  variant?: string
+  id?: string
+}
+
+export function groupUploadedFonts(fonts: FontInput[]): FontFamilyGroup[] {
   const groups = new Map<string, FontVariantEntry[]>()
 
   for (const font of fonts) {
-    const { family, variant } = parseFontFilename(font.name)
-    const entry: FontVariantEntry = { key: font.key, variant, name: font.name, size: font.size ?? 0 }
+    const { family, variant } = font.family
+      ? { family: font.family, variant: font.variant || 'regular' }
+      : parseFontFilename(font.name)
+    const entry: FontVariantEntry = { key: font.key, id: font.id, variant, name: font.name, size: font.size ?? 0 }
     const existing = groups.get(family)
     if (existing) {
       existing.push(entry)

@@ -261,6 +261,42 @@ export type Database = {
           },
         ]
       }
+      pdf_fonts: {
+        Row: {
+          created_at: string
+          family: string
+          file_key: string
+          file_size: number | null
+          file_url: string
+          id: string
+          name: string
+          updated_at: string
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          family?: string
+          file_key: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          name: string
+          updated_at?: string
+          variant?: string
+        }
+        Update: {
+          created_at?: string
+          family?: string
+          file_key?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          variant?: string
+        }
+        Relationships: []
+      }
       pdf_template_fields: {
         Row: {
           created_at: string
@@ -269,6 +305,7 @@ export type Database = {
           date_format: string | null
           display_label: string
           font_family: string
+          font_id: string | null
           font_size: number
           font_source: string
           font_variant: string
@@ -297,6 +334,7 @@ export type Database = {
           date_format?: string | null
           display_label: string
           font_family?: string
+          font_id?: string | null
           font_size?: number
           font_source?: string
           font_variant?: string
@@ -325,6 +363,7 @@ export type Database = {
           date_format?: string | null
           display_label?: string
           font_family?: string
+          font_id?: string | null
           font_size?: number
           font_source?: string
           font_variant?: string
@@ -347,6 +386,13 @@ export type Database = {
           uploaded_font_key?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pdf_template_fields_font_id_fkey"
+            columns: ["font_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_fonts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pdf_template_fields_template_id_fkey"
             columns: ["template_id"]

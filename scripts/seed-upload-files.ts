@@ -17,6 +17,16 @@ interface SeedField {
   sortOrder?: number
   customDefaultValue?: string
   customOverridable?: boolean
+  dateFormat?: 'usa' | 'gb' | 'locale'
+  levelFormat?: 'short' | 'text' | 'long'
+  textColor?: string
+  qrDotsColor?: string
+  qrBgColor?: string
+  qrDotsType?: string
+  qrCornersType?: string
+  qrCornersColor?: string
+  fontVariant?: string
+  multiline?: boolean
 }
 
 interface SeedPdfTemplate {
@@ -28,6 +38,9 @@ interface SeedPdfTemplate {
 
 interface SeedFont {
   ref: string
+  name: string
+  family?: string
+  variant?: string
   fileName: string
 }
 
@@ -40,6 +53,7 @@ interface UploadResult {
   name: string
   key: string
   ufsUrl: string
+  fileSize: number
 }
 
 const ROOT = process.cwd()
@@ -47,6 +61,15 @@ const SEED_FILES_DIR = resolve(ROOT, 'supabase', 'seed-files')
 const MANIFEST_PATH = resolve(SEED_FILES_DIR, 'manifest.json')
 const OUTPUT_PATH = resolve(SEED_FILES_DIR, 'seed-files.sql')
 const ENV_PATH = resolve(ROOT, '.env.local')
+
+function parseFontFamilyVariant(fileName: string): { family: string; variant: string } {
+  const name = basename(fileName).replace(/\.ttf$/i, '')
+  const variantMatch = name.match(/^(.+)-(\d{3}(?:italic)?)$/)
+  if (variantMatch) return { family: variantMatch[1], variant: variantMatch[2] }
+  const italicMatch = name.match(/^(.+)-italic$/)
+  if (italicMatch) return { family: italicMatch[1], variant: 'italic' }
+  return { family: name, variant: 'regular' }
+}
 
 function deterministicUUID(input: string): string {
   const hash = createHash('sha256').update(input).digest('hex')
@@ -111,11 +134,13 @@ async function uploadFile(
     throw new Error(`Upload failed for ${fileName}: ${result.error.message}`)
   }
 
-  return { name: fileName, key: result.data.key, ufsUrl: result.data.ufsUrl }
+  const fileSize = buffer.length
+  return { name: fileName, key: result.data.key, ufsUrl: result.data.ufsUrl, fileSize }
 }
 
 function generateSql(
   templates: SeedPdfTemplate[],
+  manifestFonts: SeedFont[],
   fontResults: Map<string, UploadResult>,
   pdfResults: UploadResult[],
 ): string {
@@ -126,8 +151,6 @@ function generateSql(
     '-- Re-run the script to regenerate.',
     '-- =================================================================',
     '',
-    '-- ── PDF Templates ────────────────────────────────────────────────',
-    '',
   ]
 
   const templateResults = new Map<string, UploadResult>()
@@ -135,6 +158,32 @@ function generateSql(
     templateResults.set(basename(r.name), r)
   }
 
+  // ── Fonts ──────────────────────────────────────────────────────
+  if (manifestFonts.length > 0) {
+    lines.push('-- ── Fonts ──────────────────────────────────────────────────────')
+    lines.push('')
+    const fontValues: string[] = []
+    for (const mf of manifestFonts) {
+      const result = fontResults.get(mf.ref)
+      if (!result) {
+        console.warn(`  ⚠ No upload result for font "${mf.ref}", skipping`)
+        continue
+      }
+      const fontId = deterministicUUID('pdf-font:' + mf.ref)
+      const { family, variant } = mf.family ? { family: mf.family, variant: mf.variant || 'regular' } : parseFontFamilyVariant(mf.fileName)
+      fontValues.push(
+        `  (${pgLiteral(fontId)}, ${pgLiteral(mf.name)}, ${pgLiteral(family)}, ${pgLiteral(variant)}, ${pgLiteral(result.ufsUrl)}, ${pgLiteral(result.key)}, ${result.fileSize})`,
+      )
+    }
+    if (fontValues.length > 0) {
+      lines.push('INSERT INTO pdf_fonts (id, name, family, variant, file_url, file_key, file_size)')
+      lines.push('VALUES')
+      lines.push(fontValues.join(',\n') + ';')
+      lines.push('')
+    }
+  }
+
+  // ── PDF Templates & Fields ─────────────────────────────────────
   for (const t of templates) {
     const r = templateResults.get(basename(t.fileName))
     if (!r) {
@@ -142,29 +191,30 @@ function generateSql(
       continue
     }
 
-    const uuid = deterministicUUID('pdf-template:' + t.name)
-    const fileKey = r.key
-
+    const templateId = deterministicUUID('pdf-template:' + t.name)
     lines.push(`-- Template: ${t.name}`)
     lines.push(`INSERT INTO pdf_templates (id, name, description, file_url, file_key)`)
     lines.push(
-      `VALUES (${pgLiteral(uuid)}, ${pgLiteral(t.name)}, ${pgLiteral(t.description ?? null)}, ${pgLiteral(r.ufsUrl)}, ${pgLiteral(fileKey)});`,
+      `VALUES (${pgLiteral(templateId)}, ${pgLiteral(t.name)}, ${pgLiteral(t.description ?? null)}, ${pgLiteral(r.ufsUrl)}, ${pgLiteral(r.key)});`,
     )
     lines.push('')
 
     if (t.fields.length > 0) {
       lines.push(`-- Fields for: ${t.name}`)
       lines.push(
-        `INSERT INTO pdf_template_fields (template_id, pdf_field_name, source_type, source_key, display_label, font_family, font_size, font_source, uploaded_font_key, is_enabled, custom_default_value, custom_overridable, sort_order)`,
+        `INSERT INTO pdf_template_fields (template_id, pdf_field_name, source_type, source_key, display_label, font_family, font_size, font_source, uploaded_font_key, font_id, is_enabled, custom_default_value, custom_overridable, sort_order, date_format, level_format, text_color, qr_dots_color, qr_bg_color, qr_dots_type, qr_corners_type, qr_corners_color, font_variant, multiline)`,
       )
 
       const values: string[] = []
       for (const f of t.fields) {
         let uploadedFontKey: string | null = null
+        let fontId: string | null = null
         if (f.fontSource === 'uploaded' && f.uploadedFontRef) {
           const fontResult = fontResults.get(f.uploadedFontRef)
-          uploadedFontKey = fontResult?.key ?? null
-          if (!fontResult) {
+          if (fontResult) {
+            uploadedFontKey = fontResult.key
+            fontId = deterministicUUID('pdf-font:' + f.uploadedFontRef)
+          } else {
             console.warn(
               `  ⚠ Font ref "${f.uploadedFontRef}" not found for field "${f.pdfFieldName}"`,
             )
@@ -172,30 +222,12 @@ function generateSql(
         }
 
         values.push(
-          `  (${pgLiteral(uuid)}, ${pgLiteral(f.pdfFieldName)}, ${pgLiteral(f.sourceType)}, ${pgLiteral(f.sourceKey ?? null)}, ${pgLiteral(f.displayLabel)}, ${pgLiteral(f.fontFamily ?? 'Inter')}, ${f.fontSize ?? 12}, ${pgLiteral(f.fontSource ?? 'google')}, ${pgLiteral(uploadedFontKey)}, ${f.isEnabled ?? true}, ${pgLiteral(f.customDefaultValue ?? null)}, ${f.customOverridable ?? false}, ${f.sortOrder ?? 0})`,
+          `  (${pgLiteral(templateId)}, ${pgLiteral(f.pdfFieldName)}, ${pgLiteral(f.sourceType)}, ${pgLiteral(f.sourceKey ?? null)}, ${pgLiteral(f.displayLabel)}, ${pgLiteral(f.fontFamily ?? 'Inter')}, ${f.fontSize ?? 12}, ${pgLiteral(f.fontSource ?? 'google')}, ${pgLiteral(uploadedFontKey)}, ${fontId ? pgLiteral(fontId) + '::uuid' : 'NULL'}, ${f.isEnabled ?? true}, ${pgLiteral(f.customDefaultValue ?? null)}, ${f.customOverridable ?? false}, ${f.sortOrder ?? 0}, ${pgLiteral(f.dateFormat ?? null)}, ${pgLiteral(f.levelFormat ?? null)}, ${pgLiteral(f.textColor ?? null)}, ${pgLiteral(f.qrDotsColor ?? null)}, ${pgLiteral(f.qrBgColor ?? null)}, ${pgLiteral(f.qrDotsType ?? null)}, ${pgLiteral(f.qrCornersType ?? null)}, ${pgLiteral(f.qrCornersColor ?? null)}, ${pgLiteral(f.fontVariant ?? null)}, ${f.multiline ?? false})`,
         )
       }
 
       lines.push('VALUES')
       lines.push(values.join(',\n') + ';')
-      lines.push('')
-    }
-  }
-
-  if (fontResults.size > 0) {
-    lines.push('-- ── Font References ────────────────────────────────────────────')
-    lines.push(
-      '-- These fonts were uploaded to Uploadthing. Use the keys below',
-    )
-    lines.push(
-      '-- in pdf_template_fields.uploaded_font_key when configuring fields.',
-    )
-    lines.push('')
-    for (const [ref, result] of fontResults) {
-      lines.push(`-- Font: ${ref}`)
-      lines.push(`-- File: ${result.name}`)
-      lines.push(`-- Key: ${result.key}`)
-      lines.push(`-- URL: ${result.ufsUrl}`)
       lines.push('')
     }
   }
@@ -259,7 +291,7 @@ async function main() {
 
   console.log('')
   console.log('Generating SQL...')
-  const sql = generateSql(manifest.pdfTemplates, fontResults, pdfResults)
+  const sql = generateSql(manifest.pdfTemplates, manifest.fonts, fontResults, pdfResults)
   await mkdir(SEED_FILES_DIR, { recursive: true })
   await writeFile(OUTPUT_PATH, sql, 'utf-8')
   console.log(`  SQL written to: ${OUTPUT_PATH}`)

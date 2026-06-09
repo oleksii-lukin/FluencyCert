@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { UTApi } from 'uploadthing/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
-  const key = request.nextUrl.searchParams.get('key')
-  if (!key) {
-    return NextResponse.json({ error: 'Missing key parameter' }, { status: 400 })
+  let key = request.nextUrl.searchParams.get('key')
+  const id = request.nextUrl.searchParams.get('id')
+
+  if (!key && !id) {
+    return NextResponse.json({ error: 'Missing key or id parameter' }, { status: 400 })
+  }
+
+  if (!key && id) {
+    const supabase = createAdminClient()
+    const { data: font } = await supabase
+      .from('pdf_fonts')
+      .select('file_key')
+      .eq('id', id)
+      .single()
+    if (!font) {
+      return NextResponse.json({ error: 'Font not found' }, { status: 404 })
+    }
+    key = font.file_key
   }
 
   const utapi = new UTApi()
-  const signedUrl = await utapi.generateSignedURL(key)
+  const signedUrl = await utapi.generateSignedURL(key!)
 
   const response = await fetch(signedUrl.ufsUrl)
   if (!response.ok) {

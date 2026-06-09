@@ -1,47 +1,221 @@
 {
   "pdfTemplates": [
     {
-      "name": "Standard Certificate",
-      "description": "Default certificate template with AcroForm fields",
-      "fileName": "pdfs/standard-certificate.pdf",
+      "name": "Dark Navy Gold Border Landscape Certificate of Participation",
+      "description": "An elegant landscape certificate with a dark navy background, gold decorative border frame, gold star badge, QR code verification, and classic serif typography.",
+      "fileName": "pdfs/84-forms.pdf",
       "fields": [
         {
-          "pdfFieldName": "FullName",
+          "pdfFieldName": "[certificateissued_on]",
           "sourceType": "database",
-          "sourceKey": "first_name",
-          "displayLabel": "Full Name",
-          "fontFamily": "Inter",
-          "fontSize": 24,
-          "sortOrder": 0
+          "sourceKey": "createdAt",
+          "displayLabel": "[certificateissued_on]",
+          "fontFamily": "Martian Mono",
+          "fontSize": 80,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Martian Mono",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 0,
+          "dateFormat": "gb",
+          "textColor": "#110024",
+          "fontVariant": "500"
         },
         {
-          "pdfFieldName": "EnglishLevel",
+          "pdfFieldName": "[certificateuuid]",
           "sourceType": "database",
-          "sourceKey": "english_level",
-          "displayLabel": "English Level",
-          "fontFamily": "Inter",
-          "fontSize": 14,
-          "sortOrder": 1
+          "sourceKey": "slug",
+          "displayLabel": "[certificateuuid]",
+          "fontFamily": "Martian Mono",
+          "fontSize": 80,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Martian Mono",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 1,
+          "textColor": "#110024",
+          "fontVariant": "500"
         },
         {
-          "pdfFieldName": "Date",
-          "sourceType": "database",
-          "sourceKey": "created_at",
-          "displayLabel": "Issue Date",
-          "fontFamily": "Inter",
-          "fontSize": 11,
-          "sortOrder": 2
+          "pdfFieldName": "[masterclassdescription]",
+          "sourceType": "custom",
+          "displayLabel": "[masterclassdescription]",
+          "fontFamily": "Kalam",
+          "fontSize": 56,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Kalam-700",
+          "isEnabled": true,
+          "customDefaultValue": null,
+          "customOverridable": true,
+          "sortOrder": 2,
+          "textColor": "#6b7280",
+          "fontVariant": "700",
+          "multiline": true
         },
         {
-          "pdfFieldName": "QRCode",
+          "pdfFieldName": "[masterclassname]",
+          "sourceType": "custom",
+          "displayLabel": "[masterclassname]",
+          "fontFamily": "Kalam",
+          "fontSize": 156,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Kalam",
+          "isEnabled": true,
+          "customDefaultValue": "",
+          "customOverridable": true,
+          "sortOrder": 3,
+          "textColor": "#110024",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[recipientname]",
+          "sourceType": "database",
+          "sourceKey": "fullName",
+          "displayLabel": "[recipientname]",
+          "fontFamily": "Kalam",
+          "fontSize": 156,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Kalam",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 4,
+          "textColor": "#110024",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "qrCode",
           "sourceType": "qr_code",
-          "displayLabel": "Verification QR",
+          "displayLabel": "qrCode",
           "fontFamily": "Inter",
-          "fontSize": 10,
-          "sortOrder": 3
+          "fontSize": 12,
+          "fontSource": "google",
+          "isEnabled": true,
+          "sortOrder": 5,
+          "qrDotsColor": "#171110",
+          "qrBgColor": "transparent",
+          "qrDotsType": "tile",
+          "qrCornersType": "square",
+          "qrCornersColor": "#171110"
+        }
+      ]
+    },
+    {
+      "name": "Dark Navy Gold Border Portrait Certificate of Participation",
+      "description": "An elegant portrait certificate with a dark navy background, gold decorative border frame, gold star badge, QR code verification, and classic serif typography.",
+      "fileName": "pdfs/88-forms.pdf",
+      "fields": [
+        {
+          "pdfFieldName": "[recipientname]",
+          "sourceType": "database",
+          "sourceKey": "fullName",
+          "displayLabel": "[recipientname]",
+          "fontFamily": "Kalam",
+          "fontSize": 156,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Kalam",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 0,
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[masterclassname]",
+          "sourceType": "custom",
+          "displayLabel": "[masterclassname]",
+          "fontFamily": "Kalam",
+          "fontSize": 156,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Kalam",
+          "isEnabled": true,
+          "customDefaultValue": "",
+          "customOverridable": true,
+          "sortOrder": 1,
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[masterclassdescription]",
+          "sourceType": "custom",
+          "displayLabel": "[masterclassdescription]",
+          "fontFamily": "Kalam",
+          "fontSize": 56,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Kalam-700",
+          "isEnabled": true,
+          "customDefaultValue": null,
+          "customOverridable": true,
+          "sortOrder": 2,
+          "textColor": "#6b7280",
+          "fontVariant": "700",
+          "multiline": true
+        },
+        {
+          "pdfFieldName": "[certificateissued_on]",
+          "sourceType": "database",
+          "sourceKey": "createdAt",
+          "displayLabel": "[certificateissued_on]",
+          "fontFamily": "Martian Mono",
+          "fontSize": 80,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Martian Mono",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 3,
+          "dateFormat": "gb",
+          "fontVariant": "500"
+        },
+        {
+          "pdfFieldName": "[certificateuuid]",
+          "sourceType": "database",
+          "sourceKey": "slug",
+          "displayLabel": "[certificateuuid]",
+          "fontFamily": "Martian Mono",
+          "fontSize": 80,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Martian Mono",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 4,
+          "fontVariant": "500"
+        },
+        {
+          "pdfFieldName": "qrCode",
+          "sourceType": "qr_code",
+          "displayLabel": "qrCode",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontSource": "google",
+          "isEnabled": true,
+          "sortOrder": 5,
+          "qrDotsColor": "#171110",
+          "qrBgColor": "transparent",
+          "qrDotsType": "tile",
+          "qrCornersType": "square",
+          "qrCornersColor": "#171110"
         }
       ]
     }
   ],
-  "fonts": []
+  "fonts": [
+    {
+      "ref": "Kalam",
+      "name": "Kalam.ttf",
+      "family": "Kalam",
+      "variant": "regular",
+      "fileName": "fonts/Kalam.ttf"
+    },
+    {
+      "ref": "Kalam-700",
+      "name": "Kalam-700.ttf",
+      "family": "Kalam",
+      "variant": "700",
+      "fileName": "fonts/Kalam-700.ttf"
+    },
+    {
+      "ref": "Martian Mono",
+      "name": "Martian Mono-500.ttf",
+      "family": "Martian Mono",
+      "variant": "500",
+      "fileName": "fonts/Martian Mono-500.ttf"
+    }
+  ]
 }

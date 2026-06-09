@@ -11,7 +11,7 @@ import type { PdfFontInfo } from '@/lib/pdf-fonts'
 import { testFontCompatibility } from '@/lib/font-compat'
 import { getPreviewDate, getPreviewLevel } from '@/lib/pdf-formatting'
 import type { GoogleFont } from '@/lib/fonts'
-import { fetchGoogleFonts } from '@/lib/fonts'
+import { fetchGoogleFonts, createFontRecord } from '@/lib/fonts'
 import { groupVariants, groupUploadedFonts, parseFontFilename, type FontFamilyGroup } from '@/lib/font-variants'
 import QrCodeWithLogo from 'qrcode-with-logos'
 
@@ -30,6 +30,7 @@ type FieldMapping = {
   font_source: string
   font_variant: string
   uploaded_font_key: string | null
+  font_id: string | null
   custom_default_value: string | null
   custom_overridable: boolean
   date_format: string | null
@@ -45,8 +46,11 @@ type FieldMapping = {
 }
 
 interface UploadedFont {
+  id: string
   key: string
   name: string
+  family: string
+  variant: string
 }
 
 interface TemplateData {
@@ -222,9 +226,16 @@ async function loadTemplateData(
 
 async function loadEditorFontsData(dispatchData: React.Dispatch<DataAction>) {
   try {
-    const res = await fetch('/api/admin/fonts/uploaded')
+    const res = await fetch('/api/admin/fonts')
     const data = await res.json()
-    dispatchData({ type: 'SET_UPLOADED_FONTS', fonts: data.fonts ?? [] })
+    const fonts: UploadedFont[] = (data.fonts ?? []).map((f: { id: string; file_key: string; name: string; family: string; variant: string }) => ({
+      id: f.id,
+      key: f.file_key,
+      name: f.name,
+      family: f.family,
+      variant: f.variant,
+    }))
+    dispatchData({ type: 'SET_UPLOADED_FONTS', fonts })
   } catch {}
   try {
     const fonts = await fetchGoogleFonts()
@@ -417,6 +428,7 @@ function formReducer(state: FormState, action: FormAction): FormState {
             font_source: 'google',
             font_variant: 'regular',
             uploaded_font_key: null,
+            font_id: null,
             custom_default_value: '',
             custom_overridable: true,
             date_format: null,
@@ -554,7 +566,7 @@ function FieldEditorPanel({
   loadingState: LoadingState
   onUpdateField: (index: number, updates: Partial<FieldMapping>) => void
   onSaveFont: (index: number) => void
-  onUploadFont: (file: File, index: number) => Promise<string | null>
+  onUploadFont: (file: File, index: number) => Promise<{ key: string; id: string } | null>
   t: (key: string) => string
 }) {
   return (
@@ -850,9 +862,9 @@ function FieldEditorPanel({
                   onChange={async (e) => {
                     const file = e.target.files?.[0]
                     if (!file) return
-                    const key = await onUploadFont(file, index)
-                    if (key) {
-                      onUpdateField(index, { font_source: 'uploaded', uploaded_font_key: key, font_family: `UPLOADED_FONT_${key}` })
+                    const result = await onUploadFont(file, index)
+                    if (result) {
+                      onUpdateField(index, { font_source: 'uploaded', uploaded_font_key: result.key, font_id: result.id, font_family: `UPLOADED_FONT_${result.key}` })
                     }
                   }}
                 />
@@ -1175,20 +1187,27 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
       const { blob, fileName } = await apiDownloadFont(field.font_family, field.font_variant || 'regular')
       const file = new File([blob], fileName, { type: 'font/ttf' })
 
-      await uploadFiles('fontFileUpload', { files: [file] })
+      const [res] = await uploadFiles('fontFileUpload', { files: [file] })
+      const { family, variant } = parseFontFilename(fileName)
+      const createData = await createFontRecord({ key: res.key, name: fileName, family, variant, file_url: res.ufsUrl, file_size: blob.size })
 
-      const fontsRes = await fetch('/api/admin/fonts/uploaded')
+      const fontsRes = await fetch('/api/admin/fonts')
       const fontsData = await fontsRes.json()
-      const updatedFonts = fontsData.fonts ?? []
+      const updatedFonts: UploadedFont[] = (fontsData.fonts ?? []).map((f: { id: string; file_key: string; name: string; family: string; variant: string }) => ({
+        id: f.id,
+        key: f.file_key,
+        name: f.name,
+        family: f.family,
+        variant: f.variant,
+      }))
       dispatchData({ type: 'SET_UPLOADED_FONTS', fonts: updatedFonts })
 
-      const uploaded = updatedFonts.find((uf: UploadedFont) => uf.name === fileName)
-      if (uploaded) {
-        const { variant } = parseFontFilename(uploaded.name)
+      if (createData.font) {
         updateField(index, {
           font_source: 'uploaded',
-          uploaded_font_key: uploaded.key,
-          font_family: `UPLOADED_FONT_${uploaded.key}`,
+          uploaded_font_key: res.key,
+          font_id: createData.font.id,
+          font_family: `UPLOADED_FONT_${res.key}`,
           font_variant: variant,
         })
       }
@@ -1198,13 +1217,15 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     dispatchLoading({ type: 'SET_SAVING_FONT', value: false })
   }
 
-  async function handleUploadFont(file: File): Promise<string | null> {
+  async function handleUploadFont(file: File): Promise<{ key: string; id: string } | null> {
     dispatchLoading({ type: 'SET_UPLOADING_FONT', value: true })
     try {
       const [res] = await uploadFiles('fontFileUpload', { files: [file] })
-      dispatchData({ type: 'ADD_UPLOADED_FONT', font: { key: res.key, name: file.name } })
+      const { family, variant } = parseFontFilename(file.name)
+      const createData = await createFontRecord({ key: res.key, name: file.name, family, variant, file_url: res.ufsUrl, file_size: file.size })
+      dispatchData({ type: 'ADD_UPLOADED_FONT', font: { id: createData.font.id, key: res.key, name: file.name, family, variant } })
       dispatchLoading({ type: 'SET_UPLOADING_FONT', value: false })
-      return res.key
+      return { key: res.key, id: createData.font.id }
     } catch {
       dispatchLoading({ type: 'SET_UPLOADING_FONT', value: false })
       return null

@@ -19,6 +19,7 @@ interface FieldMapping {
   font_source: string
   font_variant: string
   uploaded_font_key: string | null
+  font_id: string | null
   custom_default_value: string | null
   date_format: string | null
   level_format: string | null
@@ -131,13 +132,17 @@ async function generatePdf(input: GeneratePdfInput) {
         }
       }
 
-      const fontKey = `${field.font_family}-${field.font_variant || 'regular'}-${field.font_source}-${field.uploaded_font_key}`
+      const fontKey = `${field.font_family}-${field.font_variant || 'regular'}-${field.font_source}-${field.font_id || field.uploaded_font_key || ''}`
       if (!fieldFontCache[fontKey]) {
         let fontBytes: ArrayBuffer
         if (field.font_source === 'google') {
           fontBytes = await getGoogleFontBytes(field.font_family, field.font_variant)
         } else if (field.uploaded_font_key) {
           const fontRes = await fetch(`/api/fonts/uploaded?key=${field.uploaded_font_key}`)
+          if (!fontRes.ok) throw new Error(`Font fetch returned ${fontRes.status}`)
+          fontBytes = await fontRes.arrayBuffer()
+        } else if (field.font_id) {
+          const fontRes = await fetch(`/api/fonts/uploaded?id=${field.font_id}`)
           if (!fontRes.ok) throw new Error(`Font fetch returned ${fontRes.status}`)
           fontBytes = await fontRes.arrayBuffer()
         } else {

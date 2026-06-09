@@ -1,0 +1,1 @@
+ALTER TABLE pdf_fonts ADD COLUMN file_size BIGINT;

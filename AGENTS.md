@@ -19,11 +19,13 @@ This generates a properly timestamped file in `supabase/migrations/`. Then write
 <!-- BEGIN:verification-rules -->
 # Verification
 
-After completing a task, run all three:
+Run ALL three before every commit. Do not skip any.
 
 ```sh
 pnpm run lint
 pnpm run typecheck
 pnpm run doctor
 ```
+
+Fix all issues introduced by your changes before committing. Pre-existing errors/warnings in unchanged files may be left alone, but any error in a file you touched must be resolved.
 <!-- END:verification-rules -->

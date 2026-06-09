@@ -5,20 +5,22 @@ import { useTranslations } from 'next-intl'
 import { uploadFiles } from '@/lib/uploadthing'
 import { testFontCompatibility } from '@/lib/font-compat'
 import { FontPicker } from '@/components/ui/font-picker'
-import { loadFont, fetchGoogleFonts } from '@/lib/fonts'
+import { loadFont, fetchGoogleFonts, createFontRecord } from '@/lib/fonts'
 import type { GoogleFont } from '@/lib/fonts'
 import { FontPreview } from './font-preview'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { InformationCircleIcon } from "@hugeicons/core-free-icons"
-import { groupUploadedFonts, groupVariants, type FontFamilyGroup } from '@/lib/font-variants'
+import { groupUploadedFonts, groupVariants, parseFontFilename, type FontFamilyGroup } from '@/lib/font-variants'
 import JSZip from 'jszip'
 
 interface UploadedFont {
+  id: string
   key: string
   name: string
+  family: string
+  variant: string
   size: number
   uploadedAt: number
-  status: string
 }
 
 interface UploadedFontsState {
@@ -72,10 +74,18 @@ type UiAction =
 
 async function loadUploadedFonts(dispatchUf: React.Dispatch<UploadedFontsAction>, dispatchUi: React.Dispatch<UiAction>) {
   try {
-    const res = await fetch('/api/admin/fonts/uploaded')
+    const res = await fetch('/api/admin/fonts')
     if (!res.ok) throw new Error('Failed to fetch fonts')
     const data = await res.json()
-    const fonts: UploadedFont[] = data.fonts ?? []
+    const fonts: UploadedFont[] = (data.fonts ?? []).map((f: { id: string; file_key: string; name: string; family: string; variant: string; file_size: number | null; created_at: string }) => ({
+      id: f.id,
+      key: f.file_key,
+      name: f.name,
+      family: f.family,
+      variant: f.variant,
+      size: f.file_size ?? 0,
+      uploadedAt: new Date(f.created_at).getTime(),
+    }))
     dispatchUf({ type: 'SET_FONTS', fonts })
     return fonts
   } catch (err) {
@@ -467,7 +477,13 @@ export function FontList() {
     dispatchUi({ type: 'START_UPLOADING' })
 
     try {
-      await uploadFiles('fontFileUpload', { files: [file] })
+      const [res] = await uploadFiles('fontFileUpload', { files: [file] })
+      const { family, variant } = parseFontFilename(file.name)
+      await fetch('/api/admin/fonts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: res.key, name: file.name, family, variant, file_url: res.ufsUrl, file_size: file.size }),
+      })
       await loadUploadedFonts(dispatchUf, dispatchUi)
     } catch (err) {
       dispatchUi({ type: 'SET_ERROR', error: err instanceof Error ? err.message : t('uploadFailed') })
@@ -485,11 +501,12 @@ export function FontList() {
     dispatchUi({ type: 'START_DELETING', family })
 
     await Promise.allSettled(
-      group.variants.map((variant) =>
-        fetch(`/api/admin/fonts/uploaded/${encodeURIComponent(variant.key)}`, {
-          method: 'DELETE',
-        })
-      )
+      group.variants.map((variant) => {
+        if (variant.id) {
+          return fetch(`/api/admin/fonts/${variant.id}`, { method: 'DELETE' })
+        }
+        return fetch(`/api/admin/fonts/uploaded/${encodeURIComponent(variant.key)}`, { method: 'DELETE' })
+      })
     )
 
     dispatchUf({ type: 'REMOVE_FONTS', keys: group.variants.map((v) => v.key) })
@@ -596,7 +613,9 @@ export function FontList() {
     const file = new File([blob], fileName, { type: 'font/ttf' })
 
     try {
-      await uploadFiles('fontFileUpload', { files: [file] })
+      const [uploadRes] = await uploadFiles('fontFileUpload', { files: [file] })
+      const { family } = parseFontFilename(fileName)
+      await createFontRecord({ key: uploadRes.key, name: fileName, family, variant, file_url: uploadRes.ufsUrl, file_size: file.size })
       await loadUploadedFonts(dispatchUf, dispatchUi)
       dispatchGf({ type: 'SAVE_SUCCESS' })
       dispatchUi({ type: 'SET_SUCCESS', message: t('googleFontSaved') })

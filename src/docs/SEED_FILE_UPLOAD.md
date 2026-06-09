@@ -19,10 +19,8 @@ Uploadthing. This workflow bridges the gap:
 supabase/seed-files/
 ├── manifest.json          # Config: what to upload + field metadata
 ├── seed-files.sql         # Generated SQL (committed to git)
-├── pdfs/                  # Place .pdf files here (gitignored)
-│   └── .gitkeep
-└── fonts/                 # Place font files here (gitignored)
-    └── .gitkeep
+├── pdfs/                  # Place .pdf files here (tracked in git)
+└── fonts/                 # Place font files here (tracked in git)
 ```
 
 ## Prerequisites
@@ -104,20 +102,21 @@ This runs:
 ### 5. Commit
 
 ```bash
-git add supabase/seed-files/manifest.json supabase/seed-files/seed-files.sql
+git add supabase/seed-files/
 git add src/docs/SEED_FILE_UPLOAD.md
 git commit -m "add seed file upload workflow"
 ```
 
-**Only `manifest.json` and `seed-files.sql` are committed** — the binary
-files (PDFs, fonts) are gitignored.
+Binary files (PDFs, fonts) are tracked in git so all developers can
+re-run the upload script.
 
 ## CI / Reproducibility
 
 The generated `seed-files.sql` is committed to git, so CI environments and
-other developers get the same seed data without needing the Uploadthing token.
-If the files need to be updated, re-run the script on a machine with the token
-and recommit the SQL.
+other developers get the same seed data. The source PDF and font files are
+also tracked, so anyone can re-run the upload script to regenerate the SQL.
+If the files need to be updated, re-run the script on a machine with the
+Uploadthing token and recommit the SQL.
 
 ## Deterministic UUIDs
 

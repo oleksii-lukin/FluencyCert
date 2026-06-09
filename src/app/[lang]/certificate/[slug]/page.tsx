@@ -173,6 +173,7 @@ export default async function CertificatePage({ params }: PageProps) {
     font_source: string
     font_variant: string
     uploaded_font_key: string | null
+    font_id: string | null
     custom_default_value: string | null
     date_format: string | null
     level_format: string | null
