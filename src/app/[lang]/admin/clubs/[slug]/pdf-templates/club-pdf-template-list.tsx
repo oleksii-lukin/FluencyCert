@@ -76,6 +76,8 @@ interface PdfTemplate {
   description: string | null
   file_url: string
   file_key: string
+  preview_url: string | null
+  preview_key: string | null
   created_at: string
   pdf_template_fields: { count: number }[]
   pdf_template_variants: { count: number }[]
@@ -349,7 +351,29 @@ export function ClubPdfTemplateList() {
           <tbody>
             {data.templates.map((template) => (
               <tr key={template.id} className="border-b last:border-b-0 hover:bg-muted/30">
-                <td className="px-4 py-3 font-medium">{template.name}</td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-4 items-center">
+                    <div className="shrink-0">
+                      {template.preview_url ? (
+                        <img
+                          src={template.preview_url}
+                          alt={`${template.name} preview`}
+                          className="w-60 h-60 object-contain rounded-lg border"
+                        />
+                      ) : (
+                        <div className="w-60 h-60 rounded-lg border bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                          {t('noPreview')}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium">{template.name}</p>
+                      {template.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{template.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1.5">
                     <span className="inline-flex items-center rounded-full bg-bright-sky/10 px-2.5 py-0.5 text-xs font-medium text-bright-sky">

@@ -21,6 +21,21 @@ export const ourFileRouter = {
       return { uploadedBy: metadata.userId }
     }),
 
+  templatePreviewUpload: f({ image: { maxFileSize: '4MB' } })
+    .middleware(async () => {
+      const { userId } = await auth()
+      if (!userId) throw new Error('Unauthorized')
+
+      const [isMaster, adminClubIds] = await Promise.all([isMasterAdmin(userId), getAdminClubIds(userId)])
+
+      if (!isMaster && adminClubIds.length === 0) throw new Error('Forbidden')
+
+      return { userId }
+    })
+    .onUploadComplete(async ({ metadata }) => {
+      return { uploadedBy: metadata.userId }
+    }),
+
   fontFileUpload: f({ blob: { maxFileSize: '4MB' } })
     .middleware(async () => {
       const { userId } = await auth()

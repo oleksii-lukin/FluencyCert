@@ -42,6 +42,7 @@ interface SeedVariant {
 interface SeedPdfTemplate {
   name: string
   description?: string
+  preview?: string
   fields: SeedField[]
   variants: SeedVariant[]
 }
@@ -100,6 +101,10 @@ function getMimeType(fileName: string): string {
     '.otf': 'font/otf',
     '.woff': 'font/woff',
     '.woff2': 'font/woff2',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
   }
   return map[ext] || 'application/octet-stream'
 }
@@ -153,6 +158,7 @@ function generateSql(
   manifestFonts: SeedFont[],
   fontResults: Map<string, UploadResult>,
   pdfResults: UploadResult[],
+  previewResults: Map<string, UploadResult>,
 ): string {
   const lines: string[] = [
     '-- =================================================================',
@@ -203,10 +209,14 @@ function generateSql(
     }
 
     const templateId = deterministicUUID('pdf-template:' + t.name)
+    const previewResult = t.preview ? previewResults.get(t.preview) : null
+
     lines.push(`-- Template: ${t.name}`)
-    lines.push(`INSERT INTO pdf_templates (id, name, description, file_url, file_key)`)
     lines.push(
-      `VALUES (${pgLiteral(templateId)}, ${pgLiteral(t.name)}, ${pgLiteral(t.description ?? null)}, ${pgLiteral(firstResult.ufsUrl)}, ${pgLiteral(firstResult.key)});`,
+      `INSERT INTO pdf_templates (id, name, description, file_url, file_key${previewResult ? ', preview_url, preview_key' : ''})`,
+    )
+    lines.push(
+      `VALUES (${pgLiteral(templateId)}, ${pgLiteral(t.name)}, ${pgLiteral(t.description ?? null)}, ${pgLiteral(firstResult.ufsUrl)}, ${pgLiteral(firstResult.key)}${previewResult ? `, ${pgLiteral(previewResult.ufsUrl)}, ${pgLiteral(previewResult.key)}` : ''});`,
     )
     lines.push('')
 
@@ -343,6 +353,24 @@ async function main() {
     }
   }
 
+  const previewResults = new Map<string, UploadResult>()
+  const uniquePreviewFiles = new Set<string>()
+  for (const t of manifest.pdfTemplates) {
+    if (!t.preview) continue
+    if (uniquePreviewFiles.has(t.preview)) continue
+    uniquePreviewFiles.add(t.preview)
+
+    const filePath = resolve(SEED_FILES_DIR, t.preview)
+    if (!existsSync(filePath)) {
+      console.error(`  File not found: ${filePath}`)
+      process.exit(1)
+    }
+    process.stdout.write(`  Uploading preview: ${t.preview}... `)
+    const result = await uploadFile(utapi, filePath, basename(t.preview))
+    previewResults.set(t.preview, result)
+    console.log(`key: ${result.key}`)
+  }
+
   const fontResults = new Map<string, UploadResult>()
   for (const f of manifest.fonts) {
     const filePath = resolve(SEED_FILES_DIR, f.fileName)
@@ -358,7 +386,7 @@ async function main() {
 
   console.log('')
   console.log('Generating SQL...')
-  const sql = generateSql(manifest.pdfTemplates, manifest.fonts, fontResults, pdfResults)
+  const sql = generateSql(manifest.pdfTemplates, manifest.fonts, fontResults, pdfResults, previewResults)
   await mkdir(SEED_FILES_DIR, { recursive: true })
   await writeFile(OUTPUT_PATH, sql, 'utf-8')
   console.log(`  SQL written to: ${OUTPUT_PATH}`)
@@ -368,6 +396,7 @@ async function main() {
   console.log('Done!')
   console.log(`  ${pdfResults.length} PDF(s) uploaded`)
   console.log(`  ${fontResults.size} font(s) uploaded`)
+  console.log(`  ${previewResults.size} preview(s) uploaded`)
   console.log('')
   console.log('Next steps:')
   console.log(`  1. Review the SQL in supabase/seed-files/seed-files.sql`)

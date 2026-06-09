@@ -59,6 +59,8 @@ interface TemplateData {
   name: string
   description: string | null
   file_url: string
+  preview_url: string | null
+  preview_key: string | null
   pdf_template_fields: FieldMapping[]
 }
 
@@ -1150,7 +1152,9 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
   const [data, dispatchData] = useReducer(dataReducer, initialDataState)
   const [variantUI, dispatchVariantUI] = useReducer(variantUIReducer, initialVariantUIState)
   const [dirtyOverrides, setDirtyOverrides] = useState<Record<string, Record<string, unknown>>>({})
+  const [uploadingPreview, setUploadingPreview] = useState(false)
   const fontVariantStyleId = useRef<string | null>(null)
+  const previewInputRef = useRef<HTMLInputElement>(null)
 
   const isVariantTab = variantUI.activeTab !== 'main'
   const activeVariant = isVariantTab
@@ -1441,6 +1445,41 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
     }
   }
 
+  async function handleUploadPreview(file: File) {
+    setUploadingPreview(true)
+    try {
+      const [res] = await uploadFiles('templatePreviewUpload', { files: [file] })
+      await fetch(`/api/admin/pdf-templates/${templateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preview_url: res.url, preview_key: res.key }),
+      })
+      dispatchData({
+        type: 'SET_TEMPLATE',
+        template: { ...data.template!, preview_url: res.url, preview_key: res.key, pdf_template_fields: data.template!.pdf_template_fields },
+      })
+    } catch {
+      dispatchForm({ type: 'SET_ERROR', error: 'Failed to upload preview' })
+    }
+    setUploadingPreview(false)
+  }
+
+  async function handleRemovePreview() {
+    try {
+      await fetch(`/api/admin/pdf-templates/${templateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preview_url: null, preview_key: null }),
+      })
+      dispatchData({
+        type: 'SET_TEMPLATE',
+        template: { ...data.template!, preview_url: null, preview_key: null, pdf_template_fields: data.template!.pdf_template_fields },
+      })
+    } catch {
+      dispatchForm({ type: 'SET_ERROR', error: 'Failed to remove preview' })
+    }
+  }
+
   async function handleAddVariant(name: string, file: File): Promise<{ success: boolean; error?: string }> {
     try {
       const result = await uploadFiles('pdfTemplateUpload', { files: [file] })
@@ -1521,6 +1560,24 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
         <div className="flex gap-2">
           <button
             type="button"
+            onClick={() => previewInputRef.current?.click()}
+            disabled={uploadingPreview}
+            className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
+          >
+            {uploadingPreview ? t('uploadingPreview') : t('uploadPreview')}
+          </button>
+          <input
+            ref={previewInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (file) await handleUploadPreview(file)
+            }}
+          />
+          <button
+            type="button"
             onClick={() => dispatchForm({ type: 'TOGGLE_PDF_PREVIEW' })}
             className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
           >
@@ -1535,6 +1592,23 @@ export function TemplateFieldEditor({ templateId, lang }: { templateId: string; 
           </button>
         </div>
       </div>
+
+      {data.template.preview_url && (
+        <div className="relative inline-block">
+          <img
+            src={data.template.preview_url}
+            alt={`${data.template.name} preview`}
+            className="w-60 h-60 object-contain rounded-lg border"
+          />
+          <button
+            type="button"
+            onClick={handleRemovePreview}
+            className="absolute top-1 right-1 rounded-md bg-red-500 px-2 py-0.5 text-xs text-white hover:bg-red-600"
+          >
+            {t('removePreview')}
+          </button>
+        </div>
+      )}
 
       <VariantTabs
         variants={variantUI.variants}

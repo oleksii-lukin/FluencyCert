@@ -559,6 +559,8 @@ export type Database = {
           file_url: string
           id: string
           name: string
+          preview_key: string | null
+          preview_url: string | null
           updated_at: string
         }
         Insert: {
@@ -569,6 +571,8 @@ export type Database = {
           file_url: string
           id?: string
           name: string
+          preview_key?: string | null
+          preview_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -579,6 +583,8 @@ export type Database = {
           file_url?: string
           id?: string
           name?: string
+          preview_key?: string | null
+          preview_url?: string | null
           updated_at?: string
         }
         Relationships: [

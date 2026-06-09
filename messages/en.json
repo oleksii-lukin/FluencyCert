@@ -454,7 +454,11 @@
     "variantDefault": "Default",
     "variantOrientation": "Layout",
     "variantOrientationCustom": "Custom",
-    "variantCustomName": "Custom name"
+    "variantCustomName": "Custom name",
+    "uploadPreview": "Upload Preview",
+    "uploadingPreview": "Uploading...",
+    "removePreview": "Remove",
+    "noPreview": "No preview"
   },
   "claimActions": {
     "approve": "Approve",

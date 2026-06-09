@@ -455,7 +455,11 @@
     "variantDefault": "За замовчуванням",
     "variantOrientation": "Макет",
     "variantOrientationCustom": "Інший",
-    "variantCustomName": "Назва варіанту"
+    "variantCustomName": "Назва варіанту",
+    "uploadPreview": "Завантажити прев'ю",
+    "uploadingPreview": "Завантаження...",
+    "removePreview": "Видалити",
+    "noPreview": "Немає прев'ю"
   },
   "claimActions": {
     "approve": "Схвалити",

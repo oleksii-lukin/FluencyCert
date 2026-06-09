@@ -107,11 +107,16 @@ export async function PATCH(
   if (accessError) return accessError
 
   const body = await request.json()
-  const { name, description } = body
+  const { name, description, preview_url, preview_key } = body
 
   const { data: template, error } = await supabase
     .from('pdf_templates')
-    .update({ name, description })
+    .update({
+      ...(name !== undefined ? { name } : {}),
+      ...(description !== undefined ? { description } : {}),
+      ...(preview_url !== undefined ? { preview_url } : {}),
+      ...(preview_key !== undefined ? { preview_key } : {}),
+    })
     .eq('id', id)
     .select()
     .single()

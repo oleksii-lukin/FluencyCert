@@ -3,6 +3,7 @@
     {
       "name": "Dark Navy Gold Border Certificate",
       "description": "An elegant certificate with a dark navy background, gold decorative border frame, gold star badge, QR code verification, and classic serif typography. Available in landscape and portrait orientations.",
+      "preview": "previews/88-preview.png",
       "variants": [
         {
           "name": "Landscape",
@@ -111,6 +112,7 @@
     {
       "name": "Elegant Gold Recognition Certificate",
       "description": "A refined certificate of recognition featuring soft pink background, ornate gold corner decorations, classic serif typography, and QR code verification. Available in landscape and portrait orientations.",
+      "preview": "previews/95-preview.png",
       "variants": [
         {
           "name": "Landscape",
@@ -188,6 +190,7 @@
     {
       "name": "Professional Leadership Achievement Certificate",
       "description": "Clean leadership certificate template with blue decorative borders, dual signature fields, and QR verification. Ideal for management training, leadership programs, and professional development courses. A perfect Certificate of Leadership template.",
+      "preview": "previews/4-preview.png",
       "variants": [
         {
           "name": "Landscape",
