@@ -17,9 +17,13 @@ This generates a properly timestamped file in `supabase/migrations/`. Then write
 <!-- END:supabase-rules -->
 
 <!-- BEGIN:verification-rules -->
-# Verification
+# Verification — MANDATORY. Run BEFORE every commit and after every task.
 
-Run ALL three both after completing a task and before every commit. Do not skip any.
+## Process (do NOT skip any step)
+
+1. **HARD REQUIREMENT**: All three must pass BEFORE you run `git commit`. Do not commit first and check after — that defeats the purpose.
+
+2. Run these three commands in order:
 
 ```sh
 pnpm run lint
@@ -27,5 +31,15 @@ pnpm run typecheck
 pnpm run doctor
 ```
 
-Fix all issues introduced by your changes before committing. Pre-existing errors/warnings in unchanged files may be left alone, but any error in a file you touched must be resolved.
+3. If any command fails:
+   - If the errors are ONLY in files you did NOT touch → pre-existing, OK to proceed
+   - If ANY error is in a file you touched → FIX IT before committing
+
+4. **Check your staged files**: Before committing, run `git diff --cached` to see what's staged. If you modified any `.ts` / `.tsx` / `.js` / `.jsx` file, steps 2–3 are mandatory.
+
+5. Only after all three pass (or only pre-existing errors remain), run `git commit`.
+
+## When to skip
+
+Never. These checks are mandatory before every commit and after completing any task.
 <!-- END:verification-rules -->

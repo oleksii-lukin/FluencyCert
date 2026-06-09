@@ -193,6 +193,127 @@
           "qrCornersColor": "#171110"
         }
       ]
+    },
+    {
+      "name": "Elegant Gold Album Recognition Certificate",
+      "description": "A refined certificate of recognition featuring soft pink background, ornate gold corner decorations, classic serif typography, and QR code verification. Perfect for honoring outstanding dedication and contributions.",
+      "fileName": "pdfs/90-forms.pdf",
+      "fields": [
+        {
+          "pdfFieldName": "[recipientname]",
+          "sourceType": "database",
+          "sourceKey": "fullName",
+          "displayLabel": "[recipientname]",
+          "fontFamily": "Jacques Francois",
+          "fontSize": 120,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Jacques Francois",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 1,
+          "textColor": "#AD7C18",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[certificateissued_on]",
+          "sourceType": "database",
+          "sourceKey": "createdAt",
+          "displayLabel": "[certificateissued_on]",
+          "fontFamily": "Open Sans",
+          "fontSize": 80,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Open Sans",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 2,
+          "dateFormat": "gb",
+          "textColor": "#AD7C18",
+          "fontVariant": "600"
+        },
+        {
+          "pdfFieldName": "[certificateuuid]",
+          "sourceType": "database",
+          "sourceKey": "slug",
+          "displayLabel": "[certificateuuid]",
+          "fontFamily": "Open Sans",
+          "fontSize": 80,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Open Sans",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 3,
+          "textColor": "#AD7C18",
+          "fontVariant": "600"
+        }
+      ]
+    },
+    {
+      "name": "Elegant Gold Portrait Recognition Certificate",
+      "description": "A refined certificate of recognition featuring soft pink background, ornate gold corner decorations, classic serif typography, and QR code verification. Perfect for honoring outstanding dedication and contributions.",
+      "fileName": "pdfs/95-forms.pdf",
+      "fields": [
+        {
+          "pdfFieldName": "[recipientname]",
+          "sourceType": "database",
+          "sourceKey": "fullName",
+          "displayLabel": "[recipientname]",
+          "fontFamily": "Jacques Francois",
+          "fontSize": 120,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Jacques Francois",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 0,
+          "textColor": "#AD7C18",
+          "fontVariant": "regular"
+        },
+        {
+          "pdfFieldName": "[certificateissued_on]",
+          "sourceType": "database",
+          "sourceKey": "createdAt",
+          "displayLabel": "[certificateissued_on]",
+          "fontFamily": "Open Sans",
+          "fontSize": 80,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Open Sans",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 1,
+          "dateFormat": "gb",
+          "textColor": "#AD7C18",
+          "fontVariant": "600"
+        },
+        {
+          "pdfFieldName": "[certificateuuid]",
+          "sourceType": "database",
+          "sourceKey": "slug",
+          "displayLabel": "[certificateuuid]",
+          "fontFamily": "Open Sans",
+          "fontSize": 80,
+          "fontSource": "uploaded",
+          "uploadedFontRef": "Open Sans",
+          "isEnabled": true,
+          "customOverridable": false,
+          "sortOrder": 2,
+          "textColor": "#AD7C18",
+          "fontVariant": "600"
+        },
+        {
+          "pdfFieldName": "qrCode",
+          "sourceType": "qr_code",
+          "displayLabel": "qrCode",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontSource": "google",
+          "isEnabled": true,
+          "sortOrder": 3,
+          "qrDotsColor": "#AD7C18",
+          "qrBgColor": "transparent",
+          "qrDotsType": "fluid-line",
+          "qrCornersType": "rounded",
+          "qrCornersColor": "#AD7C18"
+        }
+      ]
     }
   ],
   "fonts": [
@@ -216,6 +337,20 @@
       "family": "Martian Mono",
       "variant": "500",
       "fileName": "fonts/Martian Mono-500.ttf"
+    },
+    {
+      "ref": "Open Sans",
+      "name": "Open Sans-600.ttf",
+      "family": "Open Sans",
+      "variant": "600",
+      "fileName": "fonts/Open Sans-600.ttf"
+    },
+    {
+      "ref": "Jacques Francois",
+      "name": "Jacques Francois.ttf",
+      "family": "Jacques Francois",
+      "variant": "regular",
+      "fileName": "fonts/Jacques Francois.ttf"
     }
   ]
 }

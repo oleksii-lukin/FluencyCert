@@ -59,7 +59,7 @@ export function formatEnglishLevel(level: string, format: LevelFormat | null): s
 }
 
 export function getPreviewDate(format: DateFormat | null, locale?: string): string {
-  const preview = '2026-12-12T00:00:00.000Z'
+  const preview = '2026-07-24T00:00:00.000Z'
   return formatDate(preview, format, locale)
 }
 
