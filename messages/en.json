@@ -451,7 +451,10 @@
     "deleteVariant": "Delete Variant",
     "deleteVariantConfirm": "Are you sure you want to delete this variant?",
     "saveOverrides": "Save Variant Mappings",
-    "variantDefault": "Default"
+    "variantDefault": "Default",
+    "variantOrientation": "Layout",
+    "variantOrientationCustom": "Custom",
+    "variantCustomName": "Custom name"
   },
   "claimActions": {
     "approve": "Approve",

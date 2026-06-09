@@ -75,6 +75,7 @@ interface PdfTemplate {
   name: string
   description: string | null
   file_url: string
+  file_key: string
   created_at: string
   pdf_template_fields: { count: number }[]
   pdf_template_variants: { count: number }[]
@@ -83,6 +84,7 @@ interface PdfTemplate {
 interface UploadFormState {
   newName: string
   newDescription: string
+  newVariantName: string
   uploadOpen: boolean
   uploading: boolean
   uploadError: string
@@ -97,6 +99,7 @@ interface DataState {
 type UploadFormAction =
   | { type: "SET_NAME"; value: string }
   | { type: "SET_DESCRIPTION"; value: string }
+  | { type: "SET_VARIANT_NAME"; value: string }
   | { type: "OPEN_UPLOAD" }
   | { type: "CLOSE_UPLOAD" }
   | { type: "START_UPLOADING" }
@@ -113,6 +116,7 @@ type DataAction =
 const initialUploadFormState: UploadFormState = {
   newName: "",
   newDescription: "",
+  newVariantName: "Landscape",
   uploadOpen: false,
   uploading: false,
   uploadError: "",
@@ -130,6 +134,8 @@ function uploadFormReducer(state: UploadFormState, action: UploadFormAction): Up
       return { ...state, newName: action.value }
     case "SET_DESCRIPTION":
       return { ...state, newDescription: action.value }
+    case "SET_VARIANT_NAME":
+      return { ...state, newVariantName: action.value }
     case "OPEN_UPLOAD":
       return { ...state, uploadOpen: true }
     case "CLOSE_UPLOAD":
@@ -139,7 +145,7 @@ function uploadFormReducer(state: UploadFormState, action: UploadFormAction): Up
     case "UPLOAD_ERROR":
       return { ...state, uploading: false, uploadError: action.error }
     case "UPLOAD_SUCCESS":
-      return { ...state, newName: "", newDescription: "", uploadOpen: false, uploading: false }
+      return { ...state, newName: "", newDescription: "", newVariantName: "Landscape", uploadOpen: false, uploading: false }
     default:
       return state
   }
@@ -190,6 +196,19 @@ export function ClubPdfTemplateList() {
 
     const result = await uploadClubPdfTemplate(slug, uploadForm.newName.trim(), uploadForm.newDescription.trim(), file)
     if (result.success) {
+      try {
+        await fetch(`/api/admin/pdf-templates/${result.template.id}/variants`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: uploadForm.newVariantName,
+            file_url: result.template.file_url,
+            file_key: result.template.file_key,
+          }),
+        })
+      } catch {
+        // non-blocking — template still created without variant
+      }
       dispatchUploadForm({ type: "UPLOAD_SUCCESS" })
       router.push(`/admin/pdf-templates/${result.template.id}`)
     } else {
@@ -255,6 +274,45 @@ export function ClubPdfTemplateList() {
               <div>
                 <label className="block text-sm font-medium mb-1">{t("pdfFile")}</label>
                 <input id="club-pdf-upload" type="file" accept=".pdf" required aria-label="Upload PDF file" className="w-full text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">{t("variantOrientation")}</label>
+                <div className="flex gap-2">
+                  {(["Landscape", "Portrait", "Custom"] as const).map((opt) => {
+                    const isCustom = opt === "Custom"
+                    const isActive = isCustom
+                      ? uploadForm.newVariantName !== "Landscape" && uploadForm.newVariantName !== "Portrait"
+                      : uploadForm.newVariantName === opt
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          if (!isCustom) {
+                            dispatchUploadForm({ type: "SET_VARIANT_NAME", value: opt })
+                          }
+                        }}
+                        className={`rounded-lg px-3 py-1.5 text-sm border transition-colors ${
+                          isActive
+                            ? "bg-bright-sky text-white border-bright-sky"
+                            : "bg-background text-muted-foreground border hover:bg-muted"
+                        }`}
+                      >
+                        {isCustom ? t("variantOrientationCustom") : opt}
+                      </button>
+                    )
+                  })}
+                </div>
+                {uploadForm.newVariantName !== "Landscape" && uploadForm.newVariantName !== "Portrait" && (
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bright-sky mt-2"
+                    placeholder={t("variantCustomName")}
+                    value={uploadForm.newVariantName}
+                    onChange={(e) => dispatchUploadForm({ type: "SET_VARIANT_NAME", value: e.target.value })}
+                    aria-label="Custom variant name"
+                  />
+                )}
               </div>
               {uploadForm.uploadError && <p className="text-sm text-red-500">{uploadForm.uploadError}</p>}
               <div className="flex justify-end gap-3">

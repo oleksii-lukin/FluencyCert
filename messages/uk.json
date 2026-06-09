@@ -452,7 +452,10 @@
     "deleteVariant": "Видалити варіант",
     "deleteVariantConfirm": "Ви впевнені, що хочете видалити цей варіант?",
     "saveOverrides": "Зберегти налаштування варіанту",
-    "variantDefault": "За замовчуванням"
+    "variantDefault": "За замовчуванням",
+    "variantOrientation": "Макет",
+    "variantOrientationCustom": "Інший",
+    "variantCustomName": "Назва варіанту"
   },
   "claimActions": {
     "approve": "Схвалити",
