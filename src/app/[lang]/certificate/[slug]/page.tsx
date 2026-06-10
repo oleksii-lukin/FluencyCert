@@ -1,12 +1,13 @@
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
-import { auth } from '@clerk/nextjs/server'
+import { auth, verifyToken } from '@clerk/nextjs/server'
+import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CertificateRenderer } from '@/components/certificate/certificate-renderer'
 import { PdfCertificateViewer } from '@/components/certificate/pdf-certificate-viewer'
 import { UpvoteRosette } from '@/components/certificate/upvote-rosette'
-import { TestimonialsMarquee } from '@/components/certificate/testimonials-marquee'
+import { TestimonialsMarquee, type FeedbackWithReviewer } from '@/components/certificate/testimonials-marquee'
 import { FeedbackForm } from '@/components/certificate/feedback-form'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft02Icon } from '@hugeicons/core-free-icons'
@@ -20,6 +21,25 @@ interface PageProps {
 }
 
 const baseUrl = siteConfig.baseUrl
+
+async function getOptionalUserId(): Promise<string | null> {
+  try {
+    const { userId } = await auth()
+    return userId
+  } catch {
+    try {
+      const cookieStore = await cookies()
+      const sessionToken = cookieStore.get('__session')?.value
+      if (!sessionToken) return null
+      const payload = await verifyToken(sessionToken, {
+        secretKey: process.env.CLERK_SECRET_KEY,
+      })
+      return payload.sub ?? null
+    } catch {
+      return null
+    }
+  }
+}
 
 export async function generateMetadata({ params }: PageProps) {
   const { lang, slug } = await params
@@ -74,8 +94,8 @@ export default async function CertificatePage({ params }: PageProps) {
   const { lang, slug } = await params
   const supabase = createAdminClient()
 
-  const [{ userId }, t, { data: claim }] = await Promise.all([
-    auth(),
+  const [userId, t, { data: claim }] = await Promise.all([
+    getOptionalUserId(),
     getTranslations('certificatePage'),
     supabase
       .from('certificate_claims')
@@ -351,7 +371,7 @@ export default async function CertificatePage({ params }: PageProps) {
           </div>
         </div>
 
-        <TestimonialsMarquee feedbacks={(feedbacksWithCertIds ?? feedbacks ?? []) as any} />
+        <TestimonialsMarquee feedbacks={(feedbacksWithCertIds ?? feedbacks ?? []) as FeedbackWithReviewer[]} />
 
         {canLeaveFeedback && (
           <div className="mx-auto mt-6 max-w-xl">

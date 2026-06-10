@@ -7,7 +7,7 @@ import Image from "next/image"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Linkedin01Icon } from "@hugeicons/core-free-icons"
 
-interface FeedbackWithReviewer {
+export interface FeedbackWithReviewer {
   id: string
   feedback_text: string
   display_name_preference: string
