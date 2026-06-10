@@ -371,7 +371,7 @@ export default async function CertificatePage({ params }: PageProps) {
           </div>
         </div>
 
-        <TestimonialsMarquee feedbacks={(feedbacksWithCertIds ?? feedbacks ?? []) as FeedbackWithReviewer[]} />
+        <TestimonialsMarquee feedbacks={(feedbacksWithCertIds ?? feedbacks ?? []) as unknown as FeedbackWithReviewer[]} />
 
         {canLeaveFeedback && (
           <div className="mx-auto mt-6 max-w-xl">
