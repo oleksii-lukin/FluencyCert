@@ -13,6 +13,8 @@ import { ArrowLeft02Icon } from '@hugeicons/core-free-icons'
 import '@/components/certificate/guilloche-pattern.css'
 import { siteConfig } from '@/lib/site'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
   params: Promise<{ lang: string; slug: string }>
 }
