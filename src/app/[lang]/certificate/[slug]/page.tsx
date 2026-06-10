@@ -321,7 +321,7 @@ export default async function CertificatePage({ params }: PageProps) {
                     slug: claim.slug,
                   }}
                   customValues={pdfTemplateData.customValues}
-                  certificateUrl={`/${lang}/certificate/${claim.slug}`}
+                  certificateUrl={`${baseUrl}/${lang}/certificate/${claim.slug}`}
                   viewerLocale={lang}
                 />
               </div>
