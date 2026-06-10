@@ -9,7 +9,6 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "doctor": "npx react-doctor@latest",
-    "postinstall": "cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs",
     "storybook": "dotenv -e .env.local -- storybook dev -p 6006",
     "build-storybook": "dotenv -e .env.local -- storybook build",
     "gen:types": "dotenv -e .env.local -- sh -c 'supabase gen types typescript --linked --schema public' > database.types.ts",
