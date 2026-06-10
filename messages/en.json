@@ -281,7 +281,11 @@
     "confirmRemoveMember": "Are you sure you want to remove this member?",
     "noMembersFound": "No members yet.",
     "selectMember": "Select a member...",
-    "noAdmins": "No administrators yet."
+    "noAdmins": "No administrators yet.",
+    "templateType": "Template Type",
+    "templateUsed": "Template Used",
+    "pdf": "PDF",
+    "react": "React"
   },
   "sidebar": {
     "dashboard": "Dashboard",

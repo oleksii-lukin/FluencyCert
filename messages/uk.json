@@ -262,7 +262,11 @@
     "noMembersFound": "Поки що немає учасників.",
     "selectMember": "Виберіть учасника...",
     "noAdmins": "Адміністраторів ще немає.",
-    "created": "Створено"
+    "created": "Створено",
+    "templateType": "Тип шаблону",
+    "templateUsed": "Використаний шаблон",
+    "pdf": "PDF",
+    "react": "React"
   },
   "sidebar": {
     "dashboard": "Панель керування",
