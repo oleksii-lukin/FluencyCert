@@ -71,8 +71,15 @@
   "showcase": {
     "title": "Member Certificates",
     "subtitle": "See how members proudly display their verified speaking certificates.",
-    "certificate": "Certificate",
-    "clubs": "clubs"
+    "chooseStyle": "Choose Your Style",
+    "styleDescription": "Every certificate is unique. Pick from a variety of design styles to match your personality and achievement.",
+    "styles": [
+      "Classic & elegant layouts",
+      "Modern & minimalist",
+      "Bold & creative",
+      "Nature-inspired themes",
+      "Night & neon accents"
+    ]
   },
   "testimonials": {
     "title": "Loved by the Community",
