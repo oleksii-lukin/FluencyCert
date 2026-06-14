@@ -120,7 +120,13 @@
   "gallery": {
     "title": "Certificate Templates",
     "subtitle": "Browse all available certificate templates. Each certificate is personalized with the member's English level, club participation, and admin verification note. Choose the style that best represents your achievement.",
-    "backToHome": "Back to FluencyCert"
+    "backToHome": "Back to FluencyCert",
+    "tabs": {
+      "web": "Web Templates",
+      "pdf": "PDF Certificates"
+    },
+    "customValues": "Custom Values",
+    "issuedOn": "Issued on"
   },
   "templateDescriptions": {
     "guillocheSecurity": "Classic security pattern with intricate background design.",
@@ -128,7 +134,10 @@
     "neubrutal": "Bold minimalist design with thick borders and high contrast.",
     "memphisRetro": "Playful retro-inspired design with vibrant geometric patterns.",
     "cyberNeon": "Dark futuristic design with neon accents and grid overlay.",
-    "naturalGreen": "Warm organic design with emerald tones and natural shapes."
+    "naturalGreen": "Warm organic design with emerald tones and natural shapes.",
+    "navyGold": "An elegant certificate with a dark navy background, gold decorative border frame, gold star badge, QR code verification, and classic serif typography.",
+    "elegantGold": "A refined certificate of recognition featuring soft pink background, ornate gold corner decorations, classic serif typography, and QR code verification.",
+    "leadership": "Clean leadership certificate template with blue decorative borders, dual signature fields, and QR verification."
   },
   "myCertificate": {
     "title": "No Certificate Claim Yet",
@@ -368,7 +377,17 @@
     "neubrutal": "Neubrutal",
     "memphisRetro": "Memphis Retro",
     "cyberNeon": "Cyber Neon",
-    "naturalGreen": "Natural Green"
+    "naturalGreen": "Natural Green",
+    "navyGold": "Dark Navy Gold Border Certificate",
+    "elegantGold": "Elegant Gold Recognition Certificate",
+    "leadership": "Professional Leadership Achievement Certificate"
+  },
+  "pdfFeatures": {
+    "qrCode": "QR Code",
+    "customVariables": "Custom Variables",
+    "multipleLayouts": "Landscape + Portrait",
+    "customFonts": "Custom Fonts",
+    "dualSignatures": "Dual Signatures"
   },
   "adminPdfTemplates": {
     "title": "PDF Certificate Templates",
