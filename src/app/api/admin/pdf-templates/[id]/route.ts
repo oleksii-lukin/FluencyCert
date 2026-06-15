@@ -32,6 +32,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -59,6 +60,7 @@ export async function GET(
     .single()
 
   if (error) {
+    console.error('[admin/pdf-templates/[id]] GET template error', { error: error.message, userId, templateId: id })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -81,12 +83,18 @@ export async function GET(
   })
 
   return NextResponse.json({ template, variants: sortedVariants })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]] Unexpected error in GET', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -122,16 +130,23 @@ export async function PATCH(
     .single()
 
   if (error) {
+    console.error('[admin/pdf-templates/[id]] PATCH template error', { error: error.message, userId, templateId: id })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ template })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]] Unexpected error in PATCH', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -157,8 +172,14 @@ export async function DELETE(
     .eq('id', id)
 
   if (error) {
+    console.error('[admin/pdf-templates/[id]] DELETE template error', { error: error.message, userId, templateId: id })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]] Unexpected error in DELETE', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

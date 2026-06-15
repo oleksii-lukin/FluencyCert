@@ -11,8 +11,9 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || ''
-  const decision = await cvAj.protect(request, { ip })
+  try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || ''
+    const decision = await cvAj.protect(request, { ip })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -44,4 +45,9 @@ export async function GET(
   }
 
   return NextResponse.json({ customValues: valuesByFieldId })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[certificates/[slug]/pdf-custom-values] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

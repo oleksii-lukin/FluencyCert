@@ -14,7 +14,8 @@ const createAj = aj.withRule(
 )
 
 export async function GET(request: Request) {
-  const decision = await listAj.protect(request, { ip: request.headers.get('x-forwarded-for') ?? '' })
+  try {
+    const decision = await listAj.protect(request, { ip: request.headers.get('x-forwarded-for') ?? '' })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -40,15 +41,21 @@ export async function GET(request: Request) {
   )
 
   return NextResponse.json({ clubs: clubsWithCounts })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[clubs] Unexpected error in GET', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await createAj.protect(request, { userId })
+    const decision = await createAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -88,8 +95,14 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
+    console.error('[clubs] Failed to create club', { name: body.name, slug: body.slug, userId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ club }, { status: 201 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[clubs] Unexpected error in POST', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

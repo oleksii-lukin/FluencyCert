@@ -70,12 +70,13 @@ async function fetchZoomUserInfo(accessToken: string): Promise<{
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await postAj.protect(request, { userId })
+    const decision = await postAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -118,6 +119,7 @@ export async function POST(request: Request) {
     .eq('id', userId)
 
   if (updateError) {
+    console.error('[zoom/connect] Failed to update profile with Zoom data', { userId, error: updateError.message })
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
   }
 
@@ -125,6 +127,11 @@ export async function POST(request: Request) {
     success: true,
     zoomUserInfo: userInfo,
   })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[zoom/connect] Unexpected error in POST', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 async function revokeZoomToken(token: string): Promise<boolean> {
@@ -148,12 +155,13 @@ async function revokeZoomToken(token: string): Promise<boolean> {
 }
 
 export async function DELETE(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await deleteAj.protect(request, { userId })
+    const decision = await deleteAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -184,8 +192,14 @@ export async function DELETE(request: Request) {
     .eq('id', userId)
 
   if (error) {
+    console.error('[zoom/connect] Failed to disconnect Zoom', { userId, error: error.message })
     return NextResponse.json({ error: 'Failed to disconnect' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[zoom/connect] Unexpected error in DELETE', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

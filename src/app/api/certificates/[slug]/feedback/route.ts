@@ -13,12 +13,13 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await postAj.protect(request, { userId })
+    const decision = await postAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -107,6 +108,7 @@ export async function POST(
     .single()
 
   if (error) {
+    console.error('[certificates/[slug]/feedback] Failed to insert feedback', { slug, userId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -121,4 +123,9 @@ export async function POST(
   })
 
   return NextResponse.json({ feedback }, { status: 201 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[certificates/[slug]/feedback] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

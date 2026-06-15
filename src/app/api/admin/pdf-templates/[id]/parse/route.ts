@@ -17,6 +17,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -61,6 +62,7 @@ export async function POST(
 
   const response = await fetch(signedUrl.ufsUrl)
   if (!response.ok) {
+    console.error('[admin/pdf-templates/[id]/parse] Failed to fetch PDF from storage', { userId, templateId: id })
     return NextResponse.json({ error: 'Failed to fetch PDF from storage' }, { status: 500 })
   }
 
@@ -125,6 +127,7 @@ export async function POST(
       .insert(newFieldsData)
 
     if (insertError) {
+      console.error('[admin/pdf-templates/[id]/parse] Insert fields error', { error: insertError.message, userId, templateId: id })
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
   }
@@ -140,4 +143,9 @@ export async function POST(
     newFieldsAdded: newFieldsData.length,
     pdfFonts,
   })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]/parse] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

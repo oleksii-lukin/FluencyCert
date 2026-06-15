@@ -10,6 +10,7 @@ const listAj = aj.withRule(
 )
 
 export async function GET(request: Request) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false })
 
     if (error) {
+      console.error('[admin/pdf-templates] GET templates error (master)', { error: error.message, userId })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -51,10 +53,16 @@ export async function GET(request: Request) {
     .order('created_at', { ascending: false })
 
   if (error) {
+    console.error('[admin/pdf-templates] GET templates error', { error: error.message, userId })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ templates })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates] Unexpected error in GET', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 const createAj = aj.withRule(
@@ -62,6 +70,7 @@ const createAj = aj.withRule(
 )
 
 export async function POST(request: Request) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -112,8 +121,14 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
+    console.error('[admin/pdf-templates] POST template error', { error: error.message, userId })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ template })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates] Unexpected error in POST', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

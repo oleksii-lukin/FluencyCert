@@ -13,12 +13,13 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await postAj.protect(request, { userId })
+    const decision = await postAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -91,4 +92,9 @@ export async function POST(
     hasUpvoted: !existing,
     upvoteCount: upvoteCount ?? 0,
   })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[certificates/[slug]/upvote] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

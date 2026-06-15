@@ -21,7 +21,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const decision = await getAj.protect(request, { ip: request.headers.get('x-forwarded-for') ?? '' })
+  try {
+    const decision = await getAj.protect(request, { ip: request.headers.get('x-forwarded-for') ?? '' })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -61,18 +62,24 @@ export async function GET(
       is_admin: is_club_admin,
     },
   })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[clubs/[slug]] Unexpected error in GET', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await updateAj.protect(request, { userId })
+    const decision = await updateAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -111,22 +118,29 @@ export async function PATCH(
     .single()
 
   if (error) {
+    console.error('[clubs/[slug]] Failed to update club', { slug, userId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ club: updated })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[clubs/[slug]] Unexpected error in PATCH', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await deleteAj.protect(request, { userId })
+    const decision = await deleteAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -163,8 +177,14 @@ export async function DELETE(
     .eq('id', club.id)
 
   if (error) {
+    console.error('[clubs/[slug]] Failed to delete club', { slug, userId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[clubs/[slug]] Unexpected error in DELETE', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

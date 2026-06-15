@@ -6,12 +6,13 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const supabase = createAdminClient()
+    const supabase = createAdminClient()
   const { slug } = await params
 
   const { data: claim } = await supabase
@@ -38,6 +39,7 @@ export async function GET(
     .order('created_at', { ascending: false })
 
   if (error) {
+    console.error('[certificates/[slug]/owner/feedback] Failed to fetch feedbacks', { slug, userId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -58,4 +60,9 @@ export async function GET(
   }
 
   return NextResponse.json({ feedbacks: feedbacksWithCertIds })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[certificates/[slug]/owner/feedback] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

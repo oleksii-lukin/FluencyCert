@@ -75,12 +75,13 @@ async function fetchIdentityMe(accessToken: string): Promise<{
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await postAj.protect(request, { userId })
+    const decision = await postAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
       .eq('id', userId)
 
     if (updateError) {
+      console.error('[linkedin/connect] Failed to update profile with linkedinUrl', { userId, error: updateError.message })
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
     }
     return NextResponse.json({ success: true, linkedinUrl: url })
@@ -151,6 +153,7 @@ export async function POST(request: Request) {
       .eq('id', userId)
 
     if (updateError) {
+      console.error('[linkedin/connect] Failed to update profile with auth code', { userId, error: updateError.message })
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
     }
 
@@ -167,15 +170,21 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ error: 'Unknown request' }, { status: 400 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[linkedin/connect] Unexpected error in POST', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function DELETE(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await deleteAj.protect(request, { userId })
+    const decision = await deleteAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -193,8 +202,14 @@ export async function DELETE(request: Request) {
     .eq('id', userId)
 
   if (error) {
+    console.error('[linkedin/connect] Failed to disconnect LinkedIn', { userId, error: error.message })
     return NextResponse.json({ error: 'Failed to disconnect' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[linkedin/connect] Unexpected error in DELETE', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

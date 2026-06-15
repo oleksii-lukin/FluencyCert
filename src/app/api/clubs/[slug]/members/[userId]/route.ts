@@ -13,12 +13,13 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ slug: string; userId: string }> },
 ) {
-  const { userId: currentUserId } = await auth()
-  if (!currentUserId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId: currentUserId } = await auth()
+    if (!currentUserId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await manageAj.protect(request, { userId: currentUserId })
+    const decision = await manageAj.protect(request, { userId: currentUserId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -70,22 +71,29 @@ export async function PATCH(
     .eq('id', membership.id)
 
   if (error) {
+    console.error('[clubs/[slug]/members/[userId]] Failed to update member role', { slug, targetUserId, currentUserId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[clubs/[slug]/members/[userId]] Unexpected error in PATCH', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ slug: string; userId: string }> },
 ) {
-  const { userId: currentUserId } = await auth()
-  if (!currentUserId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId: currentUserId } = await auth()
+    if (!currentUserId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await manageAj.protect(request, { userId: currentUserId })
+    const decision = await manageAj.protect(request, { userId: currentUserId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -120,8 +128,14 @@ export async function DELETE(
     .eq('user_id', targetUserId)
 
   if (error) {
+    console.error('[clubs/[slug]/members/[userId]] Failed to remove member', { slug, targetUserId, currentUserId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[clubs/[slug]/members/[userId]] Unexpected error in DELETE', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

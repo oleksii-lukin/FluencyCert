@@ -19,12 +19,13 @@ const patchAj = aj.withRule(
 )
 
 export async function GET(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await getAj.protect(request, { userId })
+    const decision = await getAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -43,15 +44,21 @@ export async function GET(request: Request) {
     .single()
 
   return NextResponse.json({ claim: claim ?? null })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[claims] Unexpected error in GET', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await postAj.protect(request, { userId })
+    const decision = await postAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -115,6 +122,7 @@ export async function POST(request: Request) {
   const error = success ? null : results[results.length - 1].error
 
   if (error) {
+    console.error('[claims] Failed to create claim', { userId, clubId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -126,15 +134,21 @@ export async function POST(request: Request) {
   })
 
   return NextResponse.json({ claim }, { status: 201 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[claims] Unexpected error in POST', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function PATCH(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await patchAj.protect(request, { userId })
+    const decision = await patchAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -184,8 +198,14 @@ export async function PATCH(request: Request) {
     .single()
 
   if (error) {
+    console.error('[claims] Failed to update claim background_template', { claimId: body.claimId, userId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ claim: updated })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[claims] Unexpected error in PATCH', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

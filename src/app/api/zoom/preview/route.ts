@@ -112,6 +112,7 @@ export async function POST(request: Request) {
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[zoom/preview] Failed to preview Zoom data', { userId, error: message })
     return NextResponse.json({ error: message }, { status: 502 })
   }
 }

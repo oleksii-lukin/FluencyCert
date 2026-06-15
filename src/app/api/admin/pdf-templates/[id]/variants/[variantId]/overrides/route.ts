@@ -32,6 +32,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string; variantId: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -57,16 +58,23 @@ export async function GET(
     .eq('variant_id', variantId)
 
   if (error) {
+    console.error('[admin/pdf-templates/[id]/variants/[variantId]/overrides] GET overrides error', { error: error.message, userId, templateId: id, variantId })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ overrides })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]/variants/[variantId]/overrides] Unexpected error in GET', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string; variantId: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -134,8 +142,14 @@ export async function PUT(
     .select()
 
   if (error) {
+    console.error('[admin/pdf-templates/[id]/variants/[variantId]/overrides] Upsert overrides error', { error: error.message, userId, templateId: id, variantId })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ overrides: saved })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]/variants/[variantId]/overrides] Unexpected error in PUT', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

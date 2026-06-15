@@ -32,6 +32,7 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -134,8 +135,14 @@ export async function PUT(
     .select()
 
   if (error) {
+    console.error('[admin/pdf-templates/[id]/fields] Upsert fields error', { error: error.message, userId, templateId })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ fields: saved })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]/fields] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

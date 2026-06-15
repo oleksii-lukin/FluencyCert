@@ -33,6 +33,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; variantId: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -68,6 +69,7 @@ export async function PATCH(
     .single()
 
   if (error) {
+    console.error('[admin/pdf-templates/[id]/variants/[variantId]] PATCH variant error', { error: error.message, userId, templateId: id, variantId })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -76,12 +78,18 @@ export async function PATCH(
   }
 
   return NextResponse.json({ variant })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]/variants/[variantId]] Unexpected error in PATCH', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string; variantId: string }> },
 ) {
+  try {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -119,6 +127,7 @@ export async function DELETE(
     .eq('template_id', id)
 
   if (error) {
+    console.error('[admin/pdf-templates/[id]/variants/[variantId]] DELETE variant error', { error: error.message, userId, templateId: id, variantId })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -126,4 +135,9 @@ export async function DELETE(
   await utapi.deleteFiles(variant.file_key).catch(() => {})
 
   return NextResponse.json({ success: true })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/pdf-templates/[id]/variants/[variantId]] Unexpected error in DELETE', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

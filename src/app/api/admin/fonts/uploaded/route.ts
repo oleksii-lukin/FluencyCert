@@ -10,52 +10,58 @@ const listAj = aj.withRule(
 )
 
 export async function GET(request: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
-  const decision = await listAj.protect(request, { userId })
-  if (decision.isDenied()) {
-    if (decision.reason.isRateLimit()) {
-      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
 
-  const supabase = createAdminClient()
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', userId)
-    .single()
-
-  if (!profile?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  const utapi = new UTApi()
-  const result = await utapi.listFiles()
-
-  const ttfFonts: {
-    key: string
-    name: string
-    size: number
-    uploadedAt: number
-    status: string
-  }[] = []
-  for (const f of result.files) {
-    if (f.name.endsWith('.ttf') || f.name.endsWith('.woff') || f.name.endsWith('.woff2')) {
-      ttfFonts.push({
-        key: f.key,
-        name: f.name,
-        size: f.size,
-        uploadedAt: f.uploadedAt,
-        status: f.status,
-      })
+    const decision = await listAj.protect(request, { userId })
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+      }
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
-  }
-  ttfFonts.sort((a, b) => b.uploadedAt - a.uploadedAt)
 
-  return NextResponse.json({ fonts: ttfFonts })
+    const supabase = createAdminClient()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single()
+
+    if (!profile?.is_admin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const utapi = new UTApi()
+    const result = await utapi.listFiles()
+
+    const ttfFonts: {
+      key: string
+      name: string
+      size: number
+      uploadedAt: number
+      status: string
+    }[] = []
+    for (const f of result.files) {
+      if (f.name.endsWith('.ttf') || f.name.endsWith('.woff') || f.name.endsWith('.woff2')) {
+        ttfFonts.push({
+          key: f.key,
+          name: f.name,
+          size: f.size,
+          uploadedAt: f.uploadedAt,
+          status: f.status,
+        })
+      }
+    }
+    ttfFonts.sort((a, b) => b.uploadedAt - a.uploadedAt)
+
+    return NextResponse.json({ fonts: ttfFonts })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[admin/fonts/uploaded] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

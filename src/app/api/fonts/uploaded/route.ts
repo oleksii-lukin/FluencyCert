@@ -3,7 +3,8 @@ import { UTApi } from 'uploadthing/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
-  let key = request.nextUrl.searchParams.get('key')
+  try {
+    let key = request.nextUrl.searchParams.get('key')
   const id = request.nextUrl.searchParams.get('id')
 
   if (!key && !id) {
@@ -38,4 +39,9 @@ export async function GET(request: NextRequest) {
       'Cache-Control': 'public, max-age=31536000, immutable',
     },
   })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[fonts/uploaded] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

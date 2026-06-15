@@ -12,12 +12,13 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ slug: string; feedbackId: string }> },
 ) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  const decision = await patchAj.protect(request, { userId })
+    const decision = await patchAj.protect(request, { userId })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -110,8 +111,14 @@ export async function PATCH(
     .single()
 
   if (error) {
+    console.error('[certificates/[slug]/feedback/[feedbackId]] Failed to update feedback', { slug, feedbackId, userId, error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ feedback: updated })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[certificates/[slug]/feedback/[feedbackId]] Unexpected error', { error: message })
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
