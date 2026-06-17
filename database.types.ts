@@ -24,6 +24,8 @@ export type Database = {
           english_level: string | null
           hours_participated: number | null
           id: string
+          pdf_file_key: string | null
+          pdf_file_url: string | null
           pdf_template_id: string | null
           pdf_template_variant_id: string | null
           slug: string
@@ -41,6 +43,8 @@ export type Database = {
           english_level?: string | null
           hours_participated?: number | null
           id?: string
+          pdf_file_key?: string | null
+          pdf_file_url?: string | null
           pdf_template_id?: string | null
           pdf_template_variant_id?: string | null
           slug: string
@@ -58,6 +62,8 @@ export type Database = {
           english_level?: string | null
           hours_participated?: number | null
           id?: string
+          pdf_file_key?: string | null
+          pdf_file_url?: string | null
           pdf_template_id?: string | null
           pdf_template_variant_id?: string | null
           slug?: string

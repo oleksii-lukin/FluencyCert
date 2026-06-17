@@ -96,6 +96,7 @@ interface UiState {
   open: 'approve' | 'reject' | null
   submitting: boolean
   error: string
+  step: 'saving' | 'generating' | 'uploading' | null
 }
 
 interface DataState {
@@ -124,6 +125,7 @@ type UiAction =
   | { type: 'OPEN_REJECT' }
   | { type: 'CLOSE' }
   | { type: 'START_SUBMITTING' }
+  | { type: 'SET_STEP'; step: 'saving' | 'generating' | 'uploading' | null }
   | { type: 'SUBMIT_ERROR'; error: string }
   | { type: 'SUBMIT_SUCCESS' }
 
@@ -154,6 +156,7 @@ const initialUiState: UiState = {
   open: null,
   submitting: false,
   error: "",
+  step: null,
 }
 
 const initialDataState: DataState = {
@@ -212,7 +215,9 @@ function uiReducer(state: UiState, action: UiAction): UiState {
     case 'CLOSE':
       return { ...state, open: null, error: "" }
     case 'START_SUBMITTING':
-      return { ...state, submitting: true, error: "" }
+      return { ...state, submitting: true, error: "", step: null }
+    case 'SET_STEP':
+      return { ...state, step: action.step }
     case 'SUBMIT_ERROR':
       return { ...state, submitting: false, error: action.error }
     case 'SUBMIT_SUCCESS':
@@ -439,6 +444,17 @@ function ClaimActionModal({
           <p className="mt-2 text-sm text-red-500">{ui.error}</p>
         )}
 
+        {ui.submitting && ui.step && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="size-4 animate-spin rounded-full border-2 border-bright-sky border-t-transparent" />
+            <span>
+              {ui.step === 'saving' && 'Saving claim data…'}
+              {ui.step === 'generating' && 'Generating certificate PDF…'}
+              {ui.step === 'uploading' && 'Uploading certificate…'}
+            </span>
+          </div>
+        )}
+
         <div className="mt-4 flex justify-end gap-3">
           <Button
             size="sm"
@@ -605,6 +621,146 @@ export function ClaimActions({
       body.status = status
     }
 
+    // For PDF certificates being approved/updated, generate + upload after saving
+    if ((status === 'approved' || mode === 'update') && form.certType === 'pdf') {
+      try {
+        dispatchUi({ type: 'SET_STEP', step: 'saving' })
+
+        // Step 1: Save claim data (without PDF file)
+        const saveRes = await fetch(`/api/admin/claims/${claimId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+
+        if (!saveRes.ok) {
+          const resData = await saveRes.json()
+          dispatchUi({ type: 'SUBMIT_ERROR', error: resData.error || ca('somethingWentWrong') })
+          return
+        }
+
+        const savedClaim = (await saveRes.json()).claim
+        const effectiveSlug = savedClaim.slug
+
+        // Step 2: Fetch profile data for full name
+        const certRes = await fetch(`/api/certificates/${effectiveSlug}`)
+        if (!certRes.ok) throw new Error('Failed to fetch certificate data')
+        const certData = await certRes.json()
+        const profile = certData.certificate.profiles
+        const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Certificate Holder'
+
+        // Step 3: Fetch template with fields and variants for generation
+        dispatchUi({ type: 'SET_STEP', step: 'generating' })
+        const templateRes = await fetch(`/api/admin/pdf-templates/${form.selectedPdfTemplate}`)
+        if (!templateRes.ok) throw new Error('Failed to fetch template')
+        const templateData = await templateRes.json()
+        const template = templateData.template
+
+        let fileUrl = template.file_url as string
+        let fields = [...(template.pdf_template_fields ?? [])]
+
+        if (form.selectedPdfTemplateVariant) {
+          const variant = (templateData.variants ?? []).find(
+            (v: { id: string }) => v.id === form.selectedPdfTemplateVariant
+          )
+          if (variant) {
+            fileUrl = variant.file_url
+            const overrides: Array<Record<string, unknown>> = variant.pdf_template_field_overrides ?? []
+            const overrideMap: Record<string, Record<string, unknown>> = {}
+            for (const o of overrides) {
+              overrideMap[o.field_id as string] = o
+            }
+            fields = fields.map((f: Record<string, unknown>) => {
+              const ov = overrideMap[f.id as string]
+              if (!ov) return f
+              return {
+                ...f,
+                ...(ov.font_family != null ? { font_family: ov.font_family } : {}),
+                ...(ov.font_size != null ? { font_size: ov.font_size } : {}),
+                ...(ov.font_source != null ? { font_source: ov.font_source } : {}),
+                ...(ov.font_variant != null ? { font_variant: ov.font_variant } : {}),
+                ...(ov.uploaded_font_key != null ? { uploaded_font_key: ov.uploaded_font_key } : {}),
+                ...(ov.font_id != null ? { font_id: ov.font_id } : {}),
+                ...(ov.text_color != null ? { text_color: ov.text_color } : {}),
+                ...(ov.display_label != null ? { display_label: ov.display_label } : {}),
+                ...(ov.is_enabled != null ? { is_enabled: ov.is_enabled } : {}),
+                ...(ov.multiline != null ? { multiline: ov.multiline } : {}),
+                ...(ov.date_format != null ? { date_format: ov.date_format } : {}),
+                ...(ov.level_format != null ? { level_format: ov.level_format } : {}),
+                ...(ov.custom_default_value != null ? { custom_default_value: ov.custom_default_value } : {}),
+                ...(ov.custom_overridable != null ? { custom_overridable: ov.custom_overridable } : {}),
+                ...(ov.qr_dots_color != null ? { qr_dots_color: ov.qr_dots_color } : {}),
+                ...(ov.qr_bg_color != null ? { qr_bg_color: ov.qr_bg_color } : {}),
+                ...(ov.qr_dots_type != null ? { qr_dots_type: ov.qr_dots_type } : {}),
+                ...(ov.corners_type != null ? { corners_type: ov.corners_type } : {}),
+                ...(ov.qr_corners_color != null ? { qr_corners_color: ov.qr_corners_color } : {}),
+              }
+            })
+          }
+        }
+
+        // Step 4: Generate PDF in browser
+        console.time(`[perf] admin-generatePdf:${effectiveSlug}`)
+        const pdfModule = await import('@/components/certificate/pdf-certificate-renderer')
+        const pdfCancelled = false
+        const result = await pdfModule.generatePdf({
+          templateFileUrl: fileUrl,
+          fields: fields as unknown as Parameters<typeof pdfModule.generatePdf>[0]['fields'],
+          certificateData: {
+            fullName,
+            englishLevel: savedClaim.english_level || 'Not specified',
+            speakingClubsCount: savedClaim.speaking_clubs_count ?? 0,
+            hoursParticipated: savedClaim.hours_participated,
+            adminFeedback: savedClaim.admin_feedback,
+            createdAt: savedClaim.approved_at ?? savedClaim.created_at,
+            slug: effectiveSlug,
+          },
+          customValues: data.customFieldValues,
+          certificateUrl: `${window.location.origin}/en/certificate/${effectiveSlug}`,
+          cancelled: () => pdfCancelled,
+        })
+        console.timeEnd(`[perf] admin-generatePdf:${effectiveSlug}`)
+
+        // Step 5: Upload to UploadThing
+        dispatchUi({ type: 'SET_STEP', step: 'uploading' })
+        const uploadModule = await import('@/lib/uploadthing')
+        const uploadRes = await uploadModule.uploadFiles('certificatePdfUpload', {
+          files: [new File([result.filledBytes.buffer as ArrayBuffer], `certificate-${effectiveSlug}.pdf`, { type: 'application/pdf' })],
+        })
+
+        const uploadData = Array.isArray(uploadRes) ? uploadRes[0] : uploadRes
+
+        if (!uploadData?.url || !uploadData?.key) {
+          throw new Error('Failed to upload PDF')
+        }
+
+        // Step 6: Save PDF file info
+        const updateRes = await fetch(`/api/admin/claims/${claimId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            admin_feedback: form.feedback,
+            pdf_file_url: uploadData.url,
+            pdf_file_key: uploadData.key,
+          }),
+        })
+
+        if (!updateRes.ok) {
+          throw new Error('Failed to save PDF file info')
+        }
+
+        dispatchForm({ type: 'RESET_FORM' })
+        dispatchData({ type: 'RESET' })
+        dispatchUi({ type: 'SUBMIT_SUCCESS' })
+        router.refresh()
+        return
+      } catch (err) {
+        dispatchUi({ type: 'SUBMIT_ERROR', error: err instanceof Error ? err.message : 'Failed to generate certificate PDF' })
+        return
+      }
+    }
+
+    // Non-PDF or reject flow: single PATCH call
     const res = await fetch(`/api/admin/claims/${claimId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

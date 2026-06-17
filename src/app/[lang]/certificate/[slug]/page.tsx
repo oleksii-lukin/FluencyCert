@@ -4,7 +4,8 @@ import { Link } from '@/i18n/routing'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CertificateRenderer } from '@/components/certificate/certificate-renderer'
-import { PdfCertificateViewer } from '@/components/certificate/pdf-certificate-viewer'
+import { PdfCertificateDisplay } from '@/components/certificate/pdf-certificate-display'
+import { LazyPdfCertificateRenderer } from '@/components/certificate/lazy-pdf-certificate-renderer'
 import { UpvoteRosette } from '@/components/certificate/upvote-rosette'
 import { TestimonialsMarquee } from '@/components/certificate/testimonials-marquee'
 import { FeedbackForm } from '@/components/certificate/feedback-form'
@@ -308,22 +309,29 @@ export default async function CertificatePage({ params }: PageProps) {
           <div className="flex-1">
             {pdfTemplateData ? (
               <div className="w-full">
-                <PdfCertificateViewer
-                  templateFileUrl={pdfTemplateData.fileUrl}
-                  fields={pdfTemplateData.fields}
-                  certificateData={{
-                    fullName,
-                    englishLevel: claim.english_level || 'Not specified',
-                    speakingClubsCount: claim.speaking_clubs_count ?? 0,
-                    hoursParticipated: claim.hours_participated,
-                    adminFeedback: claim.admin_feedback,
-                    createdAt: claim.approved_at ?? claim.created_at,
-                    slug: claim.slug,
-                  }}
-                  customValues={pdfTemplateData.customValues}
-                  certificateUrl={`${baseUrl}/${lang}/certificate/${claim.slug}`}
-                  viewerLocale={lang}
-                />
+                {claim.pdf_file_url ? (
+                  <PdfCertificateDisplay
+                    pdfFileUrl={claim.pdf_file_url}
+                    slug={claim.slug}
+                  />
+                ) : (
+                  <LazyPdfCertificateRenderer
+                    templateFileUrl={pdfTemplateData.fileUrl}
+                    fields={pdfTemplateData.fields}
+                    certificateData={{
+                      fullName,
+                      englishLevel: claim.english_level || 'Not specified',
+                      speakingClubsCount: claim.speaking_clubs_count ?? 0,
+                      hoursParticipated: claim.hours_participated,
+                      adminFeedback: claim.admin_feedback,
+                      createdAt: claim.approved_at ?? claim.created_at,
+                      slug: claim.slug,
+                    }}
+                    customValues={pdfTemplateData.customValues}
+                    certificateUrl={`${baseUrl}/${lang}/certificate/${claim.slug}`}
+                    viewerLocale={lang}
+                  />
+                )}
               </div>
             ) : (
               <CertificateRenderer

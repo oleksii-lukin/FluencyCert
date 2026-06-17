@@ -5,6 +5,7 @@ import { aj } from '@/lib/arcjet'
 import { slidingWindow } from '@arcjet/next'
 import { isClubAdmin, isMasterAdmin } from '@/lib/clubs'
 import { getPostHogClient } from '@/lib/posthog-server'
+import { UTApi } from 'uploadthing/server'
 
 const updateAj = aj.withRule(
   slidingWindow({ mode: "LIVE", interval: 60, max: 30, characteristics: ["userId"] }),
@@ -45,7 +46,7 @@ export async function PATCH(
     }
 
     const [{ id }, body] = await Promise.all([params, request.json()])
-    const { slug: newSlug, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, pdf_template_id, pdf_template_variant_id, custom_values } = body
+    const { slug: newSlug, status, admin_feedback, english_level, speaking_clubs_count, hours_participated, background_template, pdf_template_id, pdf_template_variant_id, custom_values, pdf_file_url, pdf_file_key } = body
 
     if (newSlug !== undefined) {
       const upperSlug = newSlug.toUpperCase()
@@ -76,7 +77,9 @@ export async function PATCH(
         background_template === undefined &&
         pdf_template_id === undefined &&
         pdf_template_variant_id === undefined &&
-        custom_values === undefined
+        custom_values === undefined &&
+        pdf_file_url === undefined &&
+        pdf_file_key === undefined
 
       if (hasOnlySlug) {
         const { data: claim, error } = await supabase
@@ -97,7 +100,7 @@ export async function PATCH(
 
     const { data: existing } = await supabase
       .from('certificate_claims')
-      .select('id, status')
+      .select('id, status, pdf_file_key')
       .eq('id', id)
       .single()
 
@@ -127,6 +130,8 @@ export async function PATCH(
       hours_participated?: number
       background_template?: string
       approved_at?: string
+      pdf_file_url?: string
+      pdf_file_key?: string
     } = {
       status: effectiveStatus,
       admin_feedback: admin_feedback.trim(),
@@ -229,20 +234,40 @@ export async function PATCH(
         }
       }
     } else if (effectiveStatus === 'approved') {
-      if (!english_level || typeof english_level !== 'string') {
-        return NextResponse.json({ error: 'english_level is required when approving' }, { status: 400 })
+      if (!isUpdate) {
+        if (!english_level || typeof english_level !== 'string') {
+          return NextResponse.json({ error: 'english_level is required when approving' }, { status: 400 })
+        }
+        if (speaking_clubs_count == null || typeof speaking_clubs_count !== 'number') {
+          return NextResponse.json({ error: 'speaking_clubs_count is required when approving' }, { status: 400 })
+        }
       }
-      if (speaking_clubs_count == null || typeof speaking_clubs_count !== 'number') {
-        return NextResponse.json({ error: 'speaking_clubs_count is required when approving' }, { status: 400 })
+      if (english_level) {
+        updateData.english_level = english_level.trim()
       }
-
-      updateData.english_level = english_level.trim()
-      updateData.speaking_clubs_count = speaking_clubs_count
+      if (speaking_clubs_count != null) {
+        updateData.speaking_clubs_count = speaking_clubs_count
+      }
       if (hours_participated != null) {
         updateData.hours_participated = hours_participated
       }
       if (background_template) {
         updateData.background_template = background_template
+      }
+    }
+
+    if (pdf_file_url !== undefined) {
+      updateData.pdf_file_url = pdf_file_url
+    }
+    if (pdf_file_key !== undefined) {
+      updateData.pdf_file_key = pdf_file_key
+
+      // Clean up old file from UploadThing before overwriting
+      if (existing.pdf_file_key && existing.pdf_file_key !== pdf_file_key) {
+        const utapi = new UTApi()
+        await utapi.deleteFiles(existing.pdf_file_key).catch((e) => {
+          console.error('[admin/claims/[id]] Failed to delete old PDF file', { key: existing.pdf_file_key, error: e })
+        })
       }
     }
 
