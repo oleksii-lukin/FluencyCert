@@ -56,7 +56,8 @@ let pdfjsLoading: Promise<any> | null = null
 async function ensurePdfjs() {
   if (!pdfjsLoading) {
     pdfjsLoading = import('pdfjs-dist').then((mod) => {
-      mod.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+      // mod.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+      mod.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.0.227/build/pdf.worker.min.mjs'
       return mod
     })
   }

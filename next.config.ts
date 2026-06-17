@@ -5,6 +5,7 @@ import path from 'path';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function copyPdfWorker() {
   try {
     const src = path.resolve('node_modules/pdfjs-dist/build/pdf.worker.min.mjs');
@@ -20,7 +21,7 @@ function copyPdfWorker() {
   }
 }
 
-copyPdfWorker();
+// copyPdfWorker();
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
